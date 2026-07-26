@@ -7,19 +7,22 @@ const A = Object.fromEntries(process.argv.slice(2).map(s => s.split('=')));
 const W = +(A.w ?? 900), H = +(A.h ?? 675);
 const zoom = +(A.zoom ?? 0.50), cx = +(A.cx ?? 0.366), cy = +(A.cy ?? 0.46);
 const tide = +(A.tide ?? 1.05), light = +(A.light ?? 0.92);
+const t = +(A.t ?? 0);
 const OUT = A.out ?? '_look.png';
 
 const S = {
-  shallow:'#86ccc2', mid:'#2f8fa0', deep:'#124f70', nightDeep:'#3aa6c8',
-  landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#d7f2ee',
+  shallow:'#86ccc2', mid:'#2f8fa0', deep:'#124f70', nightDeep:'#3fc8de',
+  landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#e3fbff',
+  abyss:'#071626', pearlCol:'#8fa8b8',
   nightGlow:0.85, nightDepth:1.0, cityGain:1.9, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
-  exposure:1.0, gamma:0.92, vignette:0.30,
+  exposure:1.0, gamma:0.92, vignette:0.36,
+  shoreGlow:0.50, surfGain:0.18, flatsGlow:0.55, shimmer:0.25,
   ...JSON.parse(A.set ?? '{}'),
 };
 const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255);
-const C = Object.fromEntries(['shallow','mid','deep','nightDeep','landDark','landLight','dampCol','city','edgeCol']
+const C = Object.fromEntries(['shallow','mid','deep','nightDeep','landDark','landLight','dampCol','city','edgeCol','abyss','pearlCol']
   .map(k => [k, hex(S[k])]));
 
 const H_LO=-0.75, H_HI=3.25, LO=0.332, HI=2.127;
@@ -27,6 +30,14 @@ const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const mix=(a,b,t)=>a+(b-a)*t;
 const mix3=(a,b,t)=>[mix(a[0],b[0],t),mix(a[1],b[1],t),mix(a[2],b[2],t)];
 const smoothstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const frac=x=>x-Math.floor(x);
+const hash=(x,y)=>frac(Math.sin(x*127.1+y*311.7)*43758.5453123);
+function noise(x,y){
+  const ix=Math.floor(x), iy=Math.floor(y), fx=x-ix, fy=y-iy;
+  const a=hash(ix,iy), b=hash(ix+1,iy), c=hash(ix,iy+1), d=hash(ix+1,iy+1);
+  const ux=fx*fx*(3-2*fx), uy=fy*fy*(3-2*fy);
+  return mix(a,b,ux)+(c-a)*uy*(1-ux)+(d-b)*ux*uy;
+}
 
 const baseObj = await sharp('data/base-aerial.jpg').removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
 const BP = baseObj.info.width, base = baseObj.data;
@@ -62,6 +73,7 @@ const uvOf = (px,py)=>{
   return [CX+(vx-0.5)*zoom*aspect*1.0866, CY+(vy-0.5)*zoom];
 };
 const heightAt=(u,v)=>H_LO+samp(fld,FP,u,v)[0]*(H_HI-H_LO);
+const bathyAt=(u,v)=>samp(fld,FP,u,v)[1];
 
 const out = Buffer.alloc(W*H*3);
 for(let py=0;py<H;py++) for(let px=0;px<W;px++){
@@ -93,24 +105,66 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const clarity=S.clarity*mix(1,0.18,smoothstep(0.05,0.80,depth));
   wcol=wcol.map(c=>c*mix(1,0.55+0.85*lum,clarity));
 
+  // Living water: a slow 2-octave shimmer, subtle texture rather than sparkle. Night gets the
+  // full slider amplitude, day a third of it.
+  const nux=u*340.0, nuy=v*340.0/1.0866;
+  const shim=noise(nux+t*0.008,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
+  wcol=wcol.map(c=>c*(1+(S.shimmer/3)*(shim-0.5)));
+
   const surface=ground.map((g,k)=>mix(g,wcol[k],submerged));
   const dh=(uTide-Hh)/Math.max(S.edgeWidth,0.004);
   const edge=Math.exp(-dh*dh);
 
+  // Shoreline rim glow, bleeding into the water from every waterline.
+  const glowW=0.065;
+  let shore=Math.exp(-Math.pow(bathy/glowW,2))*submerged;
+  shore*=1+0.3*S.shimmer*(shim-0.5);
+
+  // Offshore swell: faint contour bands parallel to the ocean beach, drifting slowly shoreward,
+  // windowed to open water clear of the shore.
+  let lines=Math.pow(0.5+0.5*Math.cos(bathy*38.0-t*0.15),6);
+  lines*=smoothstep(0.25,0.45,bathy)*(1-smoothstep(0.75,0.98,bathy));
+  // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
+  const bw=Math.abs(bathyAt(u1,v1)-bathy)+Math.abs(bathyAt(u2,v2)-bathy);
+  const linesAA=1-smoothstep(0.3,1.0,38.0*bw);
+  // A small island closes bathy's iso-contours into a ring within a few hundred metres, and the
+  // chamfer field facets that ring into an octagon — the "full-map contour lines" the owner
+  // rejected, reborn at island scale. Probe the gradient direction a short, fixed, WORLD-space
+  // distance away (not a screen derivative) and fade the bands out wherever that direction has
+  // rotated, i.e. wherever the shore curves tightly instead of running straight.
+  const bGx=bathyAt(u+0.004,v)-bathy, bGy=bathyAt(u,v+0.004)-bathy;
+  const bGl=Math.hypot(bGx,bGy);
+  const tang=bGl>1e-4?[-bGy/bGl,bGx/bGl]:[1,0];
+  const bTang=bathyAt(u+tang[0]*0.07,v+tang[1]*0.07);
+  const straight=1-smoothstep(0.02,0.12,Math.abs(bTang-bathy));
+  lines*=linesAA*straight*(0.15+0.85*uNightMix)*submerged;
+
   const daylight=surface.map((s,k)=>s*sunTint[k]*uDay);
   const landNight=palette.map((p,k)=>p*(1+0.35*S.landChroma*rel[k]));
+  const chan=smoothstep(0.02,0.10,bathy)*(1-smoothstep(0.16,0.45,bathy));
   const dw=mix(1,depth,S.nightDepth);
-  const nightWater=mix3(C.shallow.map(c=>c*0.22),C.nightDeep,Math.pow(clamp(depth,0,1),0.8)).map(c=>c*mix(1,0.78+0.55*lum,0.35));
+  let nightWater=mix3(C.abyss,C.nightDeep,chan).map(c=>c*mix(1,0.78+0.55*lum,0.35));
+  nightWater=nightWater.map(c=>c*(1+S.shimmer*(shim-0.5)));
   const emis=S.nightGlow*(0.22+0.78*uMoon)*(0.14+0.86*dw);
-  const night=landNight.map((l,k)=>mix(l*(0.05+0.24*uMoon),nightWater[k]*emis,submerged));
+  let night=landNight.map((l,k)=>mix(l*(0.05+0.24*uMoon),nightWater[k]*emis,submerged));
+
+  // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
+  // than flattened to grey — `rel` is the same relative-chroma vector the land already uses.
+  const flatBand=(1-submerged)*smoothstep(2.6,2.2,Hh)*smoothstep(-0.1,0.15,Hh+0.75);
+  const pearl=C.pearlCol.map((c,k)=>c*(0.25+0.75*lum)*(1+0.4*rel[k])*S.flatsGlow*(0.35+0.65*uMoon));
+  night=night.map((n,k)=>mix(n,Math.max(n,pearl[k]),flatBand));
 
   const vx=(px+0.5)/W-0.5, vy=(py+0.5)/H-0.5;
   const vig=1-S.vignette*smoothstep(0.42,0.98,Math.hypot(vx,vy));
   for(let k=0;k<3;k++){
     let c=mix(daylight[k],night[k],uNightMix);
-    c+=C.city[k]*city*S.cityGain*uNightMix;
+    const cityTerm=C.city[k]*(Math.pow(city,1.6)*S.cityGain*1.4)+[1.0,0.95,0.85][k]*Math.pow(city,3)*S.cityGain*0.8;
+    c+=cityTerm*uNightMix;
     c+=C.edgeCol[k]*edge*S.edgeGain*(0.45+0.75*uNightMix);
-    c*=S.exposure*vig;
+    c+=C.edgeCol[k]*shore*S.shoreGlow*(0.35+0.75*uNightMix);
+    c+=C.edgeCol[k]*lines*S.surfGain;
+    c=1-Math.exp(-c*S.exposure);
+    c*=vig;
     out[o+k]=Math.round(255*Math.pow(clamp(c,0,1),S.gamma));
   }
 }
