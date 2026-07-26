@@ -158,36 +158,39 @@ const DEVICES=[
 // Colours only. Everything structural (realism, clarity, waterline softness) lives in DEFAULTS
 // so a preset changes the palette without undoing the look.
 // Night levels (nightGlow, cityGain, flatsGlow, surfGain, abyss) were re-derived together this
-// round to hold the required hierarchy — surf line >= channel glow > city lights > flats > land >
-// abyss — measured directly off rendered pixels (see round-2 notes), not tuned by eye alone. They
-// read much lower than round 1's: darkening the flats (item 1) removed the pale floor that used to
-// make everything else look proportionately dim by comparison.
+// round for the monotonic depth-decay water (item 1 below): nightGlow/cityGain/flatsGlow restored
+// back up toward round 1's levels (round 2's cut made the water and city near-invisible), abyss
+// lifted a touch so open ocean reads dark navy rather than black, surfGain cut to a whisper now
+// that the ocean itself carries the glow. Harbour water's numbers are the ones actually verified
+// pixel-by-pixel (see round-3 notes); the other four presets were scaled by the same ratios to
+// hold the same hierarchy rather than re-derived individually — flagged as a follow-up if any
+// preset other than Harbour water needs its own pass.
 const PRESETS={
   'Harbour water':{shallow:'#86ccc2',mid:'#2f8fa0',deep:'#124f70',nightDeep:'#3fc8de',
     landDark:'#0b1512',landLight:'#2c4029',dampCol:'#2a2a24',city:'#ffb545',edgeCol:'#e3fbff',
-    abyss:'#040b13',pearlCol:'#66787f',
-    nightGlow:0.60,nightDepth:1.0,cityGain:0.30,edgeGain:0.10,
-    shoreGlow:0.50,surfGain:0.28,flatsGlow:0.35,shimmer:0.25},
+    abyss:'#08131f',pearlCol:'#74858f',
+    nightGlow:0.95,cityGain:2.0,edgeGain:0.10,
+    shoreGlow:0.50,surfGain:0.12,flatsGlow:0.50,shimmer:0.25},
   'Bioluminescent':{shallow:'#63dfe4',mid:'#0b74a4',deep:'#0a2748',nightDeep:'#39d7e6',
     landDark:'#0b1512',landLight:'#2c4029',dampCol:'#0d2a33',city:'#ffb545',edgeCol:'#c8ffff',
-    abyss:'#03080f',pearlCol:'#75a2a1',
-    nightGlow:0.74,nightDepth:1.0,cityGain:0.30,edgeGain:0.12,
-    shoreGlow:0.60,surfGain:0.34,flatsGlow:0.41,shimmer:0.32},
+    abyss:'#060e18',pearlCol:'#75a2a1',
+    nightGlow:1.15,cityGain:2.0,edgeGain:0.12,
+    shoreGlow:0.60,surfGain:0.12,flatsGlow:0.59,shimmer:0.32},
   'Deep water':{shallow:'#2ea9c4',mid:'#0a4f7e',deep:'#0a2b47',nightDeep:'#1f7fae',
     landDark:'#080f0d',landLight:'#1e2c1c',dampCol:'#0a1e26',city:'#ffc266',edgeCol:'#9fe8ff',
-    abyss:'#02070c',pearlCol:'#596a76',
-    nightGlow:0.64,nightDepth:1.0,cityGain:0.36,edgeGain:0.09,
-    shoreGlow:0.45,surfGain:0.23,flatsGlow:0.32,shimmer:0.22},
+    abyss:'#040c14',pearlCol:'#596a76',
+    nightGlow:1.00,cityGain:2.4,edgeGain:0.09,
+    shoreGlow:0.45,surfGain:0.12,flatsGlow:0.46,shimmer:0.22},
   'Warm chart':{shallow:'#f0cb98',mid:'#c07a3e',deep:'#4a2c1c',nightDeep:'#c98a4e',
     landDark:'#12100c',landLight:'#3a3524',dampCol:'#241a10',city:'#fff0c0',edgeCol:'#ffe6bb',
-    abyss:'#0e0905',pearlCol:'#8d7654',
-    nightGlow:0.53,nightDepth:0.8,cityGain:0.25,edgeGain:0.10,
-    shoreGlow:0.45,surfGain:0.23,flatsGlow:0.32,shimmer:0.20},
+    abyss:'#1c1008',pearlCol:'#8d7654',
+    nightGlow:0.85,cityGain:1.7,edgeGain:0.10,
+    shoreGlow:0.45,surfGain:0.12,flatsGlow:0.46,shimmer:0.20},
   'Monochrome':{shallow:'#cbd8dc',mid:'#6d7f87',deep:'#243035',nightDeep:'#93a9b1',
     landDark:'#0d1113',landLight:'#2a3134',dampCol:'#151b1e',city:'#ffd9a0',edgeCol:'#ffffff',
-    abyss:'#090c0e',pearlCol:'#8b9294',
-    nightGlow:0.60,nightDepth:1.0,cityGain:0.27,edgeGain:0.10,
-    shoreGlow:0.50,surfGain:0.25,flatsGlow:0.32,shimmer:0.20},
+    abyss:'#121517',pearlCol:'#8b9294',
+    nightGlow:0.95,cityGain:1.8,edgeGain:0.10,
+    shoreGlow:0.50,surfGain:0.12,flatsGlow:0.46,shimmer:0.20},
 };
 const DEFAULTS={
   ...PRESETS['Harbour water'],
@@ -195,7 +198,7 @@ const DEFAULTS={
   tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
-  edgeWidth:0.035, glowM:0.5,
+  edgeWidth:0.035, glowM:0.5, nightFall:3.2,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -246,9 +249,9 @@ uniform vec2 uCenter; uniform float uZoom,uFrameAspect;
 uniform float uTide,uTidePast,uDay,uMoon,uNightMix,uTime;
 uniform vec3 uSunTint,uShallow,uMid,uDeep,uNightDeep,uLandDark,uLandLight,uCity,uEdgeCol,uDampCol;
 uniform vec3 uAbyss,uPearl;
-uniform float uDepthCurve,uClarity,uNightDepth,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
+uniform float uDepthCurve,uClarity,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
 uniform float uRealism,uGroundGain,uGroundSat,uLandChroma,uLandWhite,uExposure,uGamma,uVignette;
-uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM;
+uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM,uNightFall;
 
 const float H_LO=-0.75, H_HI=3.25;
 
@@ -354,21 +357,22 @@ void main(){
   // ---- light -------------------------------------------------------------------
   vec3 daylight=surface*uSunTint*uDay;
 
-  // Night. Glow now lives near shore, not in proportion to raw depth: a bell over `bathy`
-  // picks out the channels and near-shore water as luminous ribbons while the open sea recedes
-  // to a deep abyss colour offshore.
+  // Night. Glow is now a MONOTONIC decay of the same continuous `depth` the water colour already
+  // uses: brightest right at the waterline (depth ~= 0, shallow submerged), fading smoothly out
+  // to the abyss as depth climbs toward the open ocean. No bell, so no dark gap can open up
+  // between a shoreline and its glow — replaces round 1/2's bathy-bell `chan` channel-highway,
+  // which lit a glowing offshore ribbon but left the water between it and every beach near-black.
+  // Near any real shore the `(uTide-H)` term of `depth` dominates over `sea*bathy`, so this stays
+  // a soft shore-hugging glow rather than the bathy chamfer field's facetable isolines; the small
+  // offshore island still gets an unfaceted rim of light from the same term. If a soft octagon
+  // ever shows around the island, ease `depth` on the `sea*bathy` branch specifically.
   vec3 landNight=palette*(1.0+0.35*uLandChroma*rel);
-  // Kept at round-1's span (0.16,0.45), not widened. Any wider bell reaches an isolated offshore
-  // island's own near-shore bathy band just as readily as it does a real channel's — the two are
-  // numerically indistinguishable to a chamfer field with no other shore nearby to cap it — so
-  // widening this for "the main shipping channel" also re-inflates a large, uniform ring around
-  // the island. The channel is already legible at this span; the island is not.
-  float chan=smoothstep(0.02,0.10,bathy)*(1.0-smoothstep(0.16,0.45,bathy));
-  float dw=mix(1.0,depth,uNightDepth);
-  vec3 nightWater=mix(uAbyss,uNightDeep,chan)*mix(1.0,0.78+0.55*lum,0.35);
-  nightWater*=1.0+uShimmer*(shim-0.5);
-  float emis=uNightGlow*(0.22+0.78*uMoon)*(0.14+0.86*dw);
-  vec3 night=mix(landNight*(0.05+0.24*uMoon),nightWater*emis,submerged);
+  float dGlow=exp(-depth*uNightFall);
+  vec3 nightWater=mix(uAbyss,uNightDeep,dGlow)
+                 *(0.30+0.70*uMoon)*uNightGlow
+                 *mix(1.0,0.78+0.55*lum,0.35)
+                 *(1.0+uShimmer*(shim-0.5));
+  vec3 night=mix(landNight*(0.05+0.24*uMoon),nightWater,submerged);
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
   // than flattened to grey. Land well above the tide range (permanently dry) is excluded. `rel`
@@ -428,7 +432,7 @@ const GROUPS=[
             ['depthCurve','Depth falloff',0.4,2.5,0.01],['clarity','Shallows show the bed',0,1,0.01]]],
   ['Night',[['nightDeep','Deep-water glow','c'],['abyss','Abyss colour','c'],['pearlCol','Pearl colour','c'],
             ['nightGlow','Glow strength',0,1.6,0.01],
-            ['nightDepth','Glow follows depth',0,1,0.01],['moonGain','Moon influence',0,1.5,0.01],
+            ['nightFall','Glow falloff',1.0,8.0,0.05],['moonGain','Moon influence',0,1.5,0.01],
             ['surfGain','Offshore swell',0,0.6,0.005],['flatsGlow','Flats sheen',0,1.5,0.01],
             ['shimmer','Water shimmer',0,0.8,0.005]]],
   ['Towns',[['city','Light colour','c'],['cityGain','Brightness',0,5,0.05]]],
@@ -620,13 +624,13 @@ function frame(now){
       ['landDark','uLandDark'],['landLight','uLandLight'],['city','uCity'],
       ['edgeCol','uEdgeCol'],['dampCol','uDampCol'],['abyss','uAbyss'],['pearlCol','uPearl']]){
     const c=hex2rgb(S[k]);gl.uniform3f(U(n),c[0],c[1],c[2]);}
-  for(const [k,n] of [['depthCurve','uDepthCurve'],['clarity','uClarity'],['nightDepth','uNightDepth'],
+  for(const [k,n] of [['depthCurve','uDepthCurve'],['clarity','uClarity'],
       ['nightGlow','uNightGlow'],['cityGain','uCityGain'],['edgeGain','uEdgeGain'],['edgeWidth','uEdgeWidth'],
       ['dampGain','uDampGain'],['realism','uRealism'],['groundGain','uGroundGain'],['groundSat','uGroundSat'],
       ['landChroma','uLandChroma'],['landWhite','uLandWhite'],
       ['exposure','uExposure'],['gamma','uGamma'],['vignette','uVignette'],
       ['shoreGlow','uShoreGlow'],['surfGain','uSurfGain'],['flatsGlow','uFlatsGlow'],['shimmer','uShimmer'],
-      ['glowM','uGlowM']])
+      ['glowM','uGlowM'],['nightFall','uNightFall']])
     gl.uniform1f(U(n),S[k]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 

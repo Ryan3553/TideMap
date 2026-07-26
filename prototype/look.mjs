@@ -13,12 +13,12 @@ const OUT = A.out ?? '_look.png';
 const S = {
   shallow:'#86ccc2', mid:'#2f8fa0', deep:'#124f70', nightDeep:'#3fc8de',
   landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#e3fbff',
-  abyss:'#040b13', pearlCol:'#66787f',
-  nightGlow:0.6, nightDepth:1.0, cityGain:0.3, edgeGain:0.10,
+  abyss:'#08131f', pearlCol:'#74858f',
+  nightGlow:0.95, nightFall:3.2, cityGain:2.0, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
   exposure:1.0, gamma:0.92, vignette:0.36,
-  shoreGlow:0.50, surfGain:0.28, flatsGlow:0.35, shimmer:0.25, glowM:0.5,
+  shoreGlow:0.50, surfGain:0.12, flatsGlow:0.50, shimmer:0.25, glowM:0.5,
   ...JSON.parse(A.set ?? '{}'),
 };
 const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255);
@@ -146,18 +146,15 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
 
   const daylight=surface.map((s,k)=>s*sunTint[k]*uDay);
   const landNight=palette.map((p,k)=>p*(1+0.35*S.landChroma*rel[k]));
-  // NOTE: kept at round-1's span (0.16,0.45), not widened as first tried. Any wider bell reaches
-  // an isolated offshore island's own near-shore bathy band just as readily as it does a real
-  // channel's — the two are numerically indistinguishable to a chamfer field with no other shore
-  // nearby to cap it — so widening this bell for "the main shipping channel" also re-inflates a
-  // large, uniform ring around the island. The channel is already legible at this span; the
-  // island is not. See round-2 notes.
-  const chan=smoothstep(0.02,0.10,bathy)*(1-smoothstep(0.16,0.45,bathy));
-  const dw=mix(1,depth,S.nightDepth);
-  let nightWater=mix3(C.abyss,C.nightDeep,chan).map(c=>c*mix(1,0.78+0.55*lum,0.35));
+  // Night glow is a MONOTONIC decay of the same continuous `depth` the water colour already uses:
+  // brightest at the waterline (depth ~= 0), fading smoothly to the abyss offshore. No bell, so no
+  // dark gap between a shoreline and its glow — replaces round 1/2's bathy-bell `chan` channel
+  // highway. Near any real shore the (uTide-H) term of `depth` dominates over `sea*bathy`, so this
+  // stays a shore-hugging glow rather than the bathy chamfer field's facetable isolines.
+  const dGlow=Math.exp(-depth*S.nightFall);
+  let nightWater=mix3(C.abyss,C.nightDeep,dGlow).map(c=>c*(0.30+0.70*uMoon)*S.nightGlow*mix(1,0.78+0.55*lum,0.35));
   nightWater=nightWater.map(c=>c*(1+S.shimmer*(shim-0.5)));
-  const emis=S.nightGlow*(0.22+0.78*uMoon)*(0.14+0.86*dw);
-  let night=landNight.map((l,k)=>mix(l*(0.05+0.24*uMoon),nightWater[k]*emis,submerged));
+  let night=landNight.map((l,k)=>mix(l*(0.05+0.24*uMoon),nightWater[k],submerged));
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
   // than flattened to grey — `rel` is the same relative-chroma vector the land already uses. A
