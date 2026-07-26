@@ -12,3 +12,6 @@ prototype/tidemap-*.html
 # See docs/SOURCES.md — every one is reproducible from the recorded parameters.
 sources/**/*.png
 sources/**/*.tif
+
+# The packaged iPad app is a build artifact of build-ipad.mjs
+prototype/ipad/

@@ -1,4 +1,11 @@
 <title>Tauranga Harbour — tide light</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#03080B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tide Light">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
   :root{ --ink:#DEE9EB; --dim:#7E979E; --faint:#42585F; --line:#152429; --accent:#5FD0E8; }
   *{box-sizing:border-box;}
@@ -49,7 +56,27 @@
   .note{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--dim);
     line-height:1.65;max-width:80ch;}
   .note b{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:500;color:var(--accent);}
+  #settingsOut{width:100%;margin-top:12px;padding:10px;border:1px solid var(--accent);border-radius:2px;
+    background:#050f13;color:var(--ink);font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical;}
   @media (prefers-reduced-motion:reduce){ .rail i{box-shadow:none;} }
+
+  /* Kiosk: the same page, run full-bleed from the iPad home screen. */
+  html.kiosk, html.kiosk body{height:100%;overflow:hidden;background:#000;}
+  html.kiosk .wrap{max-width:none;padding:0;}
+  html.kiosk .eyebrow,html.kiosk h1,html.kiosk .sub,html.kiosk .note,html.kiosk #settingsOut{display:none;}
+  html.kiosk .stage{padding:0;background:#000;height:100vh;height:100dvh;align-items:center;}
+  html.kiosk .piece{max-height:none;box-shadow:none;}
+  html.kiosk .plate{right:max(3.6%,env(safe-area-inset-right));top:max(5.5%,env(safe-area-inset-top));}
+  html.kiosk .controls,html.kiosk .panel{display:none;}
+  html.kiosk.show-ui .controls{display:flex;}
+  html.kiosk.show-ui .panel{display:grid;}
+  html.kiosk.show-ui .stage{height:auto;}
+  html.kiosk.show-ui{overflow:auto;}
+  html.kiosk.show-ui body{overflow:auto;height:auto;}
+  #uiToggle{display:none;position:fixed;z-index:9;left:max(12px,env(safe-area-inset-left));
+    bottom:max(12px,env(safe-area-inset-bottom));opacity:.28;}
+  #uiToggle:hover,#uiToggle:focus-visible{opacity:1;}
+  html.kiosk #uiToggle{display:block;}
 </style>
 
 <div class="wrap">
@@ -96,10 +123,13 @@
     <span class="hint">Paused — the tide and daylight sliders below are driving.</span>
   </div>
 
+  <textarea id="settingsOut" hidden readonly rows="8" aria-label="Settings JSON — select and copy"></textarea>
+
   <div class="panel" id="panel"></div>
 
   <p class="note" id="resnote"></p>
 </div>
+<button id="uiToggle" aria-pressed="false">Controls</button>
 
 <!-- The imagery lives here, in the document, NOT inlined into the module source. A
      multi-megabyte data URI inside <script type="module"> silently never executes in some
@@ -156,6 +186,12 @@ const DEFAULTS={
 let S=JSON.parse(JSON.stringify(DEFAULTS));
 let aspect=4/3, portrait=false, basemapName=Object.keys(IMAGES)[0];
 let playing=false;
+// Kiosk: launched from the iPad home screen, or ?kiosk on the URL. Same page, no chrome, the
+// canvas fills the screen at the screen's own aspect, and it runs in real time by itself.
+const KIOSK=new URLSearchParams(location.search).has('kiosk')
+  || window.navigator.standalone===true
+  || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+if(KIOSK) document.documentElement.classList.add('kiosk');
 
 const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -357,11 +393,14 @@ const piece=document.getElementById('piece');
 // zoom z needs z*a*1.0866 of it horizontally. Past 1.0 there is no texture left and the widest
 // landscape frame renders a black band. 0.995 rather than 1.0 because the slider quantises to
 // 0.005 and an exact cap rounds back up by one step.
-const zoomCap=()=>Math.min(1,0.995/((portrait?1/aspect:aspect)*1.0866));
+const frameAspect=()=>KIOSK&&!document.documentElement.classList.contains('show-ui')
+  ? Math.max(0.2,(window.innerWidth||1180)/Math.max(1,window.innerHeight||820))
+  : (portrait?1/aspect:aspect);
+const zoomCap=()=>Math.min(1,0.995/(frameAspect()*1.0866));
 function clampZoom(){const m=zoomCap();if(S.zoom>m){S.zoom=m;syncInputs();}}
 function applyFrame(){
   clampZoom();
-  const a=portrait?1/aspect:aspect;
+  const a=frameAspect();
   // Floors matter: embedded in an iframe or a background tab this runs before layout, and a
   // zero-width parent used to produce a NEGATIVE canvas size, which throws and takes the whole
   // module down silently. Fall back to a sensible size and let the observer below correct it.
@@ -369,6 +408,9 @@ function applyFrame(){
   const maxW=Math.max(320,Math.min(avail?avail-28:1180,1180));
   const maxH=Math.max(240,Math.round((window.innerHeight||820)*0.78));
   let w=maxW,h=w/a; if(h>maxH){h=maxH;w=h*a;}
+  if(KIOSK&&!document.documentElement.classList.contains('show-ui')){
+    w=Math.max(2,window.innerWidth||w); h=Math.max(2,window.innerHeight||h);   // fill the slab
+  }
   piece.style.width=Math.round(w)+'px';piece.style.height=Math.round(h)+'px';
   canvas.width=Math.max(2,Math.min(2600,Math.round(w*2)));
   canvas.height=Math.max(2,Math.round(canvas.width/a));
@@ -386,7 +428,7 @@ if(window.ResizeObserver) new ResizeObserver(()=>applyFrame()).observe(piece.par
 let drag=null;
 piece.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,cx:S.cx,cy:S.cy};piece.setPointerCapture(e.pointerId);});
 piece.addEventListener('pointermove',e=>{if(!drag)return;const r=piece.getBoundingClientRect();
-  const a=portrait?1/aspect:aspect;
+  const a=frameAspect();
   S.cx=clamp(drag.cx-(e.clientX-drag.x)/r.width*S.zoom*a*1.0866,0,1);
   S.cy=clamp(drag.cy-(e.clientY-drag.y)/r.height*S.zoom,0,1);syncInputs();});
 piece.addEventListener('pointerup',()=>drag=null);
@@ -408,10 +450,34 @@ playBtn.addEventListener('click',()=>setPlaying(!playing));
 document.getElementById('now').addEventListener('click',()=>{virtual=new Date();});
 
 document.getElementById('reset').addEventListener('click',()=>{S=JSON.parse(JSON.stringify(DEFAULTS));setPlaying(false);syncInputs();});
+// Copying settings out is the whole point of the sliders, so it must not be able to just fail.
+// navigator.clipboard is unavailable in a cross-origin iframe without allow="clipboard-write",
+// which is exactly where this page usually runs — so try it, fall back to execCommand, and if
+// both are refused, put the JSON on screen selected so it can be copied by hand.
+const dump=()=>JSON.stringify({...S,basemap:basemapName,aspect:portrait?1/aspect:aspect},null,2);
+async function copyText(t){
+  try{ if(navigator.clipboard&&window.isSecureContext){ await navigator.clipboard.writeText(t); return true; } }catch(_){}
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=t; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0,t.length);
+    const ok=document.execCommand('copy');
+    ta.remove();
+    if(ok) return true;
+  }catch(_){}
+  return false;
+}
+const out=document.getElementById('settingsOut');
 document.getElementById('copy').addEventListener('click',async e=>{
-  try{await navigator.clipboard.writeText(JSON.stringify({...S,basemap:basemapName,aspect:portrait?1/aspect:aspect},null,2));e.target.textContent='Copied';}
-  catch{e.target.textContent='Copy failed';}
-  setTimeout(()=>e.target.textContent='Copy settings',1400);});
+  const t=dump(), btn=e.currentTarget;
+  if(await copyText(t)){ btn.textContent='Copied'; out.hidden=true; }
+  else{
+    btn.textContent='Select and copy →';
+    out.hidden=false; out.value=t; out.focus(); out.select();
+  }
+  setTimeout(()=>btn.textContent='Copy settings',1800);});
 
 // ---------------- loop ----------------
 const DAMP_MIN=110;
@@ -448,7 +514,7 @@ function frame(now){
   const moonUp=clamp((moon.alt+2)/16,0,1);
   const moonLight=Math.min(1,moon.frac*moonUp*S.moonGain);
 
-  const a=portrait?1/aspect:aspect;
+  const a=frameAspect();
   if(S.zoom>zoomCap())clampZoom();
   const halfW=S.zoom*a*1.0866/2,halfH=S.zoom/2;
   gl.uniform2f(U('uCenter'),clamp(S.cx,halfW,1-halfW),clamp(S.cy,halfH,1-halfH));
@@ -499,7 +565,34 @@ function updateNote(){
     `Below <b>0.33 m</b> the satellites never saw the harbour, and the piece holds still.`;
 }
 
-setPlaying(false);
+// Always-on means the screen must not sleep. Safari only grants this from a user gesture and
+// drops it whenever the app is backgrounded, so ask again on every gesture and on return.
+let wakeLock=null;
+async function keepAwake(){
+  try{ if('wakeLock' in navigator && !wakeLock){
+    wakeLock=await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release',()=>{wakeLock=null;});
+  }}catch(_){ /* denied or unsupported — the piece still runs, the screen may dim */ }
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepAwake();});
+['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev,keepAwake,{passive:true}));
+
+const uiToggle=document.getElementById('uiToggle');
+uiToggle.addEventListener('click',()=>{
+  const on=document.documentElement.classList.toggle('show-ui');
+  uiToggle.setAttribute('aria-pressed',String(on));
+  uiToggle.textContent=on?'Hide controls':'Controls';
+  applyFrame();
+});
+
+if(KIOSK){
+  speed=1;                                   // real time: this is the piece, not a demo
+  [...document.querySelectorAll('[data-speed]')].forEach(b=>b.setAttribute('aria-pressed','false'));
+  setPlaying(true);
+  keepAwake();
+}else{
+  setPlaying(false);
+}
 applyFrame(); updateNote();
 requestAnimationFrame(frame);
 

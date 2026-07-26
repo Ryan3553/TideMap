@@ -16,6 +16,7 @@ Those three are short and worth reading in full.
 
 | doc | read it when | size |
 |---|---|---|
+| [IPAD.md](IPAD.md) | putting it on the actual iPad — the home-screen app, and what a native build would really cost | short |
 | [SOURCES.md](SOURCES.md) | touching source imagery or tide tables — how to regenerate, and the LDS-vs-Basemaps API-key trap | short |
 | [pipeline-validation.md](pipeline-validation.md) | working on the drying-height raster. §5 is renderer notes, §6 the defect record | **571 lines — delegate it to a subagent rather than loading it whole** |
 | [tide-validation.md](tide-validation.md) | almost never. The tide model is finished and over-specified for an artwork | 469 lines |
