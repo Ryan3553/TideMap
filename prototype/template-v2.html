@@ -143,6 +143,7 @@ __TIDE_MODULE__
 const assetEls=[...document.querySelectorAll('#assets img')];
 const IMAGES=Object.fromEntries(assetEls.filter(e=>e.dataset.name).map(e=>[e.dataset.name,e]));
 const FIELD_EL=document.getElementById('img_field');
+const FLOW_EL=document.getElementById('img_flow');
 const LATd=-37.65, LONd=176.17, RAD=Math.PI/180;
 const LO=0.332, HI=2.127;               // the fitted drying-height range; outside it the raster is silent
 const H_LO=-0.75, H_HI=3.25;            // the field's height encoding — see prep-field.mjs
@@ -165,31 +166,36 @@ const DEVICES=[
 // pixel-by-pixel (see round-3 notes); the other four presets were scaled by the same ratios to
 // hold the same hierarchy rather than re-derived individually — flagged as a follow-up if any
 // preset other than Harbour water needs its own pass.
+// cityGain cut ~7x across all five presets this round (field-v3's B channel is now a real
+// OSM+VIIRS lights layer, CBD/Mount reaching the top of the range, where the old landcover-proxy
+// channel only ever produced tiny values there — the old gain, tuned against those tiny values,
+// blew the CBD out to a white blob under the new data). Ratio held from Harbour water's verified
+// number, same "scaled together" caveat as above.
 const PRESETS={
   'Harbour water':{shallow:'#86ccc2',mid:'#2f8fa0',deep:'#124f70',nightDeep:'#3fc8de',
     landDark:'#0b1512',landLight:'#2c4029',dampCol:'#2a2a24',city:'#ffb545',edgeCol:'#e3fbff',
     abyss:'#08131f',pearlCol:'#74858f',
-    nightGlow:0.95,cityGain:2.0,edgeGain:0.10,
+    nightGlow:0.95,cityGain:0.28,edgeGain:0.10,
     shoreGlow:0.50,surfGain:0.12,flatsGlow:0.50,shimmer:0.25},
   'Bioluminescent':{shallow:'#63dfe4',mid:'#0b74a4',deep:'#0a2748',nightDeep:'#39d7e6',
     landDark:'#0b1512',landLight:'#2c4029',dampCol:'#0d2a33',city:'#ffb545',edgeCol:'#c8ffff',
     abyss:'#060e18',pearlCol:'#75a2a1',
-    nightGlow:1.15,cityGain:2.0,edgeGain:0.12,
+    nightGlow:1.15,cityGain:0.28,edgeGain:0.12,
     shoreGlow:0.60,surfGain:0.12,flatsGlow:0.59,shimmer:0.32},
   'Deep water':{shallow:'#2ea9c4',mid:'#0a4f7e',deep:'#0a2b47',nightDeep:'#1f7fae',
     landDark:'#080f0d',landLight:'#1e2c1c',dampCol:'#0a1e26',city:'#ffc266',edgeCol:'#9fe8ff',
     abyss:'#040c14',pearlCol:'#596a76',
-    nightGlow:1.00,cityGain:2.4,edgeGain:0.09,
+    nightGlow:1.00,cityGain:0.34,edgeGain:0.09,
     shoreGlow:0.45,surfGain:0.12,flatsGlow:0.46,shimmer:0.22},
   'Warm chart':{shallow:'#f0cb98',mid:'#c07a3e',deep:'#4a2c1c',nightDeep:'#c98a4e',
     landDark:'#12100c',landLight:'#3a3524',dampCol:'#241a10',city:'#fff0c0',edgeCol:'#ffe6bb',
     abyss:'#1c1008',pearlCol:'#8d7654',
-    nightGlow:0.85,cityGain:1.7,edgeGain:0.10,
+    nightGlow:0.85,cityGain:0.24,edgeGain:0.10,
     shoreGlow:0.45,surfGain:0.12,flatsGlow:0.46,shimmer:0.20},
   'Monochrome':{shallow:'#cbd8dc',mid:'#6d7f87',deep:'#243035',nightDeep:'#93a9b1',
     landDark:'#0d1113',landLight:'#2a3134',dampCol:'#151b1e',city:'#ffd9a0',edgeCol:'#ffffff',
     abyss:'#121517',pearlCol:'#8b9294',
-    nightGlow:0.95,cityGain:1.8,edgeGain:0.10,
+    nightGlow:0.95,cityGain:0.25,edgeGain:0.10,
     shoreGlow:0.50,surfGain:0.12,flatsGlow:0.46,shimmer:0.20},
 };
 const DEFAULTS={
@@ -198,7 +204,7 @@ const DEFAULTS={
   tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
-  edgeWidth:0.035, glowM:0.5, nightFall:4.2,
+  edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.45,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -244,14 +250,14 @@ void main(){ vUv=vec2(p.x*0.5+0.5,0.5-p.y*0.5); gl_Position=vec4(p,0.0,1.0); }`;
 const FS=`#extension GL_OES_standard_derivatives : enable
 precision highp float;
 varying vec2 vUv;
-uniform sampler2D uBase,uField;
-uniform vec2 uCenter; uniform float uZoom,uFrameAspect;
-uniform float uTide,uTidePast,uDay,uMoon,uNightMix,uTime;
+uniform sampler2D uBase,uField,uFlow;
+uniform vec2 uCenter,uFieldSize; uniform float uZoom,uFrameAspect;
+uniform float uTide,uTidePast,uDay,uMoon,uNightMix,uTime,uTideDir;
 uniform vec3 uSunTint,uShallow,uMid,uDeep,uNightDeep,uLandDark,uLandLight,uCity,uEdgeCol,uDampCol;
 uniform vec3 uAbyss,uPearl;
 uniform float uDepthCurve,uClarity,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
 uniform float uRealism,uGroundGain,uGroundSat,uLandChroma,uLandWhite,uExposure,uGamma,uVignette;
-uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM,uNightFall;
+uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM,uNightFall,uFlowGain;
 
 const float H_LO=-0.75, H_HI=3.25;
 
@@ -264,18 +270,91 @@ float noise(vec2 p){
   return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
 }
 
+// Interleaved gradient noise (Jimenez 2014) — cheap, textureless, near-blue-noise dither, used
+// as insurance against residual micro-plateaus on the very flattest mud (see field-v3.json).
+float ditherIGN(vec2 fragCoord){
+  return fract(52.9829189*fract(dot(fragCoord, vec2(0.06711056,0.00583715))));
+}
+
+// uField MUST be bound NEAREST/NEAREST: a 16-bit height packed across two 8-bit channels
+// (R=hi byte, A=lo byte) cannot be safely bilinear-filtered by the GPU — it blends the raw
+// bytes independently and paints a bright sawtooth seam at every high-byte carry (e.g. 0x01FF
+// next to 0x0200). So the bilinear happens HERE, by hand, on the DECODED floats, never on the
+// raw bytes. G (bathy) and B (city) ride along in the same four taps for free.
+vec3 fieldTexel(vec2 uv){                        // exact texel, decoded: (height metres, bathy, city)
+  vec4 t=texture2D(uField,uv);
+  float code16=t.r*255.0*256.0+t.a*255.0;        // 0..65535, exact for 8-bit inputs
+  float Hh=H_LO+(code16/65535.0)*(H_HI-H_LO);
+  return vec3(Hh,t.g,t.b);
+}
+vec3 sampleField(vec2 uv){                       // manual bilinear across 4 exact texels
+  vec2 texel=uv*uFieldSize-0.5;
+  vec2 fr=fract(texel);
+  vec2 base=(floor(texel)+0.5)/uFieldSize;
+  vec2 du=vec2(1.0)/uFieldSize;
+  vec3 c00=fieldTexel(base), c10=fieldTexel(base+vec2(du.x,0.0));
+  vec3 c01=fieldTexel(base+vec2(0.0,du.y)), c11=fieldTexel(base+du);
+  return mix(mix(c00,c10,fr.x), mix(c01,c11,fr.x), fr.y);
+}
+// field-v3's G channel carries a faint period-3-row resampling artifact from its NIWA source
+// (found by rendering, not by inspecting the generator — a real defect in the delivered data,
+// out of this job's scope to regenerate). It is invisible under a gentle linear read of bathy,
+// but the night-glow curve below cubes and exponentiates it, which amplifies that artifact into
+// a visible banded stripe over open water. A dense 3x3 box average (9 exact texels, no need for
+// bilinear precision here — the point is to kill high-frequency noise) removes it cleanly.
+float bathySmooth(vec2 uv){
+  vec2 du=vec2(1.0)/uFieldSize;
+  vec2 texel=uv*uFieldSize-0.5;
+  vec2 base=(floor(texel)+0.5)/uFieldSize;
+  float sum=0.0;
+  for(int dy=-1;dy<=1;dy++)
+    for(int dx=-1;dx<=1;dx++)
+      sum+=fieldTexel(base+vec2(float(dx),float(dy))*du).y;
+  return sum/9.0;
+}
+
 void main(){
   vec2 uv=uCenter+vec2((vUv.x-0.5)*uZoom*uFrameAspect*1.0866,(vUv.y-0.5)*uZoom);
   if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){gl_FragColor=vec4(0.0,0.0,0.0,1.0);return;}
   vec3 base=texture2D(uBase,uv).rgb;
-  vec3 f=texture2D(uField,uv).rgb;
+  vec3 fld=sampleField(uv);
 
   // ONE continuous surface, filtered like an elevation model. Water sits below the tide range
   // and land above it, so there is no class test anywhere in this shader and no staircase.
-  float H=H_LO+f.r*(H_HI-H_LO);
-  float bathy=f.g;                 // depth PROXY (distance from shore), not a measurement
-  float city=f.b;
+  float H=fld.x;
+  float bathy=fld.y;               // real-depth-hybrid proxy now (see field-v3.json), not a
+                                    // measurement, but no longer just "distance from shore"
+  float city=fld.z;
+  // Dither, applied once, right after decode, so every downstream reader (submerged, edge,
+  // shore, damp band, night glow) sees the same jittered value — insurance against residual
+  // micro-plateaus on the flattest mud even at 16-bit precision (see field-v3.json). Amplitude
+  // is ~0.6mm, far below anything visible on its own; the uTime drift keeps it from reading as
+  // a fixed screen-space grain once Play mode is running.
+  float hDither=(ditherIGN(gl_FragCoord.xy+vec2(uTime*0.7,0.0))-0.5)*0.0006;
+  H+=hDither;
   float lum=dot(base,vec3(0.299,0.587,0.114));
+
+  // ---- flowing channels ---------------------------------------------------------
+  // flow.png: R=LIC phase A, G=phase B (the same streamline slid seaward), B=seaward angle.
+  // Decode the angle to a unit vector via cos/sin — never lerp the raw stored byte, which wraps
+  // incorrectly right at 0/2pi. The two phases are contrast-normalised and already mask-shaped
+  // (near zero on land and far offshore), so 'flowVal' is a ready-made brightness/opacity term.
+  vec4 flowSrc=texture2D(uFlow,uv);
+  float flowAngle=flowSrc.b*6.28318530718;
+  vec2 flowDir=vec2(cos(flowAngle),sin(flowAngle));
+  // A small continuous drift along the local seaward tangent, on top of the two-phase crossfade,
+  // so the pattern reads as sliding along the channel rather than only fading between two static
+  // frames. Oscillatory (sin), so it never wraps/pops.
+  vec2 flowUv=uv+flowDir*0.0020*sin(uTime*0.06);
+  vec4 flowSample=texture2D(uFlow,flowUv);
+  // Ping-ponged, not wrapped: a straight fract() reset (B back to A every cycle) is a one-frame
+  // pop, exactly the kind of artifact this whole round exists to remove. uTideDir flips the
+  // apparent direction: ebb (-1) runs the natural A-to-B (seaward) sense, flood (+1) reverses it
+  // so the motion reads landward. Very slow — a full breathing cycle is 60 seconds.
+  float flowPhase=fract(uTime*(1.0/60.0)*(-uTideDir));
+  float flowTri=abs(flowPhase*2.0-1.0);
+  float flowVal=mix(flowSample.r,flowSample.g,flowTri);
+  float flowEffect=mix(-0.15,0.45,flowVal)*uFlowGain;
 
   // ---- ground -----------------------------------------------------------------
   // Daylight shows the imagery: this is a real place and the aerial is 0.1 m at source.
@@ -289,8 +368,15 @@ void main(){
 
   // Freshly exposed flat is dark and wet and pales as it dries — the piece's one honest cue
   // for which way the tide is going. Ebbing only; a multiply, so the imagery survives it.
-  float ebb=step(uTide+0.0004,uTidePast);
-  float band=ebb*step(uTide,H)*step(H,uTidePast);
+  // Softened from hard step() to smoothstep(): the old pair of zero-width thresholds painted a
+  // genuinely hard-edged polygon on every ebbing frame, independent of the height field's own
+  // precision (see 'quotes' in the smoothness README) — 1cm smoothstep on both boundaries plus
+  // a 4mm-wide turn-of-tide gate removes that second, independent source of pop.
+  const float DAMP_EDGE_M=0.01;
+  float ebb=smoothstep(uTide,uTide+0.004,uTidePast);
+  float bandLo=smoothstep(uTide-DAMP_EDGE_M,uTide+DAMP_EDGE_M,H);
+  float bandHi=1.0-smoothstep(uTidePast-DAMP_EDGE_M,uTidePast+DAMP_EDGE_M,H);
+  float band=ebb*bandLo*bandHi;
   float wet=clamp(band*(1.0-(H-uTide)/max(uTidePast-uTide,1e-4))*uDampGain,0.0,1.0);
   ground=mix(ground,ground*0.52+uDampCol*0.55,wet);
 
@@ -309,6 +395,9 @@ void main(){
   vec2 nuv=uv*vec2(340.0,340.0/1.0866);
   float shim=noise(nuv+vec2(uTime*0.008,0.0))*0.6+noise(nuv*2.0)*0.4;
   wcol*=1.0+(uShimmer/3.0)*(shim-0.5);
+  // Flowing channels, daylight share: at most a third of the night strength, so the daylight
+  // imagery stays essentially calm and this reads as texture, not a special effect.
+  wcol*=1.0+(flowEffect/3.0)*submerged;
 
   vec3 surface=mix(ground,wcol,submerged);
 
@@ -326,18 +415,27 @@ void main(){
   float shore=exp(-pow((uTide-H)/max(uGlowM,0.02),2.0))*submerged;
   shore*=1.0+0.3*uShimmer*(shim-0.5);
 
-  // Offshore swell: faint contour bands parallel to the ocean beach, drifting slowly shoreward.
-  // Windowed to open water well clear of the shore and short of the frame edge — never the
-  // full-map contour lines the owner ruled out. The cosine phase reads a 4-tap softened bathy
-  // (raw bathy is a chamfer field and steps texel-to-texel near the island, breaking the bands
-  // into dashes); the window and every gate below still read the sharp field.
-  vec2 texel=vec2(1.5/4096.0);
-  float bSoft=(texture2D(uField,uv+vec2( texel.x, texel.y)).g
-              +texture2D(uField,uv+vec2( texel.x,-texel.y)).g
-              +texture2D(uField,uv+vec2(-texel.x, texel.y)).g
-              +texture2D(uField,uv+vec2(-texel.x,-texel.y)).g)*0.25;
-  float lines=pow(0.5+0.5*cos(bSoft*38.0-uTime*0.15),6.0);
-  lines*=smoothstep(0.30,0.50,bathy)*(1.0-smoothstep(0.70,0.95,bathy));
+  // Offshore swell: soft, multi-frequency water texture drifting slowly shoreward — not the
+  // single crisp cosine band that reads as a contour line. Three frequencies at different drift
+  // speeds so no single period repeats obviously, each nudged by a slice of the same shimmer
+  // noise so the crests wander instead of marching in lockstep. The cosine phase reads a 4-tap
+  // softened bathy (the raw field steps texel-to-texel near the island, breaking bands into
+  // dashes); the window and every gate below still read the sharp field.
+  vec2 texel=vec2(1.5)/uFieldSize;
+  float bSoft=(sampleField(uv+vec2( texel.x, texel.y)).y
+              +sampleField(uv+vec2( texel.x,-texel.y)).y
+              +sampleField(uv+vec2(-texel.x, texel.y)).y
+              +sampleField(uv+vec2(-texel.x,-texel.y)).y)*0.25;
+  float jit=(shim-0.5);
+  float lines=0.50*pow(0.5+0.5*cos(bSoft*38.0-uTime*0.150+jit*0.6),4.0)
+             +0.30*pow(0.5+0.5*cos(bSoft*61.0-uTime*0.100-jit*0.9),3.0)
+             +0.20*pow(0.5+0.5*cos(bSoft*23.0-uTime*0.220+jit*1.3),5.0);
+  // G is now real depth (field-v3): shipping channel/near-shore water sits mid-range (~0.5),
+  // true open ocean only reaches ~0.9+. The old window (0.30-0.50 .. 0.70-0.95) was tuned to the
+  // old chamfer proxy and would have painted swell straight through the harbour channel under
+  // the new semantics — re-derived by rendering so the band sits clear beyond the channel depth,
+  // fading out again before the flattest open sea.
+  lines*=smoothstep(0.58,0.72,bathy)*(1.0-smoothstep(0.86,0.97,bathy));
   // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
   float linesAA=1.0-smoothstep(0.3,1.0,38.0*fwidth(bathy));
   // A small island closes bathy's iso-contours into a ring within a few hundred metres, and the
@@ -346,12 +444,16 @@ void main(){
   // distance away (not a screen derivative, so it does not depend on zoom) and fade the bands
   // out wherever that direction has rotated, i.e. wherever the shore curves tightly instead of
   // running straight — leaving them only on the long, nearly-straight ocean beach.
-  float bGx=texture2D(uField,uv+vec2(0.004,0.0)).g-bathy;
-  float bGy=texture2D(uField,uv+vec2(0.0,0.004)).g-bathy;
+  float bGx=sampleField(uv+vec2(0.004,0.0)).y-bathy;
+  float bGy=sampleField(uv+vec2(0.0,0.004)).y-bathy;
   float bGl=length(vec2(bGx,bGy));
   vec2 tang=bGl>1e-4?vec2(-bGy,bGx)/bGl:vec2(1.0,0.0);
-  float bTang=texture2D(uField,uv+tang*0.07).g;
-  float straight=1.0-smoothstep(0.02,0.12,abs(bTang-bathy));
+  // Probe distance shrunk from 0.07 (~2.7km) to 0.012 (~460m): G's new real-depth semantics vary
+  // over a different length scale than the old shore-distance chamfer, and the old distance
+  // overshot right past small islands (a few hundred metres across) onto straight coast on the
+  // far side, reading "straight" and letting a faint crescent of swell leak around them.
+  float bTang=sampleField(uv+tang*0.012).y;
+  float straight=1.0-smoothstep(0.015,0.05,abs(bTang-bathy));
   lines*=linesAA*straight*(0.15+0.85*uNightMix)*submerged;
 
   // ---- light -------------------------------------------------------------------
@@ -360,16 +462,33 @@ void main(){
   // Night. Glow is a MONOTONIC decay of a night depth 'nd': brightest right at the waterline,
   // fading smoothly to the abyss. 'depth' itself cannot be used here — on always-wet sentinel
   // water (H = -0.75) its tide-height term clamps to 1, which painted every permanent channel
-  // and the whole near-beach ocean as abyss-black. So the sentinel side uses bathy (distance
-  // from shore) instead, blended in by 'sea': channels sit mid-ramp and glow as ribbons, the
-  // surf zone glows and fades offshore, and only the true open ocean reaches the abyss.
+  // and the whole near-beach ocean as abyss-black. So the sentinel side uses bathy (real-depth
+  // proxy) instead, blended in by 'sea': channels sit mid-ramp and glow as ribbons, the surf
+  // zone glows and fades offshore, and only the true open ocean reaches the abyss.
   vec3 landNight=palette*(1.0+0.35*uLandChroma*rel);
-  float nd=mix(clamp((uTide-H)/uDepthCurve,0.0,1.0),bathy,sea);
+  // G changed meaning in field-v3: it is now a real-depth hybrid, not a shore-distance chamfer.
+  // Shipping channel and 1km offshore both read ~0.5 (their true ~16m NIWA depth) instead of the
+  // old proxy's ~0.01-0.1, and 5km offshore ~0.96 instead of ~1.0 — a plain exp(-bathy*nightFall)
+  // would have crushed the channel to near-black. Cubing bathy before the decay keeps the
+  // mid-depth channel/near-shore water compressed toward the bright end (visible ribbon) while
+  // still reaching the abyss by the time real depth approaches open-ocean values.
+  float bathyN=bathySmooth(uv);
+  float ndBathy=bathyN*bathyN*bathyN;
+  // Blend on H itself, NOT the sentinel-proximity ramp 'sea': in the band where H climbs from
+  // the sentinel toward fitted values, 'sea' is fractional while the tide-depth term is clamped
+  // near 1 (those heights are unfitted noise, not real depths) — the old mix passed through that
+  // bogus plateau and drew a dark navy ring around every permanent creek and pool. Below the
+  // fitted range the height says nothing about depth, so the glow consults real bathy only.
+  float nd=mix(clamp((uTide-H)/uDepthCurve,0.0,1.0),ndBathy,1.0-smoothstep(0.10,0.40,H));
   float dGlow=exp(-nd*uNightFall);
   vec3 nightWater=mix(uAbyss,uNightDeep,dGlow)
                  *(0.30+0.70*uMoon)*uNightGlow
                  *mix(1.0,0.78+0.55*lum,0.35)
                  *(1.0+uShimmer*(shim-0.5));
+  // Flowing channels, night share: full strength, and tied to the same monotonic depth decay
+  // that drives the glow itself, so bright filaments only ever appear where the water is already
+  // luminous — never as a stray sparkle out in the dark abyss.
+  nightWater*=1.0+flowEffect*dGlow;
   vec3 night=mix(landNight*(0.08+0.28*uMoon),nightWater,submerged);
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
@@ -379,8 +498,17 @@ void main(){
   // aerial stay dark instead of every flat being lifted to one pale floor — dark silvery flats,
   // midtone at their brightest, with the aerial's own detail giving the internal contrast.
   float flatBand=(1.0-submerged)*smoothstep(2.6,2.2,H)*smoothstep(-0.1,0.15,H+0.75);
-  vec3 pearl=uPearl*lum*(1.0+0.5*rel);
-  night=mix(night,pearl,flatBand*uFlatsGlow*(0.35+0.65*uMoon));
+  // Floor the luminance: the aerial is near-BLACK along wet creek margins (photographed at some
+  // real tide), and a pearl strictly proportional to lum paints black rims around every pool at
+  // night. The floor keeps a wet-sand sheen there; 0.82*lum keeps the swirl contrast.
+  vec3 pearl=uPearl*(0.18+0.82*lum)*(1.0+0.5*rel);
+  // The just-exposed margin is WET sand — it holds the water's shine on the land side of the
+  // waterline. Without this the blend dips through near-black landNight right at the boundary
+  // and draws a dark rim around every pool, which reads as an outline. Mirror of 'shore'.
+  float wetMargin=exp(-pow((H-uTide)/max(uGlowM,0.02),2.0))*(1.0-submerged);
+  float pearlMix=clamp(flatBand*uFlatsGlow*(0.35+0.65*uMoon)+wetMargin*0.75,0.0,1.0);
+  night=mix(night,pearl,pearlMix);
+  night+=uNightDeep*wetMargin*0.10*(0.30+0.70*uMoon);
 
   vec3 col=mix(daylight,night,uNightMix);
   vec3 cityTerm=uCity*(pow(city,1.6)*uCityGain*1.4)+vec3(1.0,0.95,0.85)*pow(city,3.0)*uCityGain*0.8;
@@ -405,13 +533,19 @@ const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);
 gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
 const pl=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(pl);gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
 const U=n=>gl.getUniformLocation(prog,n);
-function mkTex(img,unit){
+function mkTex(img,unit,opts){
+  // The field texture packs a 16-bit height across two 8-bit channels (R hi / A lo, see
+  // sampleField() in the shader) — hardware LINEAR filtering blends those bytes independently
+  // and paints a sawtooth seam at every high-byte carry, so it MUST be NEAREST/NEAREST and
+  // RGBA; the shader does its own manual bilinear on the decoded floats. Base imagery and the
+  // flow texture have no such packing and use the normal RGB/LINEAR path.
+  const format=opts&&opts.format||gl.RGB, filter=opts&&opts.filter||gl.LINEAR;
   const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,img);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+  gl.texImage2D(gl.TEXTURE_2D,0,format,format,gl.UNSIGNED_BYTE,img);
   return t;
 }
 const ready=el=>el.complete&&el.naturalWidth?Promise.resolve(el)
@@ -429,13 +563,14 @@ const GROUPS=[
   ['Drive it by hand',[['tide','Tide height (m)',LO,HI,0.005],['light','Daylight',0,1,0.005]]],
   ['Framing',[['zoom','Zoom',0.18,1.0,0.005],['cx','Centre ←→',0,1,0.005],['cy','Centre ↑↓',0,1,0.005]]],
   ['Water',[['shallow','Shallow','c'],['mid','Mid','c'],['deep','Deep','c'],
-            ['depthCurve','Depth falloff',0.4,2.5,0.01],['clarity','Shallows show the bed',0,1,0.01]]],
+            ['depthCurve','Depth falloff',0.4,2.5,0.01],['clarity','Shallows show the bed',0,1,0.01],
+            ['flowGain','Channel flow',0,1,0.01]]],
   ['Night',[['nightDeep','Deep-water glow','c'],['abyss','Abyss colour','c'],['pearlCol','Pearl colour','c'],
             ['nightGlow','Glow strength',0,1.6,0.01],
             ['nightFall','Glow falloff',1.0,8.0,0.05],['moonGain','Moon influence',0,1.5,0.01],
             ['surfGain','Offshore swell',0,0.6,0.005],['flatsGlow','Flats sheen',0,1.5,0.01],
             ['shimmer','Water shimmer',0,0.8,0.005]]],
-  ['Towns',[['city','Light colour','c'],['cityGain','Brightness',0,5,0.05]]],
+  ['Towns',[['city','Light colour','c'],['cityGain','Brightness',0,1,0.01]]],
   ['Waterline',[['edgeCol','Colour','c'],['edgeGain','Sheen',0,0.6,0.005],['edgeWidth','Softness (m)',0.005,0.15,0.001],
             ['shoreGlow','Shore glow',0,1.5,0.01],['glowM','Shore glow reach (m)',0.1,1.5,0.01]]],
   ['Ground',[['realism','Daylight realism',0,1,0.01],['groundGain','Daylight brightness',0.4,1.8,0.01],
@@ -618,7 +753,10 @@ function frame(now){
   gl.uniform1f(U('uZoom'),S.zoom);gl.uniform1f(U('uFrameAspect'),a);
   gl.uniform1f(U('uTide'),h);gl.uniform1f(U('uTidePast'),hPast);
   gl.uniform1f(U('uDay'),day*inten);gl.uniform1f(U('uMoon'),moonLight);gl.uniform1f(U('uNightMix'),1-day);
-  gl.uniform1f(U('uTime'),(performance.now()/1000)%3600);
+  // The frame's own timestamp, not performance.now(): identical in playback (rAF passes the same
+  // clock) but it makes __tick(t) deterministic, which is how animation gets verified headless.
+  gl.uniform1f(U('uTime'),(now/1000)%3600);
+  gl.uniform1f(U('uTideDir'),rising?1:-1);   // +1 flood / -1 ebb — the flow texture's animation sign
   gl.uniform3f(U('uSunTint'),1+0.30*warm,1-0.05*warm,1-0.34*warm);
   for(const [k,n] of [['shallow','uShallow'],['mid','uMid'],['deep','uDeep'],['nightDeep','uNightDeep'],
       ['landDark','uLandDark'],['landLight','uLandLight'],['city','uCity'],
@@ -630,7 +768,7 @@ function frame(now){
       ['landChroma','uLandChroma'],['landWhite','uLandWhite'],
       ['exposure','uExposure'],['gamma','uGamma'],['vignette','uVignette'],
       ['shoreGlow','uShoreGlow'],['surfGain','uSurfGain'],['flatsGlow','uFlatsGlow'],['shimmer','uShimmer'],
-      ['glowM','uGlowM'],['nightFall','uNightFall']])
+      ['glowM','uGlowM'],['nightFall','uNightFall'],['flowGain','uFlowGain']])
     gl.uniform1f(U(n),S[k]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 
@@ -650,8 +788,11 @@ sB.forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.speed;sB.forEach(
 const imgs={};
 for(const [name,el] of Object.entries(IMAGES)) imgs[name]=await ready(el);
 mkTex(imgs[basemapName],0);
-mkTex(await ready(FIELD_EL),1);
-gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);
+const fieldImg=await ready(FIELD_EL);
+mkTex(fieldImg,1,{format:gl.RGBA,filter:gl.NEAREST});
+mkTex(await ready(FLOW_EL),2,{format:gl.RGB,filter:gl.LINEAR});
+gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);gl.uniform1i(U('uFlow'),2);
+gl.uniform2f(U('uFieldSize'),fieldImg.naturalWidth,fieldImg.naturalHeight);
 baseSel.addEventListener('change',()=>{basemapName=baseSel.value;mkTex(imgs[basemapName],0);updateNote();});
 function updateNote(){
   const w=imgs[basemapName].width;

@@ -41,22 +41,24 @@ const ISLET_MAX_DIM_OUT = 50;                          // output-px; land-like b
 const ISLET_HN_THRESH = 0.85;                          // heightNorm above which a pixel counts as "land-like" for islet detection
 // prep-field.mjs's chamfer distance saturates at DEEP_PX=220 SOURCE px (~3.4km) — meaning any
 // erased islet suppressed the bathy proxy for every water pixel within ~3.4km of it (its nearest
-// "shore" was this fake island, not the real coast). Healing has to pull from well past that
-// radius or the "fill" value is still contaminated by the same artifact. ~600 output-px (~5.9km)
-// clears it with margin.
-const ISLET_HEAL_SIGMA_OUT = 600;
+// "shore" was this fake island, not the real coast, so the WHOLE ~3.4km depression is
+// contaminated, not just the blob's own footprint). ISLET_INFLUENCE_OUT excludes that whole disc
+// from the healing average (not just the erased pixels); ISLET_HEAL_SIGMA_OUT is how far past
+// that disc's edge the fill average reaches to find clean water.
+const ISLET_INFLUENCE_OUT = 420;
+const ISLET_HEAL_SIGMA_OUT = 350;
 const CURVE_SIGMA_OUT = 18;                            // output-px; smoothing scale the channel-likeliness curvature is measured at
 const FEATURELESS_FLOOR = 0.20;                        // amplitude on flat, featureless water (spec: ~0.2)
-const CURL_SIGMA_OUT = 10;                             // output-px; tangent field smoothed this much before measuring curl (denoise)
-const CURL_RADIUS_LO_OUT = 6, CURL_RADIUS_HI_OUT = 16; // output-px; implied loop radius below which LIC amplitude is damped
-const CURL_DAMP_FLOOR = 0.12;                          // never fully zero a tight loop — damp, don't create a black hole
+// Vortex/critical-point suppression — see the winding-number detector in section 3c for why this
+// replaced two earlier (pointwise curl, then path-accumulated rotation) attempts that did not
+// work: LIC's ring artifact is a property of the FIELD near a critical point (nearby streamlines
+// at the same radius are nearly identical), not of any one streamline's own curvature.
 
 const SIGMAS = SIGMAS_OUT.map(s => Math.max(1, s * R));
 const L = Math.round(L_OUT * R);
 const SHIFT = Math.round(SHIFT_OUT * R);
 const LOCAL_SIGMA = Math.max(4, LOCAL_SIGMA_OUT * R);
 const CURVE_SIGMA = Math.max(1, CURVE_SIGMA_OUT * R);
-const CURL_SIGMA = Math.max(1, CURL_SIGMA_OUT * R);
 const ISLET_MAX_DIM = Math.max(2, Math.round(ISLET_MAX_DIM_OUT * R));
 
 console.log(`prep-flow: OUT=${OUT} WORK=${WORK} sigmas(work)=${SIGMAS.map(s=>s.toFixed(1))} L=${L} SHIFT=${SHIFT}`);
@@ -154,8 +156,9 @@ for (let i = 0; i < NPX; i++) {
   const visited = new Uint8Array(NPX);
   const stack = new Int32Array(NPX);
   const members = new Int32Array(NPX);
-  const holeMask = new Float32Array(NPX);
-  let blobs = 0, erasedPx = 0;
+  const influenceMask = new Float32Array(NPX);  // erased footprint DILATED by the chamfer influence radius (excluded from the heal average, and the region the heal fill gets blended into)
+  const blobList = [];
+  let erasedPx = 0;
   for (let start = 0; start < NPX; start++) {
     if (!elevated[start] || visited[start]) continue;
     let sp = 0, mp = 0;
@@ -175,23 +178,38 @@ for (let i = 0; i < NPX; i++) {
     }
     const dim = Math.max(maxX - minX + 1, maxY - minY + 1);
     if (!touchesBorder && dim <= ISLET_MAX_DIM) {
-      for (let k = 0; k < mp; k++) { Hm[members[k]] = H_LO; holeMask[members[k]] = 1; }   // erase to water sentinel
-      blobs++; erasedPx += mp;
+      for (let k = 0; k < mp; k++) Hm[members[k]] = H_LO;   // erase to water sentinel
+      blobList.push({ cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, r: dim / 2 });
+      erasedPx += mp;
     }
   }
   // Erasing height alone is not enough: the bathy proxy (G channel) was chamfer-distanced FROM
-  // this same blob upstream in prep-field.mjs (it counted as "land" there too), so it carries a
-  // local dip that would still read as a small "shore" in phi and still ring in the LIC. Heal it
-  // by inpainting Bn from the surrounding valid water (validity-weighted blur, aka push-pull),
-  // blended in smoothly over a soft mask so there is no seam at the patch boundary either.
-  if (blobs > 0) {
+  // this same blob upstream in prep-field.mjs (it counted as "land" there too), so EVERY water
+  // pixel within the chamfer's ~3.4km reach of it is also depressed — not just the blob's own
+  // footprint. Exclude that whole disc from the healing average (contaminated data cannot heal
+  // itself), fill from a ring beyond it, and blend the fill back in over that same disc so the
+  // WHOLE depression is flattened, not just the seed pixel.
+  if (blobList.length > 0) {
+    const influenceWork = Math.max(2, ISLET_INFLUENCE_OUT * R);
     const healSigma = Math.max(4, ISLET_HEAL_SIGMA_OUT * R);
+    for (const b of blobList) {
+      const rad = b.r + influenceWork;
+      const x0 = Math.max(0, Math.floor(b.cx - rad)), x1 = Math.min(WORK - 1, Math.ceil(b.cx + rad));
+      const y0 = Math.max(0, Math.floor(b.cy - rad)), y1 = Math.min(WORK - 1, Math.ceil(b.cy + rad));
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const dx = x - b.cx, dy = y - b.cy;
+        if (dx * dx + dy * dy <= rad * rad) influenceMask[y * WORK + x] = 1;
+      }
+    }
     const validMask = new Float32Array(NPX);
     const bnValid = new Float32Array(NPX);
-    for (let i = 0; i < NPX; i++) { const v = holeMask[i] > 0 ? 0 : 1; validMask[i] = v; bnValid[i] = v * Bn[i]; }
+    // Land is excluded from the fill average too — a wide heal sigma would otherwise drag in
+    // nearby land's automatically-zero bathy and pull the fill down, backwards for a blob
+    // sitting in open water far from any real shore.
+    for (let i = 0; i < NPX; i++) { const v = (influenceMask[i] > 0 || Hm[i] >= LAND_H[0]) ? 0 : 1; validMask[i] = v; bnValid[i] = v * Bn[i]; }
     const num = gaussBlur(bnValid, WORK, WORK, healSigma);
     const den = gaussBlur(validMask, WORK, WORK, healSigma);
-    const softMask = gaussBlur(holeMask, WORK, WORK, Math.max(2, ISLET_MAX_DIM * 0.6));
+    const softMask = gaussBlur(influenceMask, WORK, WORK, Math.max(2, influenceWork * 0.25));
     for (let i = 0; i < NPX; i++) {
       if (softMask[i] <= 1e-3) continue;
       const fill = den[i] > 1e-3 ? num[i] / den[i] : Bn[i];
@@ -199,16 +217,7 @@ for (let i = 0; i < NPX; i++) {
       Bn[i] = Bn[i] * (1 - w) + fill * w;
     }
   }
-  console.log(`islet erase: ${blobs} blob(s) erased, ${erasedPx} work-px (max dim <= ${ISLET_MAX_DIM} work-px, seed Hn>${ISLET_HN_THRESH}); bathy proxy inpainted over the same holes`);
-  if (process.env.DEBUG_ISLET) {
-    const dx = Math.round(1875 * WORK / 4096), dy = Math.round(1292 * WORK / 4096);
-    for (let yy = dy - 6; yy <= dy + 6; yy++) {
-      let row = '';
-      for (let xx = dx - 6; xx <= dx + 6; xx++) row += holeMask[yy * WORK + xx] > 0 ? 'X' : '.';
-      console.log('hole', row);
-    }
-    console.log('at target Bn=', Bn[dy * WORK + dx], 'Hm=', Hm[dy * WORK + dx]);
-  }
+  console.log(`islet erase: ${blobList.length} blob(s) erased, ${erasedPx} work-px (max dim <= ${ISLET_MAX_DIM} work-px, seed Hn>${ISLET_HN_THRESH}); bathy proxy inpainted over the ~${ISLET_INFLUENCE_OUT}px-radius chamfer shadow around each`);
 }
 
 // ---- 1. combined terrain surface: land raised, sea floor carved as valleys ----------------
@@ -307,26 +316,60 @@ const csmooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - 
 for (let i = 0; i < NPX; i++) channelLikeliness[i] = csmooth(0, CURVE_P85 * 1.15, curvature[i]);
 console.log(`channel-likeliness: curvature P85(subsample, water)=${CURVE_P85.toExponential(3)}`);
 
-// Loop curvature: smooth the tangent field a little (denoise), then measure its curl. A tight
-// vortex has curl ~ 1/radius; convert to an implied radius in OUTPUT px and damp amplitude
-// below CURL_RADIUS_HI_OUT so no LIC bullseyes survive, whatever produced them (the vessel islet
-// erased above, or any other singularity the pyramid combination happens to produce).
-const tanXs = gaussBlur(tanX, WORK, WORK, CURL_SIGMA), tanYs = gaussBlur(tanY, WORK, WORK, CURL_SIGMA);
-const curlDamp = new Float32Array(NPX);
-for (let y = 0; y < WORK; y++) {
-  const y0 = y > 0 ? y - 1 : 0, y1 = y < WORK - 1 ? y + 1 : WORK - 1, row = y * WORK;
-  for (let x = 0; x < WORK; x++) {
-    const x0 = x > 0 ? x - 1 : 0, x1 = x < WORK - 1 ? x + 1 : WORK - 1;
-    const dVYdX = (tanYs[row + x1] - tanYs[row + x0]) / 2;
-    const dVXdY = (tanXs[y1 * WORK + x] - tanXs[y0 * WORK + x]) / 2;
-    const curlWork = dVYdX - dVXdY;                 // radians per work-px
-    const curlOut = curlWork * R;                   // radians per output-px
-    const radiusOut = 1 / (Math.abs(curlOut) + 1e-4);
-    const d = csmooth(CURL_RADIUS_LO_OUT, CURL_RADIUS_HI_OUT, radiusOut);
-    curlDamp[row + x] = CURL_DAMP_FLOOR + (1 - CURL_DAMP_FLOOR) * d;
+console.log('channel-likeliness built');
+
+// ---- 3c. critical-point (vortex) detection, by winding number ----------------------------
+// Two things were tried and discarded before this: (1) pointwise curl — LIC integrates L_OUT px
+// each way, so a pixel well outside a "tight" loop still rings, because the artifact is not
+// really about tightness at all; (2) net rotation accumulated along each pixel's own streamline
+// — measured near zero even ON a visible ring, because a short arc of a wide circle is nearly
+// straight (chord/arc length ratio close to 1) even though it is still part of a circular flow.
+// The actual mechanism: LIC bands into rings wherever the flow is close to circular over an area
+// bigger than the integration length, because neighbouring streamlines at the same radius are
+// nearly identical (they are all tracing close to the same circle) while streamlines at a
+// different radius sample different noise — i.e. it is a property of the FIELD near a critical
+// point, not of any one streamline. So: find critical points directly, the standard way (the
+// discrete winding number of the tangent direction around a small loop — non-zero only within
+// about one grid cell of a true singularity of the combined gradient field), then blank out a
+// disc around each one sized to the LIC length, since that is how far a critical point's
+// influence reaches in the rendered output regardless of how gently it turns.
+const VORTEX_LOOP_WORK = Math.max(2, L * 0.6);
+const VORTEX_SAMPLES = 8;
+const vortexSeed = new Float32Array(NPX);
+{
+  const ang = new Float32Array(VORTEX_SAMPLES);
+  const vd = [0, 0];
+  for (let y = 0; y < WORK; y += 2) {
+    for (let x = 0; x < WORK; x += 2) {
+      for (let s = 0; s < VORTEX_SAMPLES; s++) {
+        const theta = (s / VORTEX_SAMPLES) * 2 * Math.PI;
+        sampleTangent(x + VORTEX_LOOP_WORK * Math.cos(theta), y + VORTEX_LOOP_WORK * Math.sin(theta), vd);
+        ang[s] = Math.atan2(vd[1], vd[0]);
+      }
+      let wind = 0;
+      for (let s = 0; s < VORTEX_SAMPLES; s++) {
+        let d = ang[(s + 1) % VORTEX_SAMPLES] - ang[s];
+        while (d > Math.PI) d -= 2 * Math.PI;
+        while (d < -Math.PI) d += 2 * Math.PI;
+        wind += d;
+      }
+      if (Math.abs(wind) > Math.PI) {
+        vortexSeed[y * WORK + x] = 1;
+        if (x + 1 < WORK) vortexSeed[y * WORK + x + 1] = 1;
+        if (y + 1 < WORK) vortexSeed[(y + 1) * WORK + x] = 1;
+      }
+    }
   }
 }
-console.log('channel-likeliness + curl damping built');
+// Blow each detected point up into a disc sized to how far LIC actually renders a critical
+// point's influence (empirically several times L_OUT — this is what round 2's first two attempts
+// underestimated), feathered so there is no hard edge.
+const VORTEX_DISC_OUT = 5 * L_OUT;
+const vortexDisc = gaussBlur(vortexSeed, WORK, WORK, VORTEX_DISC_OUT * R * 0.5);
+const vortexMask = new Float32Array(NPX);
+let vortexPx = 0;
+for (let i = 0; i < NPX; i++) { vortexMask[i] = Math.min(1, vortexDisc[i] * 40); if (vortexSeed[i] > 0) vortexPx++; }
+console.log(`vortex detection: ${vortexPx} seed px (winding test, loop radius ${VORTEX_LOOP_WORK.toFixed(1)} work-px), blown up to ~${VORTEX_DISC_OUT}px-radius discs`);
 
 // ---- 4. noise + LIC with a shared streamline (phase A / phase B from one path) ------------
 function mulberry32(seed) {
@@ -402,6 +445,21 @@ for (let y = 0; y < WORK; y++) {
 }
 console.log(`LIC done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
+if (process.env.DEBUG_DUMP) {
+  const dump = async (arr, name) => {
+    const buf = Buffer.alloc(NPX);
+    for (let i = 0; i < NPX; i++) buf[i] = Math.round(Math.max(0, Math.min(1, arr[i])) * 255);
+    await sharp(buf, { raw: { width: WORK, height: WORK, channels: 1 } }).toColourspace('b-w').png().toFile(`data/_debug_${name}.png`);
+  };
+  await dump(channelLikeliness, 'channelLikeliness');
+  await dump(vortexSeed, 'vortexSeed');
+  await dump(vortexMask, 'vortexMask');
+  const licAraw = new Float32Array(NPX);
+  for (let i = 0; i < NPX; i++) licAraw[i] = licA[i];
+  await dump(licAraw, 'licA_raw');
+  console.log('debug dumps written');
+}
+
 // ---- 5. local contrast normalisation — seamless gaussBlur, float throughout, no 8-bit
 // quantisation anywhere in the stats. Filaments pop everywhere, not just where the raw LIC mean
 // happened to sit mid-range. --------------------------------------------------------------
@@ -424,11 +482,23 @@ const licAn = localNormalise(licA);
 const licBn = localNormalise(licB);
 console.log('local contrast normalisation done');
 
-// ---- 6. final amplitude: land/ocean gate * channel-likeliness contrast * loop damping -----
+// A critical point's rings are a SHAPE (concentric contours), not just brightness — dimming a
+// contrast-normalised ring uniformly still leaves a dim, perfectly visible ring, because the
+// *relative* contrast between ring and gap survives the multiply. Inside a detected vortex's
+// disc, blend the contrast-normalised value toward neutral (0.5, "no pattern here") instead of
+// scaling it down — that erases the ring shape itself, leaving the pixel looking like the same
+// quiet, featureless water as its surroundings, which is what it would have looked like had the
+// critical point not been there.
+for (let i = 0; i < NPX; i++) {
+  const w = 1 - vortexMask[i];
+  licAn[i] = licAn[i] * w + 0.5 * (1 - w);
+  licBn[i] = licBn[i] * w + 0.5 * (1 - w);
+}
+
+// ---- 6. final amplitude: land/ocean gate * channel-likeliness contrast --------------------
 // This is the layer that turns "whole flat lit at one brightness" into "bright braided filament
 // in the channel, quiet in between": landFactor/oceanFactor gate WHERE water is allowed to show
-// at all, channelLikeliness controls HOW BRIGHT within that (strong core, floor on plain flat),
-// curlDamp kills any tight closed loop regardless of what produced it.
+// at all, channelLikeliness controls HOW BRIGHT within that (strong core, floor on plain flat).
 const smoothstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const weight = new Float32Array(NPX);
 for (let i = 0; i < NPX; i++) {
@@ -437,7 +507,7 @@ for (let i = 0; i < NPX; i++) {
   const oceanFactor = 1 - smoothstep(OCEAN_BATHY[0], OCEAN_BATHY[1], b);
   const gate = landFactor * (FAR_FLOOR + (1 - FAR_FLOOR) * oceanFactor);
   const amplitude = FEATURELESS_FLOOR + (1 - FEATURELESS_FLOOR) * channelLikeliness[i];
-  weight[i] = gate * amplitude * curlDamp[i];
+  weight[i] = gate * amplitude;
 }
 for (let i = 0; i < NPX; i++) { licAn[i] *= weight[i]; licBn[i] *= weight[i]; }
 console.log('amplitude weighting applied');
@@ -492,8 +562,8 @@ fs.writeFileSync('data/flow.json', JSON.stringify({
     lic: { halfLengthOutputPx: L_OUT, stepping: 'RK2 (midpoint), 1 work-px step', noise: 'white noise, seeded (mulberry32, seed 20260727), pre-blurred sigma=' + NOISE_SIGMA + ' work-px so streaks survive the upsample without moire' },
     twoPhase: 'ONE streamline of length 2*(L+SHIFT)+1 samples per pixel; phase A = window centred on the seed pixel, phase B = the SAME window shifted ' + SHIFT_OUT + 'px seaward along that streamline. Phase-coherent by construction.',
     contrastNormalisation: { localSigmaOutputPx: LOCAL_SIGMA_OUT, k: CONTRAST_K, note: 'stretch [localMean-k*std, localMean+k*std] to [0,1] per pixel, before amplitude weighting; float throughout (no 8-bit quantisation of the stats)' },
-    amplitudeWeighting: { curveSigmaOutputPx: CURVE_SIGMA_OUT, featurelessFloor: FEATURELESS_FLOOR, note: 'weight = landGate * oceanGate(bathy) * mix(featurelessFloor, 1, channelLikeliness) * curlDamp; channelLikeliness = percentile-normalised |laplacian(phi)|, strong at channel cores and drainage creeks, near zero on featureless flat' },
-    loopDamping: { curlSigmaOutputPx: CURL_SIGMA_OUT, radiusBandOutputPx: [CURL_RADIUS_LO_OUT, CURL_RADIUS_HI_OUT], floor: CURL_DAMP_FLOOR, note: 'implied loop radius = 1/|curl(smoothed tangent field)|; damps (never fully zeroes) LIC amplitude inside tight closed loops so no bullseyes survive, whatever produced them' },
+    amplitudeWeighting: { curveSigmaOutputPx: CURVE_SIGMA_OUT, featurelessFloor: FEATURELESS_FLOOR, note: 'weight = landGate * oceanGate(bathy) * mix(featurelessFloor, 1, channelLikeliness); channelLikeliness = percentile-normalised |laplacian(phi)|, strong at channel cores and drainage creeks, near zero on featureless flat' },
+    vortexSuppression: { loopRadiusWorkPxAtBuildRes: VORTEX_LOOP_WORK, discRadiusOutputPx: VORTEX_DISC_OUT, note: 'discrete winding number of the tangent direction around an 8-point loop finds true critical points of the combined gradient field (the ONLY thing that reliably predicts an LIC ring — tried and discarded first: pointwise curl, then net rotation accumulated along each streamline, neither matched where rings actually appeared). Each detected point is blown up into a ~5*L_OUT-radius soft disc; inside it, both LIC phases are blended toward neutral grey (not just dimmed) so the ring SHAPE disappears, not just its brightness.' },
     oceanGate: { landFadeMetres: LAND_H, oceanBathyBand: OCEAN_BATHY, farOffshoreFloor: FAR_FLOOR, note: 'drying height cannot distinguish real channel from open sea (both sit at the water sentinel); the fade is driven by the bathy proxy alone, height only gates dry land off' },
   },
 }, null, 2));
