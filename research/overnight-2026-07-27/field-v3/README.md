@@ -180,3 +180,100 @@ is a good compression ratio, not a red flag).
 - B is bit-identical in source (`citylights.png`) to what a future round would have wired in
   anyway; this doesn't change J2's "not yet wired into the shader" status — field-v3 *is* that
   wiring, for the B channel specifically.
+
+## Round 2 — fixing the period-3-row resampling artifact at the source
+
+Wave-2b (shader agent) found, by rendering, that G carries a faint but real period-~3-row
+banding artifact over open water — invisible under a gentle linear read but amplified into a
+visible stripe by the night-glow curve's cube. They worked around it in the shader with a 3×3
+box average (`bathySmooth()` in `look.mjs`, mirrored in `template-v2.html`) for that one term,
+but flagged that the defect was still live in the delivered data and would resurface anywhere
+else G is read with a steep curve (e.g. the un-smoothed `bathy` feeding the offshore-swell
+`lines` term). This round fixes it at the source, in `resample-niwa-depth.py`, without touching
+`template-v2.html` or `look.mjs`.
+
+**Root cause.** `resample-niwa-depth.py`'s geo-coordinate computation (`src_px`/`src_py` from the
+tif's own affine transform) was always correct — the bug was in the interpolation *method*
+applied at those coordinates, `scipy.ndimage.map_coordinates(..., order=1)` (bilinear). The
+source tif is only 1547×1690 px, resampled onto the field's 4096×4096 grid — a ~2.42–2.65×
+upsample, i.e. non-integer and close to (but not exactly) an integer ratio. Bilinear
+interpolation is exactly linear *within* each source cell, and because `src_py` is an affine
+(purely linear) function of the output row index with no cross-column term, the interpolation
+weight for a given output row is identical for every column in that row. With ~2.4 output rows
+landing in each source cell, most runs of 2-3 consecutive output rows sit entirely inside one
+cell and are therefore exactly collinear (zero curvature) — then the next row crosses into the
+next cell and kinks. That alternating flat/kink pattern repeats with a period that beats against
+the 2.4-per-cell occupancy and lands close to 3 rows. Confirmed directly: scanning consecutive
+rows of the raw `niwa-elevation-raw.f32` (500-column strips), the row-wise curvature
+`mean(|row[y+1] - 2·row[y] + row[y-1]|)` alternates cleanly `~0.01 / ~0.01 / ~0.000002` every 3
+rows — the third row sits at near-machine-epsilon curvature (i.e. essentially exactly on the
+straight line through its two neighbours), with occasional single-row phase slips consistent with
+the true (not-exactly-3) 2.42–2.65 ratio. An FFT of the row-wise second-difference peaks sharply
+at **period 3.05–3.09 rows** in both the raw elevation and the final G channel. This is a genuine
+artifact of the interpolation, not sensor noise — see `round2-elev-ripple-before.png` (row-wise
+second difference `d2[y] = v[y+1]-2v[y]+v[y-1]` of the raw elevation, 200×198px "5km offshore"
+crop, 6× nearest-upscaled, both images stretched to the SAME shared scale taken from the
+`before` image's 99th percentile so brightness is directly comparable) vs
+`round2-elev-ripple-after.png`, the identical crop/processing after the fix, both alongside this
+README — `before` shows an obvious horizontal-row-locked banded noise texture, `after` is
+smooth and near-flat at the same stretch (std of the crop drops 2.9× at this exact crop; the
+period-3-specific FFT-band numbers below are the rigorous version of the same measurement over a
+larger area).
+
+**Fix.** In `resample-niwa-depth.py`: pre-smooth the source band with `scipy.ndimage.gaussian_filter(band, sigma=0.75, mode='nearest')` (0.75 source px ≈ 19m, under one native 25m
+DTM pixel) before resampling, and resample with `map_coordinates(..., order=3, mode='nearest')`
+(cubic spline, C2-continuous) instead of `order=1`. The geo-registration math (`src_px`,
+`src_py`, the bounds assertions) is byte-for-byte unchanged — only the interpolation call
+changed. `sigma=0.75`+`order=3` was chosen empirically (swept sigma 0.4-1.25, order 1 vs 3): it
+cuts the period-3 FFT-band magnitude of the *continuous* (pre-8-bit-quantization) depth signal by
+**>25×** with negligible further gain from a larger sigma; pushing sigma higher only blurs real
+seafloor detail without reducing the artifact further (the residual left in the final *quantized*
+8-bit G channel past `sigma≈0.75` is ordinary ±1-LSB dither of an already near-flat signal, not
+the resampling artifact — see measurements below).
+
+**Measurements** (`5km offshore` sample crop, 176.25E/-37.60, 512×512px around it; row-wise
+second difference `d2[y] = v[y+1] - 2·v[y] + v[y-1]`, FFT magnitude in the period-3 band
+freq∈[0.28,0.36] cyc/row):
+
+| signal | before (order=1) | after (gaussian σ=0.75 + order=3) | reduction |
+|---|---|---|---|
+| `niwa-elevation-raw.f32`, period-3 FFT magnitude | 0.578 | 0.020 | **29×** |
+| `niwa-elevation-raw.f32`, row-profile rms (full crop) | 0.00940 | 0.00139 | 6.8× |
+| G, pre-quantization float value, period-3 FFT magnitude | 0.0220 | 0.0008 | **27×** |
+| G, final 8-bit-quantized channel, period-3 FFT magnitude | 1.058 | 0.384 | 2.7× (residual is 8-bit LSB dither of a near-flat signal, not the artifact — see note above) |
+
+Row-by-row scan of the raw elevation (`research`-only diagnostic, not committed) at 500 columns
+found the *exact* signature before the fix: `mean(|d2|)` alternates cleanly `~0.01 / ~0.01 /
+~0.000002` every 3 rows (the third row sits essentially exactly on the line through its
+neighbours — the collinearity described above), with occasional single-row phase slips
+consistent with the 2.42–2.65 (not-exactly-3) true ratio. After the fix this clean period-3
+alternation is gone from the row scan entirely.
+
+**Verification of no other regressions:**
+- **R/A (16-bit height) byte-identical**: compared the regenerated `field-v3.png` against a saved
+  copy of the pre-fix file pixel-by-pixel — R: 0 pixels differ, A: 0 pixels differ, B (city
+  lights): 0 pixels differ. Only G differs (558,301 / 16,777,216 px, max |Δ|=40, concentrated in
+  NIWA-confident-water — exactly the channel this fix touches). Expected and required: `prep-field3.mjs` wasn't touched, and R/A/B don't depend on
+  `niwa-elevation-raw.f32` at all.
+- **G-channel sample table** (the four points in the §3 table above): mid shipping channel
+  129→129 (Δ0), harbour flat 15/8→9 (Δ+1), 1km offshore 14/129→128 (Δ-1), 5km offshore
+  255/244→244 (Δ0) — all within the ±3/255 tolerance, most exactly unchanged.
+- **`node prep-field3.mjs`**: 16-bit round-trip still PASSes (max abs error 0.0305mm, identical to
+  before — expected, R/A pipeline untouched).
+- **`node build-v2.mjs`**: regenerated `data/page-field.png` (deleted first to force a rebuild)
+  and rebuilt `tidemap-v2.html` successfully, 19.94 MB total.
+- **Rendered night + high-tide-night views** (`look.mjs`, unmodified, default framing,
+  `tide=1.05`/`tide=2.0`, `light=0`): visually compared pixel-for-pixel against the same views
+  rendered from the pre-fix `field-v3.png` — mean abs diff 0.039/255 across the whole frame, only
+  0.31% of pixels differ by more than 2/255, and those differences are concentrated exactly along
+  the offshore-swell-lines band and shoreline transitions (the G-dependent terms this fix
+  touches) — no change anywhere else (land, city lights, base imagery). No banding visible in
+  either the abyss/channel glow or the offshore swell texture at any zoom checked.
+
+**Files touched this round:** `prototype/resample-niwa-depth.py` only (interpolation method +
+docstring). `prototype/data/niwa-elevation-raw.f32` and `prototype/data/field-v3.png`
+regenerated (gitignored derived data, not committed directly). `prototype/data/page-field.png`
+and `prototype/tidemap-v2.html` regenerated via `build-v2.mjs`. `template-v2.html` and
+`look.mjs` were not touched, per delegation — their existing `bathySmooth()` box-average
+workaround for the night-glow term is now redundant defense-in-depth rather than load-bearing,
+but was left in place since editing them was out of scope for this round.

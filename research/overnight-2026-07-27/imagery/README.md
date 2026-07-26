@@ -174,3 +174,81 @@ one-line change to whatever references it (not made here, per the constraint aga
 - `research/overnight-2026-07-27/imagery/make-crops.mjs` — cuts the matched judging crops.
 - `research/overnight-2026-07-27/imagery/*.png` — the crops, strips, and day-shader renders
   referenced above.
+
+## Round 2: swapping the colour donor to `base-s2fresh.jpg`
+
+J1b's imagery survey (`research/overnight-2026-07-27/imagery-survey/`) shipped
+`prototype/data/base-s2fresh.jpg` — a fresh 3-scene median Sentinel-2 composite, custom-graded,
+strictly richer in colour than `base-hi.jpg` on the same 10 m grid — and flagged it as a drop-in
+upgrade for this job's fusion colour donor (see that README's "Handoff"). Did the swap.
+
+**Change**: `prototype/fuse-base.mjs` now takes the colour donor as `donor=<path>` (default
+`data/base-s2fresh.jpg`; the old behaviour is `node fuse-base.mjs donor=data/base-hi.jpg`). Donor
+resolution no longer matters to the pipeline's own guard rail — everything still gets resampled up
+to `P=5120` (never shrunk); `base-s2fresh.jpg` is 4096px (a gentler 1.25× upsample than `base-hi.jpg`'s
+2800px/1.83×, if anything less resample softening). Reran `node --max-old-space-size=8192
+fuse-base.mjs` to rebuild `base-fused.jpg`, `base-graded.jpg` (donor-independent, rebuilt for free),
+and `base-fusegrade.jpg`.
+
+**σ=80 exposure-match constants — checked, still fit.** Measured mean luminance of aerial vs. each
+donor over the three judging windows before touching anything:
+
+| window | aerial | base-hi (old donor) | base-s2fresh (new donor) |
+|---|---|---|---|
+| city | 80.6 | 59.6 | 96.9 |
+| matakana | 50.0 | 27.7 | 48.1 |
+| forest | 40.1 | 27.6 | 57.6 |
+
+`base-hi` ran uniformly *darker* than the aerial everywhere (the original exposure bug this job's
+σ=80 relight step was built to fix). `base-s2fresh` is close to the aerial in Matakana and actually
+*brighter* than the aerial in city/forest — the opposite direction, but `expRatio = clamp(aLumLF /
+sLumLF, 0.55, 1.9)` handles either direction by construction and every measured ratio here (0.70–1.04)
+sits comfortably inside the clamp with room to spare, so no clamp-edge behaviour, no code change
+needed. The mechanism does *less* work now than it did for `base-hi` (donor closer to the aerial's
+own exposure already), consistent with `base-s2fresh` being the better-graded source.
+
+**Crop verdict** (`<crop>_oldvsnew_strip.png`, left = old `base-fused.jpg` on `base-hi`, right = new
+on `base-s2fresh`; old copy preserved as `base-fused-oldhi.jpg`):
+
+- **City** — clear win, no caveats. Water goes from a flat teal wash to real turquoise-to-navy
+  gradients with visible current/sandbank texture; the container-yard roofs read in individual
+  red/orange/white instead of a single reddish mass. Zoomed into the wharf (`zoom_city_*`, since
+  deleted after review) — no halos on the sharp white-roof/dark-water edges the high-pass detail
+  layer runs right along.
+- **Matakana** — clear win. Old fused already had the σ=80 fix applied so it wasn't a black smear,
+  but it was still a fairly flat dark olive strip; new fused shows actual dune-scrub/paddock field
+  texture and tonal variation while staying legibly land, not a saturation blowout. The pre-existing
+  LINZ capture-block staircase seam in the water is visible in *both* old and new at equal strength —
+  confirmed pre-existing (also called out in the original job's README), not something this swap
+  introduced.
+- **Forest** ("must not be ruined") — richer, and worth flagging explicitly since this is the crop
+  most at risk: sampling one pixel (400,350 in the 700px crop) went from aerial (113,115,66) / old
+  fused (138,140,100) — both an olive/khaki tan, R≈G — to new fused (55,116,38), a real hue shift
+  toward saturated green (G≫R). That's `base-s2fresh`'s own colour grading (survey applied a 1.35×
+  saturation boost) carried through by the fuse step's chroma-preserving reconstruction, not a bug.
+  Zoomed crops of the same sub-region showed it as punchier, better-differentiated pasture/fallow
+  patches inside dark bush — genuinely more legible field structure, not neon/artificial, no banding.
+  Judgement call: accepted as "richer," not "ruined," but noted here since it's the biggest single
+  shift of the three crops and the one area explicitly flagged as already-good in round 1.
+- No exposure smears anywhere (the σ=80 fix from round 1 still holds under the new donor, per the
+  table above), no new seams, no new halos.
+
+**Shader check** (`day_fused_v2.png` at `tide=0.6 light=0.92`, `dusk_fused_v2.png` at `tide=1.05
+light=0.30`, both via the unmodified `look.mjs` since it defaults to `base-fused.jpg`) — compared
+against round 1's `day_fused.png` (old donor): same composition, same overall balance, no black
+smear on the Matakana strip, no artifacts at dusk's low sun angle either. The basemap swap reads as
+a mild, believable richness bump at this zoomed-out render scale — most of the punch the raw crops
+show gets folded into the shader's own water/land grading, as expected.
+
+**Verdict: accepted.** `data/base-fused.jpg` and `data/base-fusegrade.jpg` now ship built from
+`base-s2fresh.jpg`. `data/page-fused.jpg` / `data/page-fusegrade.jpg` regenerated by `build-v2.mjs`
+(`needsRebuild` picked up the newer source mtimes automatically after the two page copies were
+deleted); full build reports **19.95 MB**, under the 22 MB budget.
+
+### Files added this round
+- `research/overnight-2026-07-27/imagery/base-fused-oldhi.jpg` — pre-swap `base-fused.jpg`, kept for
+  the old-vs-new comparison above.
+- `research/overnight-2026-07-27/imagery/{city,matakana,forest}_{oldhi,newfused}.png` and
+  `..._oldvsnew_strip.png` — the round-2 comparison crops.
+- `research/overnight-2026-07-27/imagery/day_fused_v2.png`, `dusk_fused_v2.png` — shader renders of
+  the new default, via the unmodified `look.mjs`.

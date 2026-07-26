@@ -1,4 +1,18 @@
-# TideMap — handover, 2026-07-26 (fourth pass)
+# TideMap — handover, 2026-07-27 (fifth pass: the overnight beauty round)
+
+**Read `docs/REPORT-2026-07-27.md` first** — it is the authoritative record of the
+overnight round: real NIWA bathymetry in the G channel, OSM×VIIRS city lights, 16-bit
+height (field-v3.png, R hi / A lo, NEAREST + manual bilinear — hardware LINEAR on split
+bytes is wrong), the LIC flow texture (flow.png, third texture, ping-pong animation),
+multi-frequency swell, fused default basemap, and the two rim bugs (sentinel-band bogus
+tide-depth; pearl ∝ aerial-luminance) with their fixes. `docs/ROADMAP.md` has the job list
+it executed. The LINZ-key shopping list (2 m multibeam, layer 122679) is in the report.
+
+Everything below this line predates that round but the traps and rulings still stand.
+
+---
+
+# Earlier: fourth pass, 2026-07-26
 
 ## The night glow — Ryan's "make it spectacular" round
 

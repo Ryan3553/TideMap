@@ -12,6 +12,14 @@ import sharp from 'sharp';
 
 const P = 5120; // matches data/base-aerial.jpg exactly
 
+// Colour donor: the Sentinel-2 source whose colour/hue is injected into the LINZ aerial's
+// luminance detail. Override with `node fuse-base.mjs donor=data/base-hi.jpg`. Default is
+// base-s2fresh.jpg — a fresher 3-scene median S2 composite with richer, better-graded colour
+// than base-hi.jpg on the same 10 m grid (see research/overnight-2026-07-27/imagery-survey/
+// README.md "Handoff"). Whatever the donor's native size, it gets resampled UP to P=5120 below
+// (never shrunk — base-aerial.jpg stays the detail ceiling).
+const DONOR = process.argv.find(a => a.startsWith('donor='))?.slice('donor='.length) || 'data/base-s2fresh.jpg';
+
 async function rgb(path, kernel = 'lanczos3') {
   const b = await sharp(path).resize(P, P, { kernel }).removeAlpha().toColourspace('srgb').raw().toBuffer();
   if (b.length !== P * P * 3) throw new Error(`${path}: ${b.length} != ${P * P * 3}`);
@@ -123,8 +131,9 @@ async function grade(buf, landMask, {
 }
 
 console.log('loading sources...');
+console.log('colour donor:', DONOR);
 const aerial = await rgb('data/base-aerial.jpg');
-const sentinelUp = await rgb('data/base-hi.jpg', 'cubic'); // smooth upsample, avoids lanczos ringing at 1.83x
+const sentinelUp = await rgb(DONOR, 'cubic'); // smooth upsample, avoids lanczos ringing (1.25x for base-s2fresh's 4096, 1.83x for base-hi's 2800)
 const landMaskRaw = await gray('data/classes.png'); // 255 = land, else water/nodata
 // soften the mask edge a touch so the land tint doesn't hard-step at the coastline
 const landMask = await sharp(landMaskRaw, { raw: { width: P, height: P, channels: 1 } }).blur(3).extractChannel(0).raw().toBuffer();
