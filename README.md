@@ -4,9 +4,11 @@ An always-on iPad artwork of **Tauranga Harbour**, showing the real tide, sun an
 Land is a fixed basemap; every waterline is computed from a per-pixel drying-height raster
 and a predicted tide. Real information, displayed beautifully.
 
-- `CONCEPT.md` — what it is, why, and the design decisions
-- `HANDOVER.md` — current state, known defects, next steps
+- `HANDOVER.md` — **start here**: current state, the three known defects, what not to touch
+- `NEXT-SESSION.md` — kickoff prompt, reading list, acceptance criteria, environment traps
+- `CONCEPT.md` — what it is, why, and the design rulings behind it
 - `sources/MANIFEST.md` — the inputs and how to regenerate them
+- `pipeline/VALIDATION.md`, `tide/VALIDATION.md` — how far each component can be trusted
 
 ## Quick start
 
