@@ -79,6 +79,11 @@ you.
 
 ## Traps already paid for — do not rediscover these
 
+- **A backtick anywhere inside the `FS` shader template literal — including in a GLSL comment —
+  ends the string early and the module dies with a silent SyntaxError.** No console output in the
+  pane; the page just does nothing. `look.mjs` cannot catch it (it never contains the literal).
+  `build-v2.mjs` now parses the assembled module source and refuses to build. Write 'quotes',
+  never backticks, in shader comments.
 - **An inline `<script type="module">` with no closing `</script>` silently never executes.** No
   console error, no exception, no `error` event — `document.scripts[0]` is there with the full
   source and nothing runs. This cost most of an hour. `build-v2.mjs` now asserts the module

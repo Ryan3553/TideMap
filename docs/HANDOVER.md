@@ -1,4 +1,44 @@
-# TideMap — handover, 2026-07-26 (third pass)
+# TideMap — handover, 2026-07-26 (fourth pass)
+
+## The night glow — Ryan's "make it spectacular" round
+
+Ryan sent a reference image — the piece at dusk, bioluminescent: dark navy open ocean, a
+luminous surf band along the beach, channels glowing cyan through pearlescent flats, warm
+city lights. The night/dusk path of the shader was rebuilt to match, over four render-judged
+iterations. What it took:
+
+- **Night emission is a monotonic decay of a night depth `nd`.** The day `depth` cannot drive
+  night glow: on always-wet sentinel water its tide-height term clamps to 1, which painted every
+  permanent channel and the near-beach ocean abyss-black. `nd` blends tide-height depth over the
+  intertidal with **bathy (distance from shore) over sentinel water** (`mix(..., bathy, sea)`),
+  so channels sit mid-ramp and glow, the surf zone glows and fades offshore, and only true open
+  ocean reaches the `abyss` colour. Falloff on the **Glow falloff** slider (`nightFall`, 4.2).
+- **Never build a night-glow band out of bathy directly.** Two failed attempts are on record: a
+  bathy-bell "channel highway" (dark gap between beach and glow) and a bathy-gaussian shore glow
+  (the chamfer field's isolines facet into an **octagon** around the offshore island). The shore
+  glow lives in tide-height space instead: `exp(-((tide-H)/glowM)^2)`, **Shore glow reach (m)**.
+- **Pearlescent flats**: exposed intertidal is lit by the aerial's own luminance and chroma
+  (`pearl ∝ lum`), so the real swirl detail shows and dark channels stay dark — a replacement
+  blend, never a max-lift (a max-lift turned the whole harbour porcelain-white; also on record).
+- **Offshore swell lines** (subtle, gated): 4-tap-softened bathy cosine, windowed to open ocean,
+  with a world-space curvature gate so they exist only along the long straight beach — not the
+  ringed island contours Ryan already rejected. **Offshore swell** slider, whisper by default.
+- Also: two-part city lights (warm halo + near-white hot core), 2-octave animated water shimmer,
+  filmic tonemap (`1-exp(-col·exposure)`), and slightly lifted night land.
+
+New settings: `shoreGlow, surfGain, flatsGlow, shimmer, glowM, nightFall` (structural, in
+`DEFAULTS`) and `abyss, pearlCol` (colours, per-preset). All on sliders; *Copy settings* still
+round-trips everything, so the palette remains Ryan's to finish.
+
+**A trap paid for in this round:** a backtick in a GLSL comment inside the `FS` template
+literal ends the string early and the whole module dies with a silent SyntaxError — `look.mjs`
+can never catch it (it doesn't contain the literal) and neither could `build-v2.mjs`'s size
+check. `build-v2.mjs` now **parses the assembled module source** (AsyncFunction constructor)
+and refuses to build if it doesn't parse. Do not write backticks inside the shader string.
+
+---
+
+# Earlier: the third pass
 
 ## The look, after Ryan's review
 

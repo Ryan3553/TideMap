@@ -14,7 +14,7 @@ const S = {
   shallow:'#86ccc2', mid:'#2f8fa0', deep:'#124f70', nightDeep:'#3fc8de',
   landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#e3fbff',
   abyss:'#08131f', pearlCol:'#74858f',
-  nightGlow:0.95, nightFall:3.2, cityGain:2.0, edgeGain:0.10,
+  nightGlow:0.95, nightFall:4.2, cityGain:2.0, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
   exposure:1.0, gamma:0.92, vignette:0.36,
@@ -146,15 +146,14 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
 
   const daylight=surface.map((s,k)=>s*sunTint[k]*uDay);
   const landNight=palette.map((p,k)=>p*(1+0.35*S.landChroma*rel[k]));
-  // Night glow is a MONOTONIC decay of the same continuous `depth` the water colour already uses:
-  // brightest at the waterline (depth ~= 0), fading smoothly to the abyss offshore. No bell, so no
-  // dark gap between a shoreline and its glow — replaces round 1/2's bathy-bell `chan` channel
-  // highway. Near any real shore the (uTide-H) term of `depth` dominates over `sea*bathy`, so this
-  // stays a shore-hugging glow rather than the bathy chamfer field's facetable isolines.
-  const dGlow=Math.exp(-depth*S.nightFall);
+  // Night glow is a MONOTONIC decay of a night depth `nd`. `depth` itself cannot be used: on
+  // always-wet sentinel water its tide-height term clamps to 1, painting every permanent channel
+  // and the near-beach ocean abyss-black. The sentinel side uses bathy instead, blended by `sea`.
+  const nd=mix(clamp((uTide-Hh)/S.depthCurve,0,1),bathy,sea);
+  const dGlow=Math.exp(-nd*S.nightFall);
   let nightWater=mix3(C.abyss,C.nightDeep,dGlow).map(c=>c*(0.30+0.70*uMoon)*S.nightGlow*mix(1,0.78+0.55*lum,0.35));
   nightWater=nightWater.map(c=>c*(1+S.shimmer*(shim-0.5)));
-  let night=landNight.map((l,k)=>mix(l*(0.05+0.24*uMoon),nightWater[k],submerged));
+  let night=landNight.map((l,k)=>mix(l*(0.08+0.28*uMoon),nightWater[k],submerged));
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
   // than flattened to grey — `rel` is the same relative-chroma vector the land already uses. A
@@ -170,7 +169,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
     const cityTerm=C.city[k]*(Math.pow(city,1.6)*S.cityGain*1.4)+[1.0,0.95,0.85][k]*Math.pow(city,3)*S.cityGain*0.8;
     c+=cityTerm*uNightMix;
     c+=C.edgeCol[k]*edge*S.edgeGain*(0.45+0.75*uNightMix);
-    c+=C.edgeCol[k]*shore*S.shoreGlow*(0.35+0.75*uNightMix);
+    c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.35+0.75*uNightMix);
     c+=C.edgeCol[k]*lines*S.surfGain;
     c=1-Math.exp(-c*S.exposure);
     c*=vig;

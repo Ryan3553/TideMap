@@ -22,5 +22,12 @@ if (/LINZ_KEY|key=[0-9a-f]{20,}/.test(html)) throw new Error('an API key reached
 // lastIndexOf, not a regex: the comment above the assets div quotes the tag literally.
 const script = html.slice(html.lastIndexOf('<script type="module">'));
 if (script.length > 400000) throw new Error(`module source is ${script.length} chars — payload leaked back into the script`);
+// The module must PARSE. A stray backtick in a GLSL comment ends the shader template literal
+// early and the whole module dies with a SyntaxError the page never surfaces — it cost this
+// session a round trip to the browser to find. AsyncFunction accepts top-level await; the
+// module has no import/export, so a parse here proves the browser can parse it too.
+const modSrc = script.slice(script.indexOf('>')+1, script.lastIndexOf('</script>'));
+try { new (Object.getPrototypeOf(async function(){}).constructor)(modSrc); }
+catch (e) { throw new Error(`module source does not parse: ${e.message}`); }
 fs.writeFileSync('tidemap-v2.html', html);
 console.log(`built ${(html.length/1e6).toFixed(2)} MB total, module source ${(script.length/1024).toFixed(0)} kB`);

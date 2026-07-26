@@ -198,7 +198,7 @@ const DEFAULTS={
   tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
-  edgeWidth:0.035, glowM:0.5, nightFall:3.2,
+  edgeWidth:0.035, glowM:0.5, nightFall:4.2,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -319,7 +319,7 @@ void main(){
   float edge=exp(-dh*dh);
 
   // Shoreline rim glow, bleeding into the water from every waterline — confined to the water
-  // side by `submerged`, and just barely alive with the same shimmer as the open water. Lives in
+  // side by 'submerged', and just barely alive with the same shimmer as the open water. Lives in
   // TIDE-HEIGHT space, not bathy's chamfer distance: bathy's isolines facet into octagons around
   // small islands, but a band measured in metres of tide hugs every real waterline, widens over
   // flat banks and collapses on steep shores, and simply cannot facet.
@@ -357,27 +357,25 @@ void main(){
   // ---- light -------------------------------------------------------------------
   vec3 daylight=surface*uSunTint*uDay;
 
-  // Night. Glow is now a MONOTONIC decay of the same continuous `depth` the water colour already
-  // uses: brightest right at the waterline (depth ~= 0, shallow submerged), fading smoothly out
-  // to the abyss as depth climbs toward the open ocean. No bell, so no dark gap can open up
-  // between a shoreline and its glow — replaces round 1/2's bathy-bell `chan` channel-highway,
-  // which lit a glowing offshore ribbon but left the water between it and every beach near-black.
-  // Near any real shore the `(uTide-H)` term of `depth` dominates over `sea*bathy`, so this stays
-  // a soft shore-hugging glow rather than the bathy chamfer field's facetable isolines; the small
-  // offshore island still gets an unfaceted rim of light from the same term. If a soft octagon
-  // ever shows around the island, ease `depth` on the `sea*bathy` branch specifically.
+  // Night. Glow is a MONOTONIC decay of a night depth 'nd': brightest right at the waterline,
+  // fading smoothly to the abyss. 'depth' itself cannot be used here — on always-wet sentinel
+  // water (H = -0.75) its tide-height term clamps to 1, which painted every permanent channel
+  // and the whole near-beach ocean as abyss-black. So the sentinel side uses bathy (distance
+  // from shore) instead, blended in by 'sea': channels sit mid-ramp and glow as ribbons, the
+  // surf zone glows and fades offshore, and only the true open ocean reaches the abyss.
   vec3 landNight=palette*(1.0+0.35*uLandChroma*rel);
-  float dGlow=exp(-depth*uNightFall);
+  float nd=mix(clamp((uTide-H)/uDepthCurve,0.0,1.0),bathy,sea);
+  float dGlow=exp(-nd*uNightFall);
   vec3 nightWater=mix(uAbyss,uNightDeep,dGlow)
                  *(0.30+0.70*uMoon)*uNightGlow
                  *mix(1.0,0.78+0.55*lum,0.35)
                  *(1.0+uShimmer*(shim-0.5));
-  vec3 night=mix(landNight*(0.05+0.24*uMoon),nightWater,submerged);
+  vec3 night=mix(landNight*(0.08+0.28*uMoon),nightWater,submerged);
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
-  // than flattened to grey. Land well above the tide range (permanently dry) is excluded. `rel`
+  // than flattened to grey. Land well above the tide range (permanently dry) is excluded. 'rel'
   // is the same relative-chroma vector the daylight/night land already use for texture. This is a
-  // REPLACEMENT blend, not a max-lift: `pearl` is proportional to `lum`, so dark swirls in the
+  // REPLACEMENT blend, not a max-lift: 'pearl' is proportional to 'lum', so dark swirls in the
   // aerial stay dark instead of every flat being lifted to one pale floor — dark silvery flats,
   // midtone at their brightest, with the aerial's own detail giving the internal contrast.
   float flatBand=(1.0-submerged)*smoothstep(2.6,2.2,H)*smoothstep(-0.1,0.15,H+0.75);
@@ -388,7 +386,9 @@ void main(){
   vec3 cityTerm=uCity*(pow(city,1.6)*uCityGain*1.4)+vec3(1.0,0.95,0.85)*pow(city,3.0)*uCityGain*0.8;
   col+=cityTerm*uNightMix;
   col+=uEdgeCol*edge*uEdgeGain*(0.45+0.75*uNightMix);
-  col+=uEdgeCol*shore*uShoreGlow*(0.35+0.75*uNightMix);
+  // The wide shore glow takes the water's own night colour as darkness falls — stacked white
+  // here turned the whole intertidal margin frosty instead of luminous.
+  col+=mix(uEdgeCol,uNightDeep,0.6*uNightMix)*shore*uShoreGlow*(0.35+0.75*uNightMix);
   col+=uEdgeCol*lines*uSurfGain;
   col=1.0-exp(-col*uExposure);
   col*=1.0-uVignette*smoothstep(0.42,0.98,distance(vUv,vec2(0.5)));
