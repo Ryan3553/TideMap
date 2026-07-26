@@ -35,6 +35,11 @@ Three things that will waste your time if you get them wrong:
 
 - **The port is 5179.** Not 5170. A wrong port gives `ERR_CONNECTION_TIMED_OUT`, which looks
   exactly like a firewall problem and isn't.
+- **A downloaded `ipad.txt` means you reached the server.** It used to be what `/ipad` without a
+  trailing slash produced: the server read a directory as a file, 404'd, and sent a body with no
+  content type, which mobile browsers save instead of showing. Both are fixed — directories
+  redirect, and errors are `text/plain` — but the general lesson stands: **a file downloading
+  instead of rendering is a Content-Type problem, not a network problem.**
 - **Safari, not Chrome.** Chrome on iOS cannot install a PWA; its "Add to Home Screen" makes a
   bookmark that opens in Chrome with full browser chrome, which is not the piece.
 - **One server at a time.** Windows will happily let two `node serve.mjs` processes bind 5179
