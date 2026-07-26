@@ -13,12 +13,12 @@ const OUT = A.out ?? '_look.png';
 const S = {
   shallow:'#86ccc2', mid:'#2f8fa0', deep:'#124f70', nightDeep:'#3fc8de',
   landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#e3fbff',
-  abyss:'#071626', pearlCol:'#8fa8b8',
-  nightGlow:0.85, nightDepth:1.0, cityGain:1.9, edgeGain:0.10,
+  abyss:'#040b13', pearlCol:'#66787f',
+  nightGlow:0.6, nightDepth:1.0, cityGain:0.3, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
   exposure:1.0, gamma:0.92, vignette:0.36,
-  shoreGlow:0.50, surfGain:0.18, flatsGlow:0.55, shimmer:0.25,
+  shoreGlow:0.50, surfGain:0.28, flatsGlow:0.35, shimmer:0.25, glowM:0.5,
   ...JSON.parse(A.set ?? '{}'),
 };
 const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255);
@@ -115,15 +115,20 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const dh=(uTide-Hh)/Math.max(S.edgeWidth,0.004);
   const edge=Math.exp(-dh*dh);
 
-  // Shoreline rim glow, bleeding into the water from every waterline.
-  const glowW=0.065;
-  let shore=Math.exp(-Math.pow(bathy/glowW,2))*submerged;
+  // Shoreline rim glow, bleeding into the water from every waterline. Lives in TIDE-HEIGHT space,
+  // not bathy's chamfer distance: bathy's isolines facet into octagons around small islands, but
+  // a band measured in metres of tide hugs every real waterline and cannot facet.
+  let shore=Math.exp(-Math.pow((uTide-Hh)/Math.max(S.glowM,0.02),2))*submerged;
   shore*=1+0.3*S.shimmer*(shim-0.5);
 
   // Offshore swell: faint contour bands parallel to the ocean beach, drifting slowly shoreward,
-  // windowed to open water clear of the shore.
-  let lines=Math.pow(0.5+0.5*Math.cos(bathy*38.0-t*0.15),6);
-  lines*=smoothstep(0.25,0.45,bathy)*(1-smoothstep(0.75,0.98,bathy));
+  // windowed to open water clear of the shore. The cosine phase reads a 4-tap softened bathy (raw
+  // bathy steps texel-to-texel near the island, breaking the bands into dashes); the window and
+  // every gate below still read the sharp field.
+  const tx=1.5/4096.0;
+  const bSoft=(bathyAt(u+tx,v+tx)+bathyAt(u+tx,v-tx)+bathyAt(u-tx,v+tx)+bathyAt(u-tx,v-tx))*0.25;
+  let lines=Math.pow(0.5+0.5*Math.cos(bSoft*38.0-t*0.15),6);
+  lines*=smoothstep(0.30,0.50,bathy)*(1-smoothstep(0.70,0.95,bathy));
   // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
   const bw=Math.abs(bathyAt(u1,v1)-bathy)+Math.abs(bathyAt(u2,v2)-bathy);
   const linesAA=1-smoothstep(0.3,1.0,38.0*bw);
@@ -141,6 +146,12 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
 
   const daylight=surface.map((s,k)=>s*sunTint[k]*uDay);
   const landNight=palette.map((p,k)=>p*(1+0.35*S.landChroma*rel[k]));
+  // NOTE: kept at round-1's span (0.16,0.45), not widened as first tried. Any wider bell reaches
+  // an isolated offshore island's own near-shore bathy band just as readily as it does a real
+  // channel's — the two are numerically indistinguishable to a chamfer field with no other shore
+  // nearby to cap it — so widening this bell for "the main shipping channel" also re-inflates a
+  // large, uniform ring around the island. The channel is already legible at this span; the
+  // island is not. See round-2 notes.
   const chan=smoothstep(0.02,0.10,bathy)*(1-smoothstep(0.16,0.45,bathy));
   const dw=mix(1,depth,S.nightDepth);
   let nightWater=mix3(C.abyss,C.nightDeep,chan).map(c=>c*mix(1,0.78+0.55*lum,0.35));
@@ -149,10 +160,11 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   let night=landNight.map((l,k)=>mix(l*(0.05+0.24*uMoon),nightWater[k]*emis,submerged));
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
-  // than flattened to grey — `rel` is the same relative-chroma vector the land already uses.
+  // than flattened to grey — `rel` is the same relative-chroma vector the land already uses. A
+  // REPLACEMENT blend, not a max-lift: `pearl` is proportional to `lum`, so dark swirls stay dark.
   const flatBand=(1-submerged)*smoothstep(2.6,2.2,Hh)*smoothstep(-0.1,0.15,Hh+0.75);
-  const pearl=C.pearlCol.map((c,k)=>c*(0.25+0.75*lum)*(1+0.4*rel[k])*S.flatsGlow*(0.35+0.65*uMoon));
-  night=night.map((n,k)=>mix(n,Math.max(n,pearl[k]),flatBand));
+  const pearl=C.pearlCol.map((c,k)=>c*lum*(1+0.5*rel[k]));
+  night=night.map((n,k)=>mix(n,pearl[k],flatBand*S.flatsGlow*(0.35+0.65*uMoon)));
 
   const vx=(px+0.5)/W-0.5, vy=(py+0.5)/H-0.5;
   const vig=1-S.vignette*smoothstep(0.42,0.98,Math.hypot(vx,vy));
