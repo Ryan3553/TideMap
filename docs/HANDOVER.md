@@ -101,7 +101,7 @@ per-pixel drying-height raster plus a predicted tide.
 sources/     inputs only, never written by a script — see docs/SOURCES.md
 pipeline/    drying-height raster derivation (204 Sentinel-2 scenes -> waterline stack)
 tide/        offline harmonic tide model, zero deps, 8.9 kB
-prototype/   renderer + build scripts   (prototype/data/ is derived, gitignored)
+prototype/   renderer + build scripts   (data/ and ipad/ are generated, gitignored)
 research/    feasibility studies, the 9-scene photo series, composition studies
 ```
 

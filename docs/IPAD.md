@@ -22,6 +22,22 @@ hidden, canvas filling the slab at the screen's own aspect, real-time playback, 
 `Controls` button in the bottom-left brings the studio panel back if you want to change
 something on the device.
 
+`prototype/ipad/` is **generated and gitignored**, like everything else derived. If it is not
+there, you have not run the build. Rebuild it whenever the renderer changes — the service worker
+keys its cache on the build's byte length, so a rebuild invalidates the copy already on the iPad.
+
+## Stopping the server
+
+`Ctrl-C` in the terminal running it. If it was started in the background, or something is
+already holding the port:
+
+```bash
+netstat -ano | findstr :5179
+```
+
+then `taskkill /F /PID <pid>` on what it reports. There should be exactly one PID — see the
+third bullet below for why two is worse than none.
+
 ## Route 1 — over your wifi, no hosting, two minutes
 
 ```bash
