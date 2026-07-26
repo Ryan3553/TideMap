@@ -350,7 +350,7 @@ function baselineLeaveOneOut(points) {
 // height at the temporal midpoint between high and low ~= average of the
 // two adjacent tabulated heights (this is also exactly what plain cosine
 // interpolation predicts at f=0.5, since (1-cos(pi*0.5))/2 = 0.5). This is
-// a proxy, not a measurement — documented plainly in VALIDATION.md.
+// a proxy, not a measurement — documented plainly in docs/tide-validation.md.
 function midTideProxy(points) {
   const out = [];
   for (let i = 0; i + 1 < points.length; i++) {
@@ -549,7 +549,7 @@ const moduleSrc = `// Tauranga Harbour tide-prediction module — harmonic const
 // Source data: LINZ (Land Information New Zealand) official tide tables for
 // Tauranga (port 073), tauranga_2023..2027.csv. Heights are metres above
 // CHART DATUM (not mean sea level). A shipping app MUST carry LINZ
-// attribution — see VALIDATION.md.
+// attribution — see docs/tide-validation.md.
 //
 // Model: h(t) = Z0 + sum_i f_i(t) * A_i * cos(omega_i * t - phi_i - u_i(t))
 // t = hours since EPOCH_MS (2023-01-01T00:00:00Z), omega_i in rad/hour.
@@ -564,10 +564,10 @@ const moduleSrc = `// Tauranga Harbour tide-prediction module — harmonic const
 //   HEADLINE timing error: mean ${timingMeanAbs.toFixed(2)} min, max ${timingMax.toFixed(2)} min
 //   height RMSE at turning points: ${heightRMSE.toFixed(4)} m (max ${heightMax.toFixed(4)} m)
 //   height RMSE at mid-tide (proxy): ${midRMSE.toFixed(4)} m (max ${midMax.toFixed(4)} m)
-// Full numbers, worst-case tables and methodology caveats: VALIDATION.md.
+// Full numbers, worst-case tables and methodology caveats: docs/tide-validation.md.
 //
 // ${survivorDefs.length} of ${CONSTITUENT_DEFS.length} candidate constituents survived the
-// >=5mm amplitude threshold and are shipped below (see VALIDATION.md for
+// >=5mm amplitude threshold and are shipped below (see docs/tide-validation.md for
 // the dropped list).
 //
 // These shipping coefficients are refit on ALL FIVE available years
@@ -709,7 +709,7 @@ export function nextTurningPoints(date, count = 4) {
 fs.writeFileSync(path.join(__dirname, 'tauranga-tide.js'), moduleSrc);
 console.log(`\nWrote ${path.join(__dirname, 'tauranga-tide.js')} (${moduleSrc.length} bytes)`);
 
-// Export a few numbers for VALIDATION.md bookkeeping (printed as JSON so
+// Export a few numbers for docs/tide-validation.md bookkeeping (printed as JSON so
 // they can be grepped/diffed if fit.mjs is re-run later).
 console.log('\n=== SUMMARY JSON ===');
 console.log(JSON.stringify({

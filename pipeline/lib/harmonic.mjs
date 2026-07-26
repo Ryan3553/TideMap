@@ -1,6 +1,6 @@
 // Harmonic tide model fitted by least squares to the LINZ Tauranga tide-table
 // extrema. Purpose: label Sentinel-2 scenes from 2023, for which the local LINZ
-// CSV is missing (see VALIDATION.md). The fit is validated by holdout in
+// CSV is missing (see docs/pipeline-validation.md). The fit is validated by holdout in
 // 1b-tide-check.mjs — do not use it without reading that number.
 //
 // h(t) = Z0 + sum_i [ A_i cos(w_i t) + B_i sin(w_i t) ]

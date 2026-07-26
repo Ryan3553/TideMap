@@ -9,6 +9,6 @@ prototype/*.png
 prototype/tidemap-*.html
 
 # Large source rasters: kept on disk under sources/, provenance committed instead.
-# See sources/MANIFEST.md — every one is reproducible from the recorded parameters.
+# See docs/SOURCES.md — every one is reproducible from the recorded parameters.
 sources/**/*.png
 sources/**/*.tif

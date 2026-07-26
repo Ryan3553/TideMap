@@ -4,7 +4,7 @@
 // Source data: LINZ (Land Information New Zealand) official tide tables for
 // Tauranga (port 073), tauranga_2023..2027.csv. Heights are metres above
 // CHART DATUM (not mean sea level). A shipping app MUST carry LINZ
-// attribution — see VALIDATION.md.
+// attribution — see docs/tide-validation.md.
 //
 // Model: h(t) = Z0 + sum_i f_i(t) * A_i * cos(omega_i * t - phi_i - u_i(t))
 // t = hours since EPOCH_MS (2023-01-01T00:00:00Z), omega_i in rad/hour.
@@ -19,10 +19,10 @@
 //   HEADLINE timing error: mean 9.45 min, max 29.68 min
 //   height RMSE at turning points: 0.0313 m (max 0.0789 m)
 //   height RMSE at mid-tide (proxy): 0.1732 m (max 0.4039 m)
-// Full numbers, worst-case tables and methodology caveats: VALIDATION.md.
+// Full numbers, worst-case tables and methodology caveats: docs/tide-validation.md.
 //
 // 23 of 31 candidate constituents survived the
-// >=5mm amplitude threshold and are shipped below (see VALIDATION.md for
+// >=5mm amplitude threshold and are shipped below (see docs/tide-validation.md for
 // the dropped list).
 //
 // These shipping coefficients are refit on ALL FIVE available years

@@ -1,4 +1,4 @@
-// Stage 6 — validation. Everything reported in VALIDATION.md comes from here.
+// Stage 6 — validation. Everything reported in docs/pipeline-validation.md comes from here.
 //
 //  1. Exact leave-one-out (lib/steps.mjs), banded by tide, for the shipped
 //     model AND for the round-2 configuration, so the change is visible.

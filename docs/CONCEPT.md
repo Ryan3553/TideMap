@@ -165,7 +165,7 @@ attribution is still required and still correct to give.
 
 ## Status
 
-- Imagery viability — **proven**, `research/FINDINGS.md`.
+- Imagery viability — **proven**, `docs/FINDINGS.md`.
 - Nine-step photo series — **built**, `research/series/`.
 - Offline tide prediction — **built**, `tide/` (0.051 m RMSE on a held-out year).
 - Drying-height raster — in progress.

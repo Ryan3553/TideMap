@@ -5,7 +5,7 @@
 > Project: TideMap, an always-on iPad artwork of Tauranga Harbour. Working directory
 > `D:\Development\Claude Sandbox\TideMap` (git repo, clean tree).
 >
-> Read `HANDOVER.md` first, then `CONCEPT.md`. Do not re-run the 204-scene pipeline fit —
+> Read everything in `docs/` — start with `HANDOVER.md`, then `CONCEPT.md`. Do not re-run the 204-scene pipeline fit —
 > the raster is sound apart from one defect described in the handover.
 >
 > Three jobs, in this order:
@@ -30,13 +30,13 @@
 
 | job | also read |
 |---|---|
-| 1. Urban misclassification | `pipeline/VALIDATION.md` §5 (notes for the renderer) and §6 (defect record). Long — have a subagent read it and report rather than loading it whole. |
+| 1. Urban misclassification | `docs/pipeline-validation.md` §5 (notes for the renderer) and §6 (defect record). Long — have a subagent read it and report rather than loading it whole. |
 | 2. Land rendering | `prototype/template-v2.html` fragment shader only. Nothing else. |
 | 3. Zoom clamp | `prototype/template-v2.html`, the `applyFrame` and `frame` functions. |
-| Anything touching sources | `sources/MANIFEST.md` — how to regenerate, and the LDS-vs-Basemaps key trap. |
+| Anything touching sources | `docs/SOURCES.md` — how to regenerate, and the LDS-vs-Basemaps key trap. |
 
-**Rarely needed:** `tide/VALIDATION.md` (the tide model is finished and over-specified for an
-artwork — do not spend effort here), `research/FINDINGS.md` (the original feasibility
+**Rarely needed:** `docs/tide-validation.md` (the tide model is finished and over-specified for an
+artwork — do not spend effort here), `docs/FINDINGS.md` (the original feasibility
 question, now settled).
 
 ## Acceptance criteria

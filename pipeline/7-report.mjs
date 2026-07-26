@@ -1,4 +1,4 @@
-// Stage 7 — assemble VALIDATION.md. Every number is read from the JSON
+// Stage 7 — assemble docs/pipeline-validation.md. Every number is read from the JSON
 // artifacts produced by the earlier stages; nothing is typed in by hand.
 import fs from 'fs';
 import path from 'path';
@@ -563,5 +563,5 @@ node verify.mjs                    # independent decode check
 Tiles (${(816 * 1.33).toFixed(0)} MB) and composites (1.5 GB) are cached on disk; re-runs are cheap.
 `;
 
-fs.writeFileSync(path.resolve(dirs.out, '..', 'VALIDATION.md'), md);
-console.log('wrote pipeline/VALIDATION.md');
+fs.writeFileSync(path.resolve(dirs.out, '..', '..', 'docs', 'pipeline-validation.md'), md);
+console.log('wrote docs/pipeline-validation.md');

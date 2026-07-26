@@ -1,6 +1,6 @@
 # TideMap — handover, 2026-07-26
 
-Read `CONCEPT.md` first (what the piece is and why), then this (where it stands).
+Read `CONCEPT.md` (same folder) first (what the piece is and why), then this (where it stands).
 
 ## What the thing is
 
@@ -11,7 +11,7 @@ per-pixel drying-height raster plus a predicted tide.
 ## Layout
 
 ```
-sources/     inputs only, never written by a script — see sources/MANIFEST.md
+sources/     inputs only, never written by a script — see docs/SOURCES.md
 pipeline/    drying-height raster derivation (204 Sentinel-2 scenes -> waterline stack)
 tide/        offline harmonic tide model, zero deps, 8.9 kB
 prototype/   renderer + build scripts   (prototype/data/ is derived, gitignored)
@@ -27,7 +27,7 @@ Verify it locally: `node prototype/serve.mjs` then open `localhost:5179/tidemap-
   spot-checked by hand against the LINZ table. Far more accuracy than an artwork needs.
 - **Drying-height raster** — 204 scenes, tide 0.31–2.16 m, leave-one-out IoU 0.899;
   138.1 km² intertidal against ~145 km² in the literature. Validation in
-  `pipeline/VALIDATION.md`, including where it is weak and why.
+  `docs/pipeline-validation.md`, including where it is weak and why.
 - **Renderer** — WebGL, all colours on sliders, iOS device frames, manual/live tide and
   daylight, LINZ aerial or Sentinel basemap. Verified live by driving frames through the
   `window.__tick` hook (rAF is suspended in a hidden pane, so nothing self-reports there).
