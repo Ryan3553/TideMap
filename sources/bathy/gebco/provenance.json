@@ -1,0 +1,25 @@
+{
+  "file": "gebco2024_tauranga_bbox.tif",
+  "source": "GEBCO_2024 Grid (global 15 arc-second gridded bathymetry/topography)",
+  "publisher": "GEBCO (General Bathymetric Chart of the Oceans) / Seabed 2030, hosted as a public COG mirror by source.coop (user alexgleith)",
+  "obtained_via": "HTTP range-request (vsicurl) windowed read of the global COG, no full download, no auth/key required",
+  "origin_url": "https://s3.us-west-2.amazonaws.com/us-west-2.opendata.source.coop/alexgleith/gebco-2024/GEBCO_2024.tif",
+  "mirror_landing_page": "https://source.coop/alexgleith/gebco-2024",
+  "official_gebco_page": "https://www.gebco.net/data-products-gridded-bathymetry-data/gebco2024-grid",
+  "method": "python3 + rasterio, rasterio.windows.from_bounds against /vsicurl/<url>, read band 1 only within bbox, wrote a new small GeoTIFF (no reprojection)",
+  "bbox_wgs84": { "west": 175.93, "south": -37.79, "east": 176.37, "north": -37.41 },
+  "crs": "EPSG:4326",
+  "pixel_size_deg": 0.0041666667,
+  "approx_resolution_m": "~450 m at this latitude (15 arc-second native grid)",
+  "shape": { "width": 106, "height": 91 },
+  "dtype": "int16",
+  "units": "metres, negative = below sea level (bathymetry), positive = elevation (topography) — standard GEBCO convention, NOT chart datum/soundings datum",
+  "value_range_observed": { "min": -142, "max": 520 },
+  "date_obtained": "2026-07-26",
+  "licence": "GEBCO Grid: released under a public-domain-equivalent / CC0-style GEBCO terms — free for any use with acknowledgement of GEBCO/Seabed2030 as source (see https://www.gebco.net/about_us/faq/). Verify exact wording before redistribution; the source.coop mirror inherits the same terms.",
+  "notes": [
+    "Coarse global compilation, NOT a hydrographic survey — do not use for navigation.",
+    "Vertical datum is approximate mean sea level, not NZ chart datum (LAT) — do not mix directly with LINZ tide/drying-height data without a datum note.",
+    "Good only as a rough shelf/basin-scale sanity check or a placeholder deep-water gradient outside the harbour mouth; at ~450 m/pixel it cannot resolve the harbour's channels, sandbars or the ebb-tide delta (those are ~50-500 m features) — this is the fallback baseline referenced in ROADMAP.md J6, not the deliverable."
+  ]
+}

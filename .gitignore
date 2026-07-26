@@ -15,3 +15,7 @@ sources/**/*.tif
 
 # The packaged iPad app is a build artifact of build-ipad.mjs
 prototype/ipad/
+
+# Overnight-round research images are regenerable from the scripts beside them
+research/overnight-*/**/*.png
+research/overnight-*/**/*.jpg

@@ -1,0 +1,27 @@
+{
+  "file": "bop25m_dtm_tauranga_bbox.tif",
+  "source": "NZ Bay of Plenty BoP 25m DTM",
+  "publisher": "NIWA (Earth Sciences New Zealand)",
+  "compiled_from": "Multibeam and single-beam survey data from NIWA and LINZ, plus international surveys (USA, Germany vessels). Cites Lamarche et al. 2018 as the underlying compilation.",
+  "obtained_via": "ArcGIS ImageServer exportImage request, keyless, no auth required",
+  "service_root": "https://gis.niwa.co.nz/raster/rest/services/Bay_of_Plenty_25m_DTM/ImageServer",
+  "arcgis_online_item": "https://www.arcgis.com/home/item.html?id=3a1d7ee29dac42e3ba6ec4efeeafbacf",
+  "landing_page": "https://data-niwa.opendata.arcgis.com/datasets/nz-bay-of-plenty-dtm-25m-raster",
+  "further_info": "https://niwa.co.nz/oceans/new-zealand-bathymetry-further-information",
+  "request_used": "https://gis.niwa.co.nz/raster/rest/services/Bay_of_Plenty_25m_DTM/ImageServer/exportImage?bbox=175.93,-37.79,176.37,-37.41&bboxSR=4326&imageSR=4326&size=1547,1690&format=tiff&pixelType=F32&noDataInterpretation=esriNoDataMatchAny&interpolation=RSP_NearestNeighbor&f=image",
+  "bbox_wgs84": { "west": 175.93, "south": -37.79, "east": 176.37, "north": -37.41 },
+  "native_crs": "EPSG:3994 (Mercator 41 S, NIWA regional projection)",
+  "output_crs": "EPSG:4326 (reprojected on the fly by the ImageServer at export time)",
+  "native_pixel_size_m": 25,
+  "shape": { "width": 1547, "height": 1690 },
+  "dtype": "float32",
+  "units": "metres, negative = below sea level (bathymetry), positive = elevation (topography). Combined DTM, not chart datum — vertical reference is approximately MSL, not LAT.",
+  "value_range_observed": { "min": -256.96, "max": 559.74, "note": "full bbox includes open Bay of Plenty water outside the harbour mouth, hence depths beyond harbour-channel scale" },
+  "date_obtained": "2026-07-26",
+  "licence": "NIWA Open Data Licence BY-NN-NC-SA v1 (https://niwa.co.nz/environmental-information/licences/niwa-open-data-licence-by-nn-nc-sa-version-1) — attribution required, NON-COMMERCIAL, share-alike, no additional restrictions beyond those. IMPORTANT: confirm this licence is compatible with how TideMap is distributed (e.g. an installable iPad artwork) before shipping it — NC/SA terms may need Ryan's sign-off if the piece is ever sold or the licence's exact text differs from this summary (page returned 404 on fetch, summary is from search-result excerpts, verify directly).",
+  "notes": [
+    "This is the best real, keyless, resolution-appropriate bathymetry obtained this round: 25 m grid, ~18x finer than the GEBCO fallback, and it does show real channel-scale depth gradients (validated: a transect sampled at 40px spacing crosses from +20 m land through 0 and down to -46 m, a plausible harbour-mouth-to-shelf profile, not a flat/degenerate raster).",
+    "Still coarser than what LINZ layer 122679 (Bay of Plenty Multibeam 2m Depth Model, 2024/25, LAT datum) would give inside the harbour itself — that layer needs an LDS key. See research/overnight-2026-07-27/bathy/README.md for the full comparison and recommendation.",
+    "Vertical datum is NOT tide/chart datum (LAT) — do not blend directly with the renderer's drying-height raster (which is tide-referenced) without a datum offset; treat this as a shape/relief source, not an absolute-depth source, until reconciled."
+  ]
+}
