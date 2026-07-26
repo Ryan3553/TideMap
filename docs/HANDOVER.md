@@ -55,6 +55,34 @@ measurement, and it is labelled as such in `prep-field.mjs`, in `field-v2.json` 
 exists so the channels read as channels and so night glow has something to follow. Do not let it
 be quoted as bathymetry. LINZ topo-bathy LiDAR (due mid-2026) is the real answer.
 
+## It is now an installable iPad app
+
+`prototype/build-ipad.mjs` packages `prototype/ipad/` as a home-screen web app: manifest, icons
+cut from the harbour entrance, and a cache-first service worker. **There is no second renderer** —
+`ipad/index.html` *is* `tidemap-v2.html`, and the page detects it was launched standalone and
+switches itself to kiosk: chrome hidden, canvas filling the slab at the screen's own aspect,
+real-time playback, screen wake lock, and a dim `Controls` button to bring the studio panel back
+on the device. Full instructions and the honest limits are in **[IPAD.md](IPAD.md)**.
+
+Native iOS would be a `WKWebView` around the same file and **cannot be built on Windows** — Xcode
+needs a Mac, and every cross-platform route still needs macOS to produce the build. The one thing
+it genuinely buys is streamed imagery, which is the largest remaining visual gap.
+
+**Copy settings no longer fails.** `navigator.clipboard` is unavailable in a cross-origin iframe
+without `allow="clipboard-write"` — which is exactly where the published page runs. It now tries
+the async API, falls back to `execCommand`, and if both are refused puts the JSON on screen
+selected. Copying settings out is the whole point of the sliders; it must not be able to fail.
+
+## Suggested next session (supersedes the list below)
+
+1. **Colour, with Ryan driving.** Everything else is now in place for it. He sends back the JSON
+   from *Copy settings* and it becomes the default. The land palette is still the original dark
+   olive — the grading work made land *legible*, not *pretty*, and the palette is where that
+   happens.
+2. Default framing — city end, northern basin, or a travelling frame.
+3. If `WET_MIN = 0.20` proves to have cut real flats, tune it; the sweep is in
+   `pipeline-validation.md` §7 and the raw fit is intact in `fit.bin`.
+
 ---
 
 # Earlier: the second pass

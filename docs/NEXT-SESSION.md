@@ -1,8 +1,13 @@
 # Next session — kickoff
 
 The three jobs this file used to specify — urban misclassification, land rendering, zoom
-clamp — are **done**. See `HANDOVER.md` for what each turned out to be and how it was fixed.
-What is left is Ryan's to call: colour first.
+clamp — are **done**, and so is the round after it: the look, the continuous waterline, and
+packaging the piece as an installable iPad app. See `HANDOVER.md` for what each turned out to
+be, and `IPAD.md` for getting it onto the device.
+
+**What is left is Ryan's to call, and it is colour.** Everything is in place for it: the sliders
+work, *Copy settings* works, and the JSON he sends back becomes the default. Do not spend a
+session guessing at the palette before he has driven it.
 
 ## Paste this as the opening message
 
@@ -33,6 +38,7 @@ What is left is Ryan's to call: colour first.
 | Anything touching the look | `prototype/template-v2.html` fragment shader only. Nothing else. |
 | Framing | `prototype/template-v2.html`, the `applyFrame`, `zoomCap` and `frame` functions. |
 | Anything touching sources | `docs/SOURCES.md` — how to regenerate, and the LDS-vs-Basemaps key trap. |
+| Anything touching the iPad build | `docs/IPAD.md` — the home-screen app, the three ways LAN testing goes wrong, and what native would really cost. |
 
 **Rarely needed:** `docs/tide-validation.md` (the tide model is finished and over-specified for an
 artwork — do not spend effort here), `docs/FINDINGS.md` (the original feasibility
@@ -82,7 +88,6 @@ you.
   the artifact viewer. `applyFrame` now has floors and a `ResizeObserver`.
 - **Do not put multi-megabyte data URIs inside the module source.** They belong in `<img>` tags in
   the document, where the parser handles them and they decode off the main thread.
-
 - **`sharp` silently truncates 16-bit PNG input to 8 bits.** It cannot read
   `drying-height.png`. Use `pipeline/lib/png16.mjs` → `decodeGray16`.
 - **`sharp` raw output channel count depends on the input's alpha, not on your expectation.**
