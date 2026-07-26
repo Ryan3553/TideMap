@@ -1,0 +1,46 @@
+{
+  "beforeHarbourIntertidalKm2": 138.15,
+  "afterHarbourIntertidalKm2": 133.33,
+  "description": "Stage 9 — removal of non-tidal water from the fitted classes. Applied IN PLACE to classes.png and drying-height.png; out/fit.bin holds the pre-clean fit.",
+  "wetMinNdwi": 0.2,
+  "minWetScenes": 3,
+  "pixelAreaKm2": 0.00024121248019887416,
+  "beforeKm2": {
+    "subtidal": 829.57,
+    "intertidal": 168.04,
+    "supratidal": 632.99
+  },
+  "afterKm2": {
+    "subtidal": 829.02,
+    "intertidal": 157.56,
+    "supratidal": 644.01
+  },
+  "removedKm2": {
+    "spectralIntertidal": 5.5,
+    "orphanSubtidal": 0.55,
+    "orphanIntertidal": 4.98
+  },
+  "orphanComponents": 2953,
+  "largestOrphansKm2": [
+    1.535,
+    0.512,
+    0.428,
+    0.376,
+    0.254,
+    0.243,
+    0.212,
+    0.051,
+    0.033,
+    0.029,
+    0.026,
+    0.026,
+    0.025,
+    0.019,
+    0.018,
+    0.018,
+    0.018,
+    0.016,
+    0.015,
+    0.014
+  ]
+}

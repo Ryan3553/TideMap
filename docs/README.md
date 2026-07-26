@@ -6,9 +6,9 @@ Point a new session at this folder. Read in this order.
 
 | # | doc | what it gives you |
 |---|---|---|
-| 1 | **[HANDOVER.md](HANDOVER.md)** | Where the project stands, the three diagnosed defects with measurements, and what not to touch. **The most important file here.** |
+| 1 | **[HANDOVER.md](HANDOVER.md)** | Where the project stands, the three defects and how each was fixed, and what not to touch. **The most important file here.** |
 | 2 | **[CONCEPT.md](CONCEPT.md)** | What the piece *is* and the rulings behind it — north stays up, artwork not utility, why the damp band exists. Stops settled decisions being re-litigated. |
-| 3 | **[NEXT-SESSION.md](NEXT-SESSION.md)** | Kickoff prompt, per-job reading list, acceptance criteria, and the environment traps that have already cost time once. |
+| 3 | **[NEXT-SESSION.md](NEXT-SESSION.md)** | Kickoff prompt and — the part still worth reading whatever the job — the environment traps that have already cost time once. |
 
 Those three are short and worth reading in full.
 

@@ -1,6 +1,6 @@
 # Validation — Tauranga Harbour intertidal drying-height raster
 
-Round 3. Produced by `pipeline/` on 2026-07-25. Every number below is
+Round 3. Produced by `pipeline/` on 2026-07-26. Every number below is
 emitted by code in this folder (`out/*.json`); none is estimated or illustrative.
 
 **Headline.** 204 Sentinel-2 scenes (2017–2026) spanning effective tide
@@ -374,6 +374,12 @@ the shipped file independently on every run.
 
 ## 5. Notes for the renderer
 
+**Read the rasters as stage 9 leaves them.** `9-clean.mjs` rewrites `classes.png` and
+`drying-height.png` in place after the fit, removing water that is not water (§7). The numbers in
+this section are measured on the **raw** fit in `fit.bin`; after cleaning, harbour intertidal is
+**133.33 km²**. If you re-run `4-fit.mjs` you must re-run
+`9-clean.mjs` after it or the defect comes back.
+
 **Apply `harbour-mask.png` (255 = draw) before drawing anything.** 29.9 km²
 of intertidal outside it is non-tidal flicker that the step fit cannot distinguish from real drying
 ground, and it will shimmer as the tide animates. §6 lists what it is made of.
@@ -519,6 +525,64 @@ clear, not because the difference was assumed away.
 
 ---
 
+## 7. Stage 9 — water that is not water
+
+**The defect.** Dark and bluish urban pixels — roof shadow, wet asphalt, the port's berths — sit on
+the wet side of the global NDWI threshold often enough that the step fit calls them subtidal, or
+finds a bogus step in them and calls them intertidal. Rendered, they are permanent blue holes
+punched through Mount Maunganui, the CBD and the port, following the street grid. They do not move
+with the tide, so they read as damage rather than as data.
+
+Two things about the earlier framing of this defect are worth correcting. It was reported as
+"45% of the Tauranga CBD is classified intertidal". Re-measured, a box over the CBD does come out
+around 40% intertidal — but that box contains most of the Waikareao and Waimapu estuaries, and those
+pixels are real flats: their submerged-state NDWI is +0.62, against +0.64 over the Matakana banks.
+**The area affected is far smaller than 45% of the city; the visual damage is real but it is
+speckle, not blocks.** And the worst of it was not in the pipeline at all — it was
+`prototype/prep-hires.mjs` guessing water-vs-land from luminance for anything its despeckling
+filter rejected, which turned dark roofs into permanent water.
+
+**Two tests, both derived from the data.**
+
+1. **Sea-connected.** Real harbour water is one connected body reaching the open sea; a roof is not.
+   Label the water classes 8-connected, keep only the component containing the ocean seed, and every
+   other water pixel becomes land. This also drops the inland flooded paddocks that §6 had to
+   exclude with a mask — the four largest orphans it removes are exactly those components.
+2. **The wet state must look like water.** A pixel called intertidal is claimed to be submerged in
+   every scene above its drying height. Average the NDWI over exactly those scenes: harbour flats
+   come out at a median **+0.583**, because they are under water. Urban pixels hover at zero — they
+   only ever grazed the threshold. Demote intertidal whose submerged state never looks wet.
+
+Test 2 runs first, because urban speckle is what bridges a city block to the shoreline and lets
+test 1 keep it.
+
+**Choosing the cut.** Test 2's threshold is `WET_MIN`, set to **0.2** NDWI. The
+percentiles of submerged-state NDWI over harbour intertidal are p1 +0.098, p2 +0.201, p5 +0.393,
+p50 +0.583, so the cut sits just above the 2nd percentile: it is a claim about the bottom 2% of
+pixels, not about the population.
+
+| | before | after |
+|---|---|---|
+| subtidal | 829.57 km² | 829.02 km² |
+| intertidal (whole frame) | 168.04 km² | 157.56 km² |
+| **intertidal inside `harbour-mask.png`** | **138.15 km²** | **133.33 km²** |
+
+Removed: 5.5 km² intertidal by the spectral test,
+4.98 km² intertidal + 0.55 km²
+subtidal as orphan components (2953 of them).
+
+**The cost is 4.8 km² of harbour intertidal, 3.5% of the scored set,
+and it is stated rather than hidden.** Some of that is certainly real flat at the margins of the
+test. The trade was taken because the removed pixels are, by construction, ones whose "submerged"
+state is not distinguishable from dry ground in the imagery — so they were never carrying much
+information — and because permanent water in the middle of a town is a far more visible error than
+a slightly thinner flat. If it turns out to have cut too deep, `WET_MIN` is one environment
+variable and the raw fit is still in `fit.bin`.
+
+`out/cleaned-away.png` is a raster of exactly which pixels changed, so the edit is auditable.
+
+---
+
 ## Verdict
 
 **Good enough to drive the artwork, with one honest hole at the bottom of the tide.**
@@ -564,6 +628,7 @@ node 4-fit.mjs                     # the raster
 node 5-preview.mjs                 # human-viewable renders
 node 6-validate.mjs                # all validation numbers
 node 8-harbour-mask.mjs            # renderer mask + excluded-component audit
+node 9-clean.mjs                   # remove non-tidal water; REWRITES classes/drying-height in place
 node 7-report.mjs                  # this file
 node verify.mjs                    # independent decode check
 ```

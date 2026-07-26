@@ -1,4 +1,4 @@
-<title>Tauranga Harbour — tide light v2</title>
+<title>Tauranga Harbour — tide light</title>
 <style>
   :root{ --ink:#DEE9EB; --dim:#7E979E; --faint:#42585F; --line:#152429; --accent:#5FD0E8; }
   *{box-sizing:border-box;}
@@ -33,7 +33,9 @@
   button:hover,select:hover{border-color:var(--accent);color:var(--accent);}
   button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#03181D;}
+  #play{min-width:8.5em;}
   .spacer{flex:1;}
+  .hint{font-size:11px;color:var(--faint);letter-spacing:.02em;text-transform:none;font-weight:400;}
 
   .panel{margin-top:22px;border-top:1px solid var(--line);padding-top:18px;
     display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:20px 26px;}
@@ -47,18 +49,20 @@
   .note{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--dim);
     line-height:1.65;max-width:80ch;}
   .note b{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:500;color:var(--accent);}
+  @media (prefers-reduced-motion:reduce){ .rail i{box-shadow:none;} }
 </style>
 
 <div class="wrap">
-  <div class="eyebrow">v2 · LINZ aerial · iOS frames · manual tide and light</div>
+  <div class="eyebrow">LINZ 0.1 m aerial · continuous waterline · iOS frames</div>
   <h1>Tauranga Harbour, <em>tide light</em></h1>
-  <p class="sub">Pick a device frame, choose the imagery, and drive tide and daylight by hand or let
-    them run live. Drag inside the frame to pan, scroll to zoom.</p>
+  <p class="sub">The tide, the sun and the moon are real. Everything below the waterline is computed
+    from a per-pixel drying-height surface. Move the sliders to set the tide and the hour, or press
+    play to let the day run. Drag inside the frame to pan, scroll to zoom.</p>
 
   <div class="stage"><div class="piece" id="piece">
     <canvas id="c"></canvas>
     <div class="plate">
-      <div class="state" id="state">RISING</div>
+      <div class="state" id="state">HELD</div>
       <div class="place">Tauranga Harbour</div>
       <div class="phase" id="phase">Mid Tide</div>
       <div class="rail"><i id="dot"></i></div>
@@ -84,12 +88,12 @@
   </div>
 
   <div class="controls">
-    <button data-speed="1">Real time</button>
+    <button id="play">▶ Play the day</button>
     <button data-speed="900">15 min / s</button>
     <button data-speed="2400" aria-pressed="true">40 min / s</button>
     <button data-speed="10800">3 hr / s</button>
-    <span class="spacer"></span>
-    <button id="liveAll">Back to live</button>
+    <button id="now">Set to now</button>
+    <span class="hint">Paused — the tide and daylight sliders below are driving.</span>
   </div>
 
   <div class="panel" id="panel"></div>
@@ -97,14 +101,21 @@
   <p class="note" id="resnote"></p>
 </div>
 
+<!-- The imagery lives here, in the document, NOT inlined into the module source. A
+     multi-megabyte data URI inside <script type="module"> silently never executes in some
+     engines; as <img> it is the HTML parser's problem, it decodes off the main thread, and
+     the module stays a few kB. -->
+<div id="assets" hidden aria-hidden="true">__IMG_TAGS__</div>
+
 <script type="module">
 __TIDE_MODULE__
 
-const IMAGES = __IMAGES__;              // {name: dataURI}
-const FIELD_SRC = "__FIELD__";
+const assetEls=[...document.querySelectorAll('#assets img')];
+const IMAGES=Object.fromEntries(assetEls.filter(e=>e.dataset.name).map(e=>[e.dataset.name,e]));
+const FIELD_EL=document.getElementById('img_field');
 const LATd=-37.65, LONd=176.17, RAD=Math.PI/180;
-const GROUND_ASPECT=(0.38*110.95)/(0.44*111.320*Math.cos(37.6*RAD));
-const LO=0.332, HI=2.127;
+const LO=0.332, HI=2.127;               // the fitted drying-height range; outside it the raster is silent
+const H_LO=-0.75, H_HI=3.25;            // the field's height encoding — see prep-field.mjs
 
 const DEVICES=[
   ['iPad 12.9" / 10.2"  4:3', 4/3],
@@ -114,32 +125,40 @@ const DEVICES=[
   ['iPhone 8 / SE  16:9', 1334/750],
   ['Square  1:1', 1],
 ];
+// Colours only. Everything structural (realism, clarity, waterline softness) lives in DEFAULTS
+// so a preset changes the palette without undoing the look.
 const PRESETS={
-  'Bioluminescent':{shallow:'#6df3f7',mid:'#0b74a4',deep:'#03122e',landDark:'#0b1512',landLight:'#2c4029',
-    flatDark:'#75786f',flatLight:'#f7f4e6',city:'#ffb545',edgeCol:'#c8ffff',dampCol:'#0d2a33',
-    nightGlow:0.55,nightDepth:1.0,cityGain:1.9,edgeGain:0.38},
-  'Deep water':{shallow:'#2ea9c4',mid:'#0a4f7e',deep:'#020a1c',landDark:'#080f0d',landLight:'#1e2c1c',
-    flatDark:'#5c6058',flatLight:'#e8e4d2',city:'#ffc266',edgeCol:'#9fe8ff',dampCol:'#0a1e26',
-    nightGlow:0.75,nightDepth:1.0,cityGain:2.3,edgeGain:0.30},
-  'Warm chart':{shallow:'#ffd9a0',mid:'#c07a3e',deep:'#2a1a12',landDark:'#12100c',landLight:'#3a3524',
-    flatDark:'#7a6b55',flatLight:'#fdf3dd',city:'#fff0c0',edgeCol:'#ffe6bb',dampCol:'#241a10',
-    nightGlow:0.5,nightDepth:0.8,cityGain:1.6,edgeGain:0.34},
-  'Monochrome':{shallow:'#dfe9ec',mid:'#6d7f87',deep:'#0b1114',landDark:'#0d1113',landLight:'#2a3134',
-    flatDark:'#6c7276',flatLight:'#f2f4f5',city:'#ffd9a0',edgeCol:'#ffffff',dampCol:'#151b1e',
-    nightGlow:0.6,nightDepth:1.0,cityGain:1.7,edgeGain:0.42},
+  'Harbour water':{shallow:'#86ccc2',mid:'#2f8fa0',deep:'#124f70',nightDeep:'#3aa6c8',
+    landDark:'#0b1512',landLight:'#2c4029',dampCol:'#2a2a24',city:'#ffb545',edgeCol:'#d7f2ee',
+    nightGlow:0.85,nightDepth:1.0,cityGain:1.9,edgeGain:0.10},
+  'Bioluminescent':{shallow:'#63dfe4',mid:'#0b74a4',deep:'#0a2748',nightDeep:'#39d7e6',
+    landDark:'#0b1512',landLight:'#2c4029',dampCol:'#0d2a33',city:'#ffb545',edgeCol:'#c8ffff',
+    nightGlow:1.05,nightDepth:1.0,cityGain:1.9,edgeGain:0.12},
+  'Deep water':{shallow:'#2ea9c4',mid:'#0a4f7e',deep:'#0a2b47',nightDeep:'#1f7fae',
+    landDark:'#080f0d',landLight:'#1e2c1c',dampCol:'#0a1e26',city:'#ffc266',edgeCol:'#9fe8ff',
+    nightGlow:0.90,nightDepth:1.0,cityGain:2.3,edgeGain:0.09},
+  'Warm chart':{shallow:'#f0cb98',mid:'#c07a3e',deep:'#4a2c1c',nightDeep:'#c98a4e',
+    landDark:'#12100c',landLight:'#3a3524',dampCol:'#241a10',city:'#fff0c0',edgeCol:'#ffe6bb',
+    nightGlow:0.75,nightDepth:0.8,cityGain:1.6,edgeGain:0.10},
+  'Monochrome':{shallow:'#cbd8dc',mid:'#6d7f87',deep:'#243035',nightDeep:'#93a9b1',
+    landDark:'#0d1113',landLight:'#2a3134',dampCol:'#151b1e',city:'#ffd9a0',edgeCol:'#ffffff',
+    nightGlow:0.85,nightDepth:1.0,cityGain:1.7,edgeGain:0.10},
 };
 const DEFAULTS={
-  ...PRESETS['Bioluminescent'],
+  ...PRESETS['Harbour water'],
   zoom:0.50, cx:0.366, cy:0.46,
-  depthCurve:1.15, moonGain:0.8, dampGain:1.0,
+  tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
+  depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
+  realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
+  edgeWidth:0.035,
   exposure:1.0, gamma:0.92, vignette:0.30,
-  tideManual:-1,          // <0 = follow the clock
-  lightManual:-1,         // <0 = follow the sun
 };
 let S=JSON.parse(JSON.stringify(DEFAULTS));
 let aspect=4/3, portrait=false, basemapName=Object.keys(IMAGES)[0];
+let playing=false;
 
 const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function julian(d){return d.getTime()/86400000+2440587.5;}
 function altitude(ra,dec,n){
   const lst=((((18.697374558+24.06570982441908*n)%24+24)%24)+LONd/15)%24*15*RAD;
@@ -167,48 +186,81 @@ gl.getExtension('OES_standard_derivatives');
 
 const VS=`attribute vec2 p; varying vec2 vUv;
 void main(){ vUv=vec2(p.x*0.5+0.5,0.5-p.y*0.5); gl_Position=vec4(p,0.0,1.0); }`;
+
 const FS=`#extension GL_OES_standard_derivatives : enable
 precision highp float;
 varying vec2 vUv;
-uniform sampler2D uBase,uFieldL,uFieldN;
+uniform sampler2D uBase,uField;
 uniform vec2 uCenter; uniform float uZoom,uFrameAspect;
 uniform float uTide,uTidePast,uDay,uMoon,uNightMix;
-uniform vec3 uSunTint,uShallow,uMid,uDeep,uLandDark,uLandLight,uFlatDark,uFlatLight,uCity,uEdgeCol,uDampCol;
-uniform float uDepthCurve,uNightDepth,uNightGlow,uCityGain,uEdgeGain,uDampGain,uExposure,uGamma,uVignette;
+uniform vec3 uSunTint,uShallow,uMid,uDeep,uNightDeep,uLandDark,uLandLight,uCity,uEdgeCol,uDampCol;
+uniform float uDepthCurve,uClarity,uNightDepth,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
+uniform float uRealism,uGroundGain,uGroundSat,uLandChroma,uLandWhite,uExposure,uGamma,uVignette;
+
+const float H_LO=-0.75, H_HI=3.25;
 
 void main(){
   vec2 uv=uCenter+vec2((vUv.x-0.5)*uZoom*uFrameAspect*1.0866,(vUv.y-0.5)*uZoom);
   if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){gl_FragColor=vec4(0.0,0.0,0.0,1.0);return;}
   vec3 base=texture2D(uBase,uv).rgb;
-  float dryH=texture2D(uFieldL,uv).r*2.5;
-  vec4 fN=texture2D(uFieldN,uv);
-  float cls=fN.g, city=fN.b, lum=dot(base,vec3(0.299,0.587,0.114));
+  vec3 f=texture2D(uField,uv).rgb;
 
-  float isSub=1.0-step(0.25,cls), isInter=step(0.25,cls)*(1.0-step(0.75,cls));
-  float submerged=isSub+isInter*step(dryH,uTide);
+  // ONE continuous surface, filtered like an elevation model. Water sits below the tide range
+  // and land above it, so there is no class test anywhere in this shader and no staircase.
+  float H=H_LO+f.r*(H_HI-H_LO);
+  float bathy=f.g;                 // depth PROXY (distance from shore), not a measurement
+  float city=f.b;
+  float lum=dot(base,vec3(0.299,0.587,0.114));
 
-  vec3 land=mix(uLandDark,uLandLight,smoothstep(0.03,0.50,lum));
-  vec3 flat0=mix(uFlatDark,uFlatLight,smoothstep(0.03,0.44,lum));
+  // ---- ground -----------------------------------------------------------------
+  // Daylight shows the imagery: this is a real place and the aerial is 0.1 m at source.
+  // The stylised two-colour version is kept for night, and uRealism crossfades between them.
+  float tl=mix(smoothstep(0.02,uLandWhite,lum),clamp(lum,0.0,1.0),0.22);
+  vec3 palette=mix(uLandDark,uLandLight,tl);
+  vec3 rel=clamp((base-vec3(lum))/max(lum,0.04),-1.2,1.2);
+  vec3 stylised=palette*(1.0+uLandChroma*rel);
+  vec3 real=mix(vec3(lum),base,uGroundSat)*uGroundGain;
+  vec3 ground=mix(stylised,real,uRealism);
+
+  // Freshly exposed flat is dark and wet and pales as it dries — the piece's one honest cue
+  // for which way the tide is going. Ebbing only; a multiply, so the imagery survives it.
   float ebb=step(uTide+0.0004,uTidePast);
-  float band=ebb*step(uTide,dryH)*step(dryH,uTidePast);
-  float wet=clamp(band*(1.0-(dryH-uTide)/max(uTidePast-uTide,1e-4))*uDampGain,0.0,1.0);
-  flat0=mix(flat0,flat0*0.38+uDampCol,wet);
+  float band=ebb*step(uTide,H)*step(H,uTidePast);
+  float wet=clamp(band*(1.0-(H-uTide)/max(uTidePast-uTide,1e-4))*uDampGain,0.0,1.0);
+  ground=mix(ground,ground*0.52+uDampCol*0.55,wet);
 
-  float depth=mix(clamp((uTide-dryH)/uDepthCurve,0.0,1.0),1.0-smoothstep(0.03,0.34,lum),isSub);
-  vec3 water=depth<0.5?mix(uShallow,uMid,depth*2.0):mix(uMid,uDeep,(depth-0.5)*2.0);
-  water*=0.86+0.30*lum;
+  // ---- water ------------------------------------------------------------------
+  float aa=max(fwidth(H),0.0015);
+  float submerged=smoothstep(-aa,aa,uTide-H);          // antialiased per screen pixel
+  float sea=1.0-smoothstep(0.03,0.35,H-H_LO);          // 1 on the always-wet sentinel
+  float depth=max(clamp((uTide-H)/uDepthCurve,0.0,1.0),sea*bathy);
+  vec3 wcol=depth<0.5?mix(uShallow,uMid,depth*2.0):mix(uMid,uDeep,(depth-0.5)*2.0);
+  // The shallows let the bed through — that is where the sandbanks and channels read.
+  float clarity=uClarity*mix(1.0,0.18,smoothstep(0.05,0.80,depth));
+  wcol*=mix(1.0,0.55+0.85*lum,clarity);
 
-  float edge=0.0;
-  if(isInter>0.5){ float we=max(fwidth(dryH),0.0005); edge=1.0-smoothstep(0.0,we*2.2,abs(dryH-uTide)); }
+  vec3 surface=mix(ground,wcol,submerged);
 
-  vec3 surface=mix(mix(land,flat0,isInter),water,submerged);
+  // ---- waterline ---------------------------------------------------------------
+  // A soft sheen measured in METRES of tide, not a hairline in screen pixels. On a flat that
+  // is a wide gentle band; on a steep shore it collapses to nothing, which is correct.
+  float dh=(uTide-H)/max(uEdgeWidth,0.004);
+  float edge=exp(-dh*dh);
+
+  // ---- light -------------------------------------------------------------------
   vec3 daylight=surface*uSunTint*uDay;
-  float dnight=mix(1.0,depth,uNightDepth);
-  float emis=submerged*dnight*uNightGlow*(0.25+0.75*uMoon);
-  vec3 night=surface*(0.04+0.26*uMoon)+water*emis;
+
+  // Night. Deep water is the brightest thing in the frame: it holds the sky and the moon,
+  // while the flats and the land go quiet.
+  vec3 landNight=palette*(1.0+0.35*uLandChroma*rel);
+  float dw=mix(1.0,depth,uNightDepth);
+  vec3 nightWater=mix(uShallow*0.22,uNightDeep,pow(clamp(depth,0.0,1.0),0.8))*mix(1.0,0.78+0.55*lum,0.35);
+  float emis=uNightGlow*(0.22+0.78*uMoon)*(0.14+0.86*dw);
+  vec3 night=mix(landNight*(0.05+0.24*uMoon),nightWater*emis,submerged);
+
   vec3 col=mix(daylight,night,uNightMix);
   col+=uCity*city*uCityGain*uNightMix;
-  col+=uEdgeCol*edge*uEdgeGain*(0.6+0.6*uNightMix);
+  col+=uEdgeCol*edge*uEdgeGain*(0.45+0.75*uNightMix);
   col*=uExposure;
   col*=1.0-uVignette*smoothstep(0.42,0.98,distance(vUv,vec2(0.5)));
   gl_FragColor=vec4(pow(clamp(col,0.0,1.0),vec3(uGamma)),1.0);
@@ -224,20 +276,20 @@ const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);
 gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
 const pl=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(pl);gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
 const U=n=>gl.getUniformLocation(prog,n);
-function mkTex(img,unit,smooth){
+function mkTex(img,unit){
   const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-  const f=smooth?gl.LINEAR:gl.NEAREST;
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,f);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,f);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,img);
   return t;
 }
-const load=s=>new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=s;});
+const ready=el=>el.complete&&el.naturalWidth?Promise.resolve(el)
+  :new Promise((r,j)=>{el.addEventListener('load',()=>r(el),{once:true});el.addEventListener('error',j,{once:true});});
 
 function drawMoon(frac,waxing){
-  const R=10,k=Math.max(0,Math.min(1,frac)),x=R*(1-2*k);
+  const R=10,k=clamp(frac,0,1),x=R*(1-2*k);
   const so=waxing?1:0,si=(x>=0)===waxing?0:1;
   document.getElementById('moonlit').setAttribute('d',
     k<0.01?'':`M 0 ${-R} A ${R} ${R} 0 0 ${so} 0 ${R} A ${Math.abs(x)} ${R} 0 0 ${si} 0 ${-R} Z`);
@@ -245,15 +297,19 @@ function drawMoon(frac,waxing){
 
 // ---------------- UI ----------------
 const GROUPS=[
-  ['Drive it by hand',[['tideManual','Tide height (m)',-1,HI,0.005,'live below 0.33'],
-                       ['lightManual','Daylight',-1,1,0.005,'live below 0']]],
+  ['Drive it by hand',[['tide','Tide height (m)',LO,HI,0.005],['light','Daylight',0,1,0.005]]],
   ['Framing',[['zoom','Zoom',0.18,1.0,0.005],['cx','Centre ←→',0,1,0.005],['cy','Centre ↑↓',0,1,0.005]]],
-  ['Water',[['shallow','Shallow','c'],['mid','Mid','c'],['deep','Deep','c'],['depthCurve','Depth falloff',0.4,2.5,0.01]]],
-  ['Night',[['nightGlow','Water glow',0,1.6,0.01],['nightDepth','Glow follows depth',0,1,0.01],['moonGain','Moon influence',0,1.5,0.01]]],
+  ['Water',[['shallow','Shallow','c'],['mid','Mid','c'],['deep','Deep','c'],
+            ['depthCurve','Depth falloff',0.4,2.5,0.01],['clarity','Shallows show the bed',0,1,0.01]]],
+  ['Night',[['nightDeep','Deep-water glow','c'],['nightGlow','Glow strength',0,1.6,0.01],
+            ['nightDepth','Glow follows depth',0,1,0.01],['moonGain','Moon influence',0,1.5,0.01]]],
   ['Towns',[['city','Light colour','c'],['cityGain','Brightness',0,5,0.05]]],
-  ['Waterline',[['edgeCol','Colour','c'],['edgeGain','Glow',0,1.5,0.01]]],
-  ['Ground',[['landDark','Land dark','c'],['landLight','Land light','c'],['flatDark','Flat dark','c'],
-             ['flatLight','Flat light','c'],['dampCol','Damp tint','c'],['dampGain','Damp strength',0,2,0.02]]],
+  ['Waterline',[['edgeCol','Colour','c'],['edgeGain','Sheen',0,0.6,0.005],['edgeWidth','Softness (m)',0.005,0.15,0.001]]],
+  ['Ground',[['realism','Daylight realism',0,1,0.01],['groundGain','Daylight brightness',0.4,1.8,0.01],
+             ['groundSat','Daylight colour',0,2,0.01],
+             ['landDark','Night land dark','c'],['landLight','Night land light','c'],
+             ['landChroma','Land colour kept',0,1.4,0.01],['landWhite','Land white point',0.20,0.95,0.01],
+             ['dampCol','Damp tint','c'],['dampGain','Damp strength',0,2,0.02]]],
   ['Image',[['exposure','Exposure',0.4,2,0.01],['gamma','Gamma',0.6,1.4,0.01],['vignette','Vignette',0,0.8,0.01]]],
 ];
 const panel=document.getElementById('panel');
@@ -270,21 +326,22 @@ for(const [title,items] of GROUPS){
       lb.innerHTML=`<span>${label}</span><span class="v" id="v_${key}"></span>`;
       const inp=document.createElement('input');
       inp.type='range';inp.min=a;inp.max=b;inp.step=step;inp.value=S[key];inp.dataset.key=key;
-      inp.addEventListener('input',()=>{S[key]=+inp.value;showVal(key);});
+      inp.addEventListener('input',()=>{
+        S[key]=+inp.value;
+        if(key==='zoom')clampZoom();
+        if(key==='tide'||key==='light')pause();   // touching them means you want them
+        showVal(key);
+      });
       lb.appendChild(inp);fsx.appendChild(lb);
     }
   }
   panel.appendChild(fsx);
 }
-function showVal(k){
-  const el=document.getElementById('v_'+k); if(!el) return;
-  if(k==='tideManual') el.textContent = S[k]<LO ? 'live' : S[k].toFixed(2);
-  else if(k==='lightManual') el.textContent = S[k]<0 ? 'live' : S[k].toFixed(2);
-  else el.textContent=(+S[k]).toFixed(2);
-}
+function showVal(k){const el=document.getElementById('v_'+k); if(el) el.textContent=(+S[k]).toFixed(2);}
 function syncInputs(){
   panel.querySelectorAll('input').forEach(i=>{const k=i.dataset.key;if(k!=null){i.value=S[k];showVal(k);}});
 }
+function syncOne(k){const i=panel.querySelector(`input[data-key="${k}"]`);if(i){i.value=S[k];showVal(k);}}
 syncInputs();
 
 const devSel=document.getElementById('device');
@@ -292,18 +349,29 @@ DEVICES.forEach(([n,a],i)=>{const o=document.createElement('option');o.value=a;o
 const baseSel=document.getElementById('basemap');
 Object.keys(IMAGES).forEach((n,i)=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(i===0)o.selected=true;baseSel.appendChild(o);});
 const preSel=document.getElementById('preset');
-{const o=document.createElement('option');o.textContent='Colour preset…';o.value='';preSel.appendChild(o);}
-Object.keys(PRESETS).forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;preSel.appendChild(o);});
+Object.keys(PRESETS).forEach((n,i)=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(i===0)o.selected=true;preSel.appendChild(o);});
 preSel.addEventListener('change',()=>{const p=PRESETS[preSel.value];if(p){Object.assign(S,JSON.parse(JSON.stringify(p)));syncInputs();}});
 
 const piece=document.getElementById('piece');
+// The map is 1.0866 wider than tall in normalised texture units, so a frame of aspect `a` at
+// zoom z needs z*a*1.0866 of it horizontally. Past 1.0 there is no texture left and the widest
+// landscape frame renders a black band. 0.995 rather than 1.0 because the slider quantises to
+// 0.005 and an exact cap rounds back up by one step.
+const zoomCap=()=>Math.min(1,0.995/((portrait?1/aspect:aspect)*1.0866));
+function clampZoom(){const m=zoomCap();if(S.zoom>m){S.zoom=m;syncInputs();}}
 function applyFrame(){
+  clampZoom();
   const a=portrait?1/aspect:aspect;
-  const maxW=Math.min(piece.parentElement.clientWidth-28,1180);
-  const maxH=Math.round(window.innerHeight*0.78);
+  // Floors matter: embedded in an iframe or a background tab this runs before layout, and a
+  // zero-width parent used to produce a NEGATIVE canvas size, which throws and takes the whole
+  // module down silently. Fall back to a sensible size and let the observer below correct it.
+  const avail=piece.parentElement.clientWidth||0;
+  const maxW=Math.max(320,Math.min(avail?avail-28:1180,1180));
+  const maxH=Math.max(240,Math.round((window.innerHeight||820)*0.78));
   let w=maxW,h=w/a; if(h>maxH){h=maxH;w=h*a;}
   piece.style.width=Math.round(w)+'px';piece.style.height=Math.round(h)+'px';
-  canvas.width=Math.min(2600,Math.round(w*2));canvas.height=Math.round(canvas.width/a);
+  canvas.width=Math.max(2,Math.min(2600,Math.round(w*2)));
+  canvas.height=Math.max(2,Math.round(canvas.width/a));
   gl.viewport(0,0,canvas.width,canvas.height);
 }
 devSel.addEventListener('change',()=>{aspect=+devSel.value;applyFrame();});
@@ -311,19 +379,35 @@ const bl=document.getElementById('land'),bp=document.getElementById('port');
 bl.addEventListener('click',()=>{portrait=false;bl.setAttribute('aria-pressed','true');bp.setAttribute('aria-pressed','false');applyFrame();});
 bp.addEventListener('click',()=>{portrait=true;bp.setAttribute('aria-pressed','true');bl.setAttribute('aria-pressed','false');applyFrame();});
 window.addEventListener('resize',applyFrame);
+// The container often gets its real width after this module runs (iframe, hidden tab, late
+// layout). Without this the piece would stay at the fallback size until the window resized.
+if(window.ResizeObserver) new ResizeObserver(()=>applyFrame()).observe(piece.parentElement);
 
 let drag=null;
 piece.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,cx:S.cx,cy:S.cy};piece.setPointerCapture(e.pointerId);});
 piece.addEventListener('pointermove',e=>{if(!drag)return;const r=piece.getBoundingClientRect();
   const a=portrait?1/aspect:aspect;
-  S.cx=Math.max(0,Math.min(1,drag.cx-(e.clientX-drag.x)/r.width*S.zoom*a*1.0866));
-  S.cy=Math.max(0,Math.min(1,drag.cy-(e.clientY-drag.y)/r.height*S.zoom));syncInputs();});
+  S.cx=clamp(drag.cx-(e.clientX-drag.x)/r.width*S.zoom*a*1.0866,0,1);
+  S.cy=clamp(drag.cy-(e.clientY-drag.y)/r.height*S.zoom,0,1);syncInputs();});
 piece.addEventListener('pointerup',()=>drag=null);
 piece.addEventListener('wheel',e=>{e.preventDefault();
-  S.zoom=Math.max(0.18,Math.min(1,S.zoom*(1+Math.sign(e.deltaY)*0.06)));syncInputs();},{passive:false});
+  S.zoom=clamp(S.zoom*(1+Math.sign(e.deltaY)*0.06),0.18,zoomCap());syncInputs();},{passive:false});
 
-document.getElementById('reset').addEventListener('click',()=>{S=JSON.parse(JSON.stringify(DEFAULTS));syncInputs();});
-document.getElementById('liveAll').addEventListener('click',()=>{S.tideManual=-1;S.lightManual=-1;virtual=new Date();syncInputs();});
+// ---------------- play / pause ----------------
+const playBtn=document.getElementById('play');
+const hint=document.querySelector('.hint');
+function setPlaying(v){
+  playing=v;
+  playBtn.textContent=v?'❚❚ Pause':'▶ Play the day';
+  playBtn.setAttribute('aria-pressed',String(v));
+  hint.textContent=v?'Running — the sliders follow the clock.'
+                    :'Paused — the tide and daylight sliders below are driving.';
+}
+function pause(){ if(playing) setPlaying(false); }
+playBtn.addEventListener('click',()=>setPlaying(!playing));
+document.getElementById('now').addEventListener('click',()=>{virtual=new Date();});
+
+document.getElementById('reset').addEventListener('click',()=>{S=JSON.parse(JSON.stringify(DEFAULTS));setPlaying(false);syncInputs();});
 document.getElementById('copy').addEventListener('click',async e=>{
   try{await navigator.clipboard.writeText(JSON.stringify({...S,basemap:basemapName,aspect:portrait?1/aspect:aspect},null,2));e.target.textContent='Copied';}
   catch{e.target.textContent='Copy failed';}
@@ -334,75 +418,92 @@ const DAMP_MIN=110;
 let virtual=new Date(),speed=2400,last=performance.now();
 const tF=new Intl.DateTimeFormat('en-NZ',{timeZone:'Pacific/Auckland',hour:'numeric',minute:'2-digit',hour12:true});
 const dF=new Intl.DateTimeFormat('en-NZ',{timeZone:'Pacific/Auckland',weekday:'short',day:'numeric',month:'short'});
-function stateWord(h,rising){const f=(h-LO)/(HI-LO);
-  if(f<0.14)return'Low Tide';if(f>0.86)return'High Tide';
-  if(f>0.40&&f<0.60)return'Mid Tide';return rising?'Flooding':'Draining';}
+function stateWord(h,rising){const fr=(h-LO)/(HI-LO);
+  if(fr<0.14)return'Low Tide';if(fr>0.86)return'High Tide';
+  if(fr>0.40&&fr<0.60)return'Mid Tide';return rising?'Flooding':'Draining';}
 
 function frame(now){
   const dt=(now-last)/1000;last=now;
-  virtual=new Date(virtual.getTime()+dt*speed*1000);
-  const manualTide=S.tideManual>=LO;
-  const hTrue=manualTide?S.tideManual:predict(virtual);
-  const h=Math.max(LO,Math.min(HI,hTrue));
-  const hPast=manualTide?h:Math.max(LO,Math.min(HI,predict(new Date(virtual.getTime()-DAMP_MIN*60000))));
-  const rising=manualTide?true:hTrue>predict(new Date(virtual.getTime()-600000));
-  const sun=sunPos(virtual),moon=moonPos(virtual);
-  const day=S.lightManual>=0?S.lightManual:Math.max(0,Math.min(1,(sun.alt+6)/11));
-  const warm=Math.max(0,Math.min(1,(12-sun.alt)/18));
-  const inten=S.lightManual>=0?1:0.30+0.70*Math.max(0,Math.min(1,(sun.alt+4)/26));
-  const moonUp=Math.max(0,Math.min(1,(moon.alt+2)/16));
+  if(playing) virtual=new Date(virtual.getTime()+dt*speed*1000);
+
+  const moon=moonPos(virtual);
+  let h,hPast,rising,sunAlt;
+  if(playing){
+    const hTrue=predict(virtual);
+    h=clamp(hTrue,LO,HI);
+    hPast=clamp(predict(new Date(virtual.getTime()-DAMP_MIN*60000)),LO,HI);
+    rising=hTrue>predict(new Date(virtual.getTime()-600000));
+    sunAlt=sunPos(virtual).alt;
+    S.tide=h; S.light=clamp((sunAlt+6)/40,0,1);
+    syncOne('tide'); syncOne('light');      // only the two that move; syncInputs() every frame is 20 DOM writes
+  }else{
+    h=clamp(S.tide,LO,HI);
+    hPast=h;                       // held: no damp band, because nothing has just drained
+    rising=true;
+    sunAlt=S.light*40-6;           // the slider IS the sun, so the warmth follows it
+  }
+  const day=clamp((sunAlt+6)/11,0,1);
+  const warm=clamp((12-sunAlt)/18,0,1);
+  const inten=0.30+0.70*clamp((sunAlt+4)/26,0,1);
+  const moonUp=clamp((moon.alt+2)/16,0,1);
   const moonLight=Math.min(1,moon.frac*moonUp*S.moonGain);
 
   const a=portrait?1/aspect:aspect;
+  if(S.zoom>zoomCap())clampZoom();
   const halfW=S.zoom*a*1.0866/2,halfH=S.zoom/2;
-  gl.uniform2f(U('uCenter'),Math.max(halfW,Math.min(1-halfW,S.cx)),Math.max(halfH,Math.min(1-halfH,S.cy)));
+  gl.uniform2f(U('uCenter'),clamp(S.cx,halfW,1-halfW),clamp(S.cy,halfH,1-halfH));
   gl.uniform1f(U('uZoom'),S.zoom);gl.uniform1f(U('uFrameAspect'),a);
   gl.uniform1f(U('uTide'),h);gl.uniform1f(U('uTidePast'),hPast);
   gl.uniform1f(U('uDay'),day*inten);gl.uniform1f(U('uMoon'),moonLight);gl.uniform1f(U('uNightMix'),1-day);
   gl.uniform3f(U('uSunTint'),1+0.30*warm,1-0.05*warm,1-0.34*warm);
-  for(const [k,n] of [['shallow','uShallow'],['mid','uMid'],['deep','uDeep'],['landDark','uLandDark'],
-      ['landLight','uLandLight'],['flatDark','uFlatDark'],['flatLight','uFlatLight'],['city','uCity'],
+  for(const [k,n] of [['shallow','uShallow'],['mid','uMid'],['deep','uDeep'],['nightDeep','uNightDeep'],
+      ['landDark','uLandDark'],['landLight','uLandLight'],['city','uCity'],
       ['edgeCol','uEdgeCol'],['dampCol','uDampCol']]){
     const c=hex2rgb(S[k]);gl.uniform3f(U(n),c[0],c[1],c[2]);}
-  for(const [k,n] of [['depthCurve','uDepthCurve'],['nightDepth','uNightDepth'],['nightGlow','uNightGlow'],
-      ['cityGain','uCityGain'],['edgeGain','uEdgeGain'],['dampGain','uDampGain'],
+  for(const [k,n] of [['depthCurve','uDepthCurve'],['clarity','uClarity'],['nightDepth','uNightDepth'],
+      ['nightGlow','uNightGlow'],['cityGain','uCityGain'],['edgeGain','uEdgeGain'],['edgeWidth','uEdgeWidth'],
+      ['dampGain','uDampGain'],['realism','uRealism'],['groundGain','uGroundGain'],['groundSat','uGroundSat'],
+      ['landChroma','uLandChroma'],['landWhite','uLandWhite'],
       ['exposure','uExposure'],['gamma','uGamma'],['vignette','uVignette']]) gl.uniform1f(U(n),S[k]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 
-  document.getElementById('state').textContent=manualTide?'HELD':(rising?'RISING':'FALLING');
+  document.getElementById('state').textContent=playing?(rising?'RISING':'FALLING'):'HELD';
   document.getElementById('phase').textContent=stateWord(h,rising);
   document.getElementById('dot').style.left=((h-LO)/(HI-LO)*100)+'%';
   document.getElementById('meta').textContent=
-    (manualTide?'—  ·  ':tF.format(virtual).toUpperCase()+'  ·  '+dF.format(virtual)+'  ·  ')+hTrue.toFixed(2)+' m';
+    (playing?tF.format(virtual).toUpperCase()+'  ·  '+dF.format(virtual)+'  ·  ':'')+h.toFixed(2)+' m';
   document.getElementById('moontxt').textContent=Math.round(moon.frac*100)+'% '+(moon.waxing?'waxing':'waning');
   drawMoon(moon.frac,moon.waxing);
   requestAnimationFrame(frame);
 }
 const sB=[...document.querySelectorAll('[data-speed]')];
-sB.forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.speed;sB.forEach(o=>o.setAttribute('aria-pressed',String(o===b)));}));
+sB.forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.speed;sB.forEach(o=>o.setAttribute('aria-pressed',String(o===b)));if(!playing)setPlaying(true);}));
 
 // ---------------- boot ----------------
 const imgs={};
-for(const [name,src] of Object.entries(IMAGES)) imgs[name]=await load(src);
-const fieldImg=await load(FIELD_SRC);
-mkTex(imgs[basemapName],0,true);
-mkTex(fieldImg,1,true);
-mkTex(fieldImg,2,false);
-gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uFieldL'),1);gl.uniform1i(U('uFieldN'),2);
-baseSel.addEventListener('change',()=>{basemapName=baseSel.value;mkTex(imgs[basemapName],0,true);updateNote();});
+for(const [name,el] of Object.entries(IMAGES)) imgs[name]=await ready(el);
+mkTex(imgs[basemapName],0);
+mkTex(await ready(FIELD_EL),1);
+gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);
+baseSel.addEventListener('change',()=>{basemapName=baseSel.value;mkTex(imgs[basemapName],0);updateNote();});
 function updateNote(){
   const w=imgs[basemapName].width;
   const mpp=(0.44*111320*Math.cos(37.6*Math.PI/180)/w).toFixed(1);
   document.getElementById('resnote').innerHTML=
     `<b>${basemapName}</b> — ${w}px across the harbour, about <b>${mpp} m</b> per pixel here. `+
-    `The LINZ layer is genuinely <b>0.1 m</b> at source; it is downsampled to fit an embeddable page, `+
-    `and at whole-harbour framing an iPad screen cannot resolve more than this anyway. `+
-    `Zoom in and the difference against Sentinel-2 shows. The waterline itself is limited to `+
-    `<b>~15 m</b> by the drying-height raster, whatever the imagery does.`;
+    `The LINZ layer is genuinely <b>0.1 m</b> at source; what is embedded here is the z14 tile set, `+
+    `which is <b>7.6 m</b> at source and is the ceiling for a self-contained page — a shipping app `+
+    `would stream the full-resolution layer as you zoom. The waterline is a smooth iso-contour of a `+
+    `continuous height surface, but the surface underneath it is sampled at <b>~15 m</b>, so it is `+
+    `smooth rather than sharp: it will not show you a tide creeping around a single rock. `+
+    `Below <b>0.33 m</b> the satellites never saw the harbour, and the piece holds still.`;
 }
+
+setPlaying(false);
 applyFrame(); updateNote();
-// debug hook: lets a headless/hidden pane drive one frame, where rAF is suspended
+requestAnimationFrame(frame);
+
 window.__tick = t => frame(t ?? performance.now());
 window.__pixel = (x,y) => { const p=new Uint8Array(4); gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,p); return [...p]; };
-requestAnimationFrame(frame);
+window.__S = () => S;
 </script>

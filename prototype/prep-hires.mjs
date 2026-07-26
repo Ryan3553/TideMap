@@ -52,25 +52,12 @@ const h16 = dec.samples ?? dec.data ?? dec;
 const harbour = await sharp('data/harbour-mask.png').extractChannel(0).raw().toBuffer();
 const baseN = await rawRGB(await sharp('data/base-hi.png').resize(N, N).png().toBuffer(), N, N);
 
-const PX_KM2 = 14.9 * 16.2 / 1e6, MIN_KM2 = 0.05;
-const isInter = new Uint8Array(N * N);
-for (let i = 0; i < N * N; i++) isInter[i] = (h16[i] !== 0 && h16[i] !== 65535) ? 1 : 0;
-const lab = new Int32Array(N * N).fill(-1), st = new Int32Array(N * N), sizes = [];
-for (let s = 0; s < N * N; s++) {
-  if (!isInter[s] || lab[s] >= 0) continue;
-  const id = sizes.length; let sp = 0, cnt = 0; st[sp++] = s; lab[s] = id;
-  while (sp) {
-    const p = st[--sp]; cnt++; const x = p % N, y = (p / N) | 0;
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue;
-      const q = ny * N + nx;
-      if (isInter[q] && lab[q] < 0) { lab[q] = id; st[sp++] = q; }
-    }
-  }
-  sizes.push(cnt);
-}
-const keep = sizes.map(c => c * PX_KM2 >= MIN_KM2);
+const PX_KM2 = 14.9 * 16.2 / 1e6;
+// No despeckling here any more. Pipeline stage 9 (9-clean.mjs) removes water that
+// is not sea-connected and intertidal whose submerged state never looks like water,
+// so what arrives is already clean. The old fallback — guess water-vs-land from
+// luminance for anything the size filter rejected — is what punched the permanent
+// blue holes through Mount Maunganui and the port: dark bluish roofs read as water.
 
 // city lights: bright AND near-grey AND set back from the water (surf is bright and white too)
 const landMask = Buffer.alloc(N * N);
@@ -109,11 +96,11 @@ for (let i = 0; i < N * N; i++) {
   let r = 0, g;
   if (v === 0) g = 0;
   else if (v === 65535) g = 255;
-  else if (!keep[lab[i]] || harbour[i] < 128) {
-    const R = baseN[i * 3], Gc = baseN[i * 3 + 1], B = baseN[i * 3 + 2];
-    const lum = (0.299 * R + 0.587 * Gc + 0.114 * B) / 255;
-    g = (B > R && lum < 0.34) ? 0 : 255;
-  } else { g = 128; r = Math.round((v - 1) / 65533 * heightMax / 2.5 * 255); }
+  // Intertidal outside the harbour mask is open-water sun glint and surf that the
+  // step fit misreads as drying ground (docs/pipeline-validation.md §6). It is
+  // sea-connected, so it is sea — freeze it as water rather than animating it.
+  else if (harbour[i] < 128) g = 0;
+  else { g = 128; r = Math.round((v - 1) / 65533 * heightMax / 2.5 * 255); }
   packed[i * 3] = r; packed[i * 3 + 1] = g; packed[i * 3 + 2] = Math.min(255, urban[i] * 0.85 + glow[i]);
 }
 console.log(`city lights ${(lit * PX_KM2).toFixed(1)} km2`);
