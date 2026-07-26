@@ -1,5 +1,10 @@
 # Next session — kickoff
 
+> **2026-07-26 late:** an overnight "make it beautiful" round is running — see
+> `docs/ROADMAP.md` for the jobs (imagery fusion, real night lights, smooth tide, LIC flow
+> channels, artistic swell/motion, bathymetry hunt) and `docs/REPORT-2026-07-27.md` for how
+> it ended. The sections below predate that round; the traps all still stand.
+
 The three jobs this file used to specify — urban misclassification, land rendering, zoom
 clamp — are **done**, and so is the round after it: the look, the continuous waterline, and
 packaging the piece as an installable iPad app. See `HANDOVER.md` for what each turned out to
