@@ -1,0 +1,363 @@
+<title>Tauranga Harbour — Tide Progression</title>
+<style>
+  :root {
+    --ground:        #EDF1F1;
+    --ground-2:      #E1E8E8;
+    --ink:           #0D1D22;
+    --ink-soft:      #46595E;
+    --ink-faint:     #8B9CA0;
+    --rule:          #C6D2D3;
+    --accent:        #B3225C;   /* chart magenta — lights, cautions, the live mark */
+    --sand:          #A87B45;   /* exposed flat */
+    --stage:         #0A1418;
+    --panel:         #F6F8F8;
+    --shadow:        0 1px 2px rgba(13,29,34,.10), 0 12px 32px rgba(13,29,34,.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:   #071115;
+      --ground-2: #0C1B20;
+      --ink:      #E4EDEE;
+      --ink-soft: #90A6AB;
+      --ink-faint:#5A7075;
+      --rule:     #1B2E34;
+      --accent:   #FF5C90;
+      --sand:     #D6A468;
+      --stage:    #040C0F;
+      --panel:    #0C1B20;
+      --shadow:   0 1px 2px rgba(0,0,0,.5), 0 14px 40px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#071115; --ground-2:#0C1B20; --ink:#E4EDEE; --ink-soft:#90A6AB;
+    --ink-faint:#5A7075; --rule:#1B2E34; --accent:#FF5C90; --sand:#D6A468;
+    --stage:#040C0F; --panel:#0C1B20;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 40px rgba(0,0,0,.45);
+  }
+  :root[data-theme="light"] {
+    --ground:#EDF1F1; --ground-2:#E1E8E8; --ink:#0D1D22; --ink-soft:#46595E;
+    --ink-faint:#8B9CA0; --rule:#C6D2D3; --accent:#B3225C; --sand:#A87B45;
+    --stage:#0A1418; --panel:#F6F8F8;
+    --shadow:0 1px 2px rgba(13,29,34,.10), 0 12px 32px rgba(13,29,34,.10);
+  }
+
+  /* Hydrographic chart convention: water features set in italic serif,
+     land and structure in roman sans, soundings in mono. */
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: ui-sans-serif, "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 72px; }
+
+  header { display: flex; flex-direction: column; gap: 10px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); }
+  .eyebrow {
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600;
+  }
+  h1 {
+    margin: 0; font-size: clamp(28px, 4.6vw, 46px); font-weight: 400; letter-spacing: -.015em;
+    text-wrap: balance; line-height: 1.05;
+  }
+  h1 em {
+    font-family: ui-serif, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic; font-weight: 400;
+  }
+  .standfirst {
+    max-width: 62ch; color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 2px 0 0;
+  }
+  .coords {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 11.5px; color: var(--ink-faint); letter-spacing: .04em;
+  }
+
+  .instrument {
+    display: grid; grid-template-columns: minmax(0,1fr) 232px; gap: 26px;
+    align-items: start; margin-top: 30px;
+  }
+  @media (max-width: 860px) { .instrument { grid-template-columns: minmax(0,1fr); } }
+
+  .stage {
+    position: relative; aspect-ratio: 1/1; background: var(--stage);
+    border-radius: 3px; overflow: hidden; box-shadow: var(--shadow);
+  }
+  .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; will-change: opacity;
+  }
+  .stage img.on { opacity: 1; }
+  .stamp {
+    position: absolute; left: 12px; bottom: 12px; z-index: 3;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 10.5px; letter-spacing: .09em; color: rgba(232,242,244,.72);
+    background: rgba(4,12,15,.55); padding: 5px 9px; border-radius: 2px;
+    backdrop-filter: blur(3px);
+  }
+
+  .readout { display: flex; flex-direction: column; gap: 18px; }
+  .height {
+    display: flex; align-items: baseline; gap: 7px;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .height b { font-size: 46px; font-weight: 500; letter-spacing: -.03em; color: var(--accent); }
+  .height span { font-size: 15px; color: var(--ink-soft); }
+  .state {
+    font-family: ui-serif, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic; font-size: 17px; color: var(--ink); margin-top: -8px;
+  }
+
+  .staff { display: flex; gap: 12px; align-items: stretch; height: 250px; }
+  .staff input[type=range] {
+    -webkit-appearance: none; appearance: none; background: transparent;
+    writing-mode: vertical-lr; direction: rtl; width: 30px; height: 100%; margin: 0; cursor: ns-resize;
+  }
+  .staff input[type=range]::-webkit-slider-runnable-track {
+    width: 8px; background: linear-gradient(to top, var(--sand), var(--accent)); border-radius: 4px;
+  }
+  .staff input[type=range]::-moz-range-track {
+    width: 8px; background: linear-gradient(to top, var(--sand), var(--accent)); border-radius: 4px;
+  }
+  .staff input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 26px; height: 12px; border-radius: 2px;
+    background: var(--accent); border: 2px solid var(--panel); margin-left: -9px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
+  .staff input[type=range]::-moz-range-thumb {
+    width: 26px; height: 12px; border-radius: 2px; border: 2px solid var(--panel);
+    background: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
+  .staff input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .ticks {
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 10.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums;
+    padding: 2px 0;
+  }
+  .ticks i { font-style: normal; position: relative; padding-left: 10px; }
+  .ticks i::before {
+    content: ""; position: absolute; left: 0; top: 50%; width: 5px; height: 1px; background: var(--rule);
+  }
+
+  .controls { display: flex; gap: 8px; }
+  button {
+    font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    padding: 9px 14px; border-radius: 2px; border: 1px solid var(--rule);
+    background: var(--panel); color: var(--ink); cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .sources {
+    border-top: 1px solid var(--rule); padding-top: 14px;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 11px; color: var(--ink-soft); line-height: 1.75; font-variant-numeric: tabular-nums;
+  }
+  .sources .k { color: var(--ink-faint); letter-spacing: .08em; text-transform: uppercase; font-size: 10px; display: block; margin-bottom: 5px; }
+  .bar { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; margin-top: 3px; }
+  .bar b { display: block; height: 100%; background: var(--accent); }
+
+  .filmstrip { margin-top: 34px; }
+  .filmstrip h2 {
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-faint);
+    font-weight: 600; margin: 0 0 14px;
+  }
+  .frames { display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px; }
+  @media (max-width: 860px) { .frames { grid-template-columns: repeat(3, 1fr); } }
+  .frame { display: flex; flex-direction: column; gap: 6px; background: none; border: 0; padding: 0; cursor: pointer; }
+  .frame img {
+    width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 2px; display: block;
+    border: 1.5px solid transparent; transition: border-color .15s;
+  }
+  .frame:hover img { border-color: var(--ink-faint); }
+  .frame[aria-current="true"] img { border-color: var(--accent); }
+  .frame figcaption {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 10.5px; color: var(--ink-faint); text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .frame[aria-current="true"] figcaption { color: var(--accent); }
+
+  .notes {
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--rule);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px;
+  }
+  .note h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); font-weight: 600; }
+  .note p { margin: 0; font-size: 13px; line-height: 1.65; color: var(--ink-soft); max-width: 46ch; }
+  .note b { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-weight: 500; color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Feasibility study · Sentinel-2 · Tile 60HVD</div>
+    <h1>Tauranga Harbour, <em>from the flood to the drying</em></h1>
+    <p class="standfirst">
+      Nine cloud-free satellite captures of the same harbour, ordered not by date but by
+      the height of the tide at the moment each was taken. Drag the staff to move the water.
+    </p>
+    <div class="coords">175.93°E – 176.37°E · 37.41°S – 37.79°S · 10 m ground sample · heights above chart datum, LINZ Tauranga</div>
+  </header>
+
+  <div class="instrument">
+    <div class="stage" id="stage">
+      <div class="stamp" id="stamp"></div>
+    </div>
+
+    <div class="readout">
+      <div>
+        <div class="height"><b id="h">1.10</b><span>m</span></div>
+        <div class="state" id="state">half tide, flooding</div>
+      </div>
+
+      <div class="staff">
+        <input type="range" id="slider" min="0.31" max="2.00" step="0.01" value="1.10"
+               aria-label="Tide height in metres above chart datum">
+        <div class="ticks">
+          <i>2.0 — spring high</i>
+          <i>1.5</i>
+          <i>1.0</i>
+          <i>0.5</i>
+          <i>0.3 — spring low</i>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="play" aria-pressed="false">Run the cycle</button>
+      </div>
+
+      <div class="sources">
+        <span class="k">Blending captures</span>
+        <div id="srcA"></div>
+        <div class="bar"><b id="barA"></b></div>
+        <div id="srcB" style="margin-top:8px"></div>
+        <div class="bar"><b id="barB"></b></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="filmstrip">
+    <h2>The nine captures, by tide height</h2>
+    <div class="frames" id="frames"></div>
+  </section>
+
+  <section class="notes">
+    <div class="note">
+      <h3>Why the tide varies at all</h3>
+      <p>Sentinel-2 crosses Tauranga at the same local time every pass — about <b>10:20 am</b>. The
+      semidiurnal tide drifts against the five-day revisit, so a fixed morning slot sweeps the whole
+      tidal range over a few weeks.</p>
+    </div>
+    <div class="note">
+      <h3>How the heights were derived</h3>
+      <p>Each capture's exact acquisition instant was matched against LINZ's official Tauranga
+      predictions and interpolated between the bracketing high and low. Tauranga is a standard port,
+      so the tables are authoritative.</p>
+    </div>
+    <div class="note">
+      <h3>What this is not, yet</h3>
+      <p>Crossfading photographs is a preview of the idea, not the shipping technique. The real build
+      reduces each capture to a waterline and moves that line continuously — <b>9</b> photos become
+      <b>9</b> calibrated contours over one fixed basemap.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const FRAMES = __IMAGES__;
+
+const stage = document.getElementById('stage');
+const imgs = FRAMES.map((f, i) => {
+  const el = document.createElement('img');
+  el.src = f.src;
+  el.alt = 'Tauranga Harbour at ' + f.tide.toFixed(2) + ' m tide, captured ' + f.date;
+  stage.insertBefore(el, stage.firstChild);
+  return el;
+});
+
+const framesEl = document.getElementById('frames');
+const buttons = FRAMES.map((f, i) => {
+  const b = document.createElement('button');
+  b.className = 'frame';
+  b.type = 'button';
+  b.innerHTML = '<img src="' + f.src + '" alt="">' +
+                '<figcaption>' + f.tide.toFixed(2) + ' m</figcaption>';
+  b.addEventListener('click', () => { stop(); set(f.tide); });
+  framesEl.appendChild(b);
+  return b;
+});
+
+const slider = document.getElementById('slider');
+const LO = FRAMES[0].tide, HI = FRAMES[FRAMES.length - 1].tide;
+
+function describe(h) {
+  const f = (h - LO) / (HI - LO);
+  if (f < 0.12) return 'low water — the flats are open';
+  if (f < 0.35) return 'the harbour is draining';
+  if (f < 0.62) return 'half tide, banks awash';
+  if (f < 0.85) return 'the flood is nearly in';
+  return 'high water — the harbour is brimming';
+}
+
+function set(h) {
+  h = Math.min(HI, Math.max(LO, h));
+  slider.value = h;
+  document.getElementById('h').textContent = h.toFixed(2);
+  document.getElementById('state').textContent = describe(h);
+
+  let j = 0;
+  while (j < FRAMES.length - 2 && FRAMES[j + 1].tide < h) j++;
+  const a = FRAMES[j], b = FRAMES[j + 1];
+  const t = Math.min(1, Math.max(0, (h - a.tide) / (b.tide - a.tide)));
+
+  imgs.forEach((el, i) => {
+    el.style.opacity = i === j ? 1 : (i === j + 1 ? t : 0);
+    el.style.zIndex = i === j ? 1 : (i === j + 1 ? 2 : 0);
+  });
+
+  const near = t < 0.5 ? a : b;
+  document.getElementById('stamp').textContent =
+    near.date + ' · ' + near.scene + ' · cloud ' + near.cloud + '%';
+  document.getElementById('srcA').textContent =
+    a.date + '   ' + a.tide.toFixed(2) + ' m   ' + Math.round((1 - t) * 100) + '%';
+  document.getElementById('srcB').textContent =
+    b.date + '   ' + b.tide.toFixed(2) + ' m   ' + Math.round(t * 100) + '%';
+  document.getElementById('barA').style.width = ((1 - t) * 100) + '%';
+  document.getElementById('barB').style.width = (t * 100) + '%';
+
+  buttons.forEach((el, i) => el.setAttribute('aria-current', String(i === (t < 0.5 ? j : j + 1))));
+}
+
+slider.addEventListener('input', () => { stop(); set(+slider.value); });
+
+// A 12 h 25 min semidiurnal cycle, compressed to 24 s.
+const playBtn = document.getElementById('play');
+let raf = null, t0 = 0;
+function stop() {
+  if (raf) cancelAnimationFrame(raf);
+  raf = null;
+  playBtn.setAttribute('aria-pressed', 'false');
+  playBtn.textContent = 'Run the cycle';
+}
+function tick(ts) {
+  if (!t0) t0 = ts;
+  const phase = ((ts - t0) / 24000) * Math.PI * 2;
+  const mid = (LO + HI) / 2, amp = (HI - LO) / 2;
+  set(mid - Math.cos(phase) * amp);
+  raf = requestAnimationFrame(tick);
+}
+playBtn.addEventListener('click', () => {
+  if (raf) return stop();
+  t0 = 0;
+  playBtn.setAttribute('aria-pressed', 'true');
+  playBtn.textContent = 'Stop';
+  raf = requestAnimationFrame(tick);
+});
+
+set(1.10);
+</script>

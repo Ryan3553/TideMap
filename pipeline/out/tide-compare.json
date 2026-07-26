@@ -1,0 +1,49 @@
+{
+  "heightAtExtrema": {
+    "local": {
+      "n": 7057,
+      "bias": 0,
+      "rmse": 0.0303,
+      "maxAbs": 0.075
+    },
+    "shared": {
+      "n": 7057,
+      "bias": 0,
+      "rmse": 0.031,
+      "maxAbs": 0.0855
+    }
+  },
+  "turningPointTiming": {
+    "local": {
+      "n": 1009,
+      "meanAbs": 13.46,
+      "maxAbs": 34
+    },
+    "shared": {
+      "n": 1009,
+      "meanAbs": 9.35,
+      "maxAbs": 26
+    }
+  },
+  "sceneInstantDisagreement": {
+    "sharedVsLocal": {
+      "n": 204,
+      "bias": -0.0309,
+      "rmse": 0.108,
+      "maxAbs": 0.3615
+    },
+    "sharedVsCosine": {
+      "n": 72,
+      "bias": -0.0384,
+      "rmse": 0.107,
+      "maxAbs": 0.2775
+    },
+    "localVsCosine": {
+      "n": 72,
+      "bias": -0.009,
+      "rmse": 0.1047,
+      "maxAbs": 0.2634
+    }
+  },
+  "verdict": "mixed — see numbers"
+}

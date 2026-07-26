@@ -1,0 +1,3358 @@
+{
+  "nScenesFit": 204,
+  "nScenesScored": 97,
+  "tideRangeFit": [
+    0.313,
+    2.162
+  ],
+  "pixelAreaKm2": 0.000241,
+  "harbourPolygon": [
+    [
+      175.94,
+      -37.428
+    ],
+    [
+      175.998,
+      -37.48
+    ],
+    [
+      176.058,
+      -37.565
+    ],
+    [
+      176.128,
+      -37.628
+    ],
+    [
+      176.19,
+      -37.668
+    ],
+    [
+      176.25,
+      -37.702
+    ],
+    [
+      176.29,
+      -37.76
+    ],
+    [
+      176.29,
+      -37.79
+    ],
+    [
+      175.93,
+      -37.79
+    ],
+    [
+      175.93,
+      -37.47
+    ]
+  ],
+  "scoreSubsample": 2,
+  "lag": {
+    "tau0Min": 40,
+    "slopeMinPerKm": 4
+  },
+  "harbour": {
+    "polygonKm2": 682.2,
+    "waterKm2": 182.3,
+    "subtidalKm2": 42.5,
+    "intertidalKm2": 139.8,
+    "supratidalKm2": 499.9,
+    "subtidalPctOfWater": 23.3,
+    "intertidalPctOfWater": 76.7,
+    "pinnedLowKm2": 40.55,
+    "pinnedHighKm2": 0.11,
+    "spuriousIntertidalOutsideKm2": 28.2
+  },
+  "leaveOneOut": {
+    "before": {
+      "label": "BEFORE (round 2 config: 2023+, cloud<5%, uniform tau=80)",
+      "nFit": 35,
+      "nScored": 35,
+      "tau0": 80,
+      "slope": 0,
+      "tideRange": [
+        0.462,
+        1.975
+      ],
+      "meanIoU": 0.8574,
+      "medianIoU": 0.8513,
+      "meanIoULand": 0.6403,
+      "meanAgree": 89.57,
+      "banded": [
+        {
+          "band": "< 0.75 m",
+          "n": 9,
+          "meanIoU": 0.8176,
+          "meanAgree": 89.91
+        },
+        {
+          "band": "0.75-1.00 m",
+          "n": 9,
+          "meanIoU": 0.822,
+          "meanAgree": 86.49
+        },
+        {
+          "band": "1.00-1.50 m",
+          "n": 12,
+          "meanIoU": 0.8619,
+          "meanAgree": 88.03
+        },
+        {
+          "band": "1.50-2.00 m",
+          "n": 5,
+          "meanIoU": 0.9819,
+          "meanAgree": 98.22
+        },
+        {
+          "band": ">= 2.00 m",
+          "n": 0,
+          "meanIoU": null,
+          "meanAgree": null
+        }
+      ],
+      "rows": [
+        {
+          "id": "S2C_60HVD_20251016_0_L2A",
+          "date": "2025-10-16",
+          "tide": 0.462,
+          "cloud": 0.52,
+          "agree": 93.04,
+          "iou": 0.8333,
+          "iouLand": 0.8932,
+          "obsWaterFracPct": 35.86
+        },
+        {
+          "id": "S2C_60HVD_20260424_0_L2A",
+          "date": "2026-04-24",
+          "tide": 0.589,
+          "cloud": 0.19,
+          "agree": 86.65,
+          "iou": 0.74,
+          "iouLand": 0.7848,
+          "obsWaterFracPct": 50.23
+        },
+        {
+          "id": "S2A_60HVD_20240305_0_L2A",
+          "date": "2024-03-05",
+          "tide": 0.609,
+          "cloud": 0.88,
+          "agree": 92.84,
+          "iou": 0.8535,
+          "iouLand": 0.8771,
+          "obsWaterFracPct": 46.93
+        },
+        {
+          "id": "S2C_60HVD_20251115_0_L2A",
+          "date": "2025-11-15",
+          "tide": 0.612,
+          "cloud": 0.36,
+          "agree": 89.61,
+          "iou": 0.7923,
+          "iouLand": 0.828,
+          "obsWaterFracPct": 40.03
+        },
+        {
+          "id": "S2B_60HVD_20230614_0_L2A",
+          "date": "2023-06-14",
+          "tide": 0.646,
+          "cloud": 1.58,
+          "agree": 85.71,
+          "iou": 0.7534,
+          "iouLand": 0.7463,
+          "obsWaterFracPct": 52.02
+        },
+        {
+          "id": "S2B_60HVD_20250802_0_L2A",
+          "date": "2025-08-02",
+          "tide": 0.65,
+          "cloud": 1.39,
+          "agree": 95.77,
+          "iou": 0.9225,
+          "iouLand": 0.9148,
+          "obsWaterFracPct": 51.88
+        },
+        {
+          "id": "S2B_60HVD_20250504_0_L2A",
+          "date": "2025-05-04",
+          "tide": 0.66,
+          "cloud": 2.41,
+          "agree": 91.21,
+          "iou": 0.8579,
+          "iouLand": 0.8129,
+          "obsWaterFracPct": 61.59
+        },
+        {
+          "id": "S2A_60HVD_20240204_0_L2A",
+          "date": "2024-02-04",
+          "tide": 0.66,
+          "cloud": 2.22,
+          "agree": 90.15,
+          "iou": 0.8336,
+          "iouLand": 0.8057,
+          "obsWaterFracPct": 49.55
+        },
+        {
+          "id": "S2B_60HVD_20230214_0_L2A",
+          "date": "2023-02-14",
+          "tide": 0.68,
+          "cloud": 3.87,
+          "agree": 84.18,
+          "iou": 0.7722,
+          "iouLand": 0.6589,
+          "obsWaterFracPct": 67.95
+        },
+        {
+          "id": "S2B_60HVD_20260608_0_L2A",
+          "date": "2026-06-08",
+          "tide": 0.784,
+          "cloud": 0.03,
+          "agree": 87.57,
+          "iou": 0.8105,
+          "iouLand": 0.7346,
+          "obsWaterFracPct": 58.6
+        },
+        {
+          "id": "S2B_60HVD_20240320_0_L2A",
+          "date": "2024-03-20",
+          "tide": 0.797,
+          "cloud": 2.17,
+          "agree": 91.59,
+          "iou": 0.873,
+          "iouLand": 0.8006,
+          "obsWaterFracPct": 58.18
+        },
+        {
+          "id": "S2C_60HVD_20260514_0_L2A",
+          "date": "2026-05-14",
+          "tide": 0.848,
+          "cloud": 2.36,
+          "agree": 87.68,
+          "iou": 0.8212,
+          "iouLand": 0.7163,
+          "obsWaterFracPct": 58.53
+        },
+        {
+          "id": "S2B_60HVD_20251210_0_L2A",
+          "date": "2025-12-10",
+          "tide": 0.871,
+          "cloud": 2.46,
+          "agree": 76.12,
+          "iou": 0.7326,
+          "iouLand": 0.31,
+          "obsWaterFracPct": 89.11
+        },
+        {
+          "id": "S2A_60HVD_20240703_0_L2A",
+          "date": "2024-07-03",
+          "tide": 0.873,
+          "cloud": 0.02,
+          "agree": 87.57,
+          "iou": 0.8201,
+          "iouLand": 0.713,
+          "obsWaterFracPct": 57.32
+        },
+        {
+          "id": "S2A_60HVD_20240812_0_L2A",
+          "date": "2024-08-12",
+          "tide": 0.886,
+          "cloud": 0.03,
+          "agree": 90.67,
+          "iou": 0.8652,
+          "iouLand": 0.7673,
+          "obsWaterFracPct": 61.41
+        },
+        {
+          "id": "S2C_60HVD_20250310_0_L2A",
+          "date": "2025-03-10",
+          "tide": 0.914,
+          "cloud": 0.53,
+          "agree": 83.4,
+          "iou": 0.7812,
+          "iouLand": 0.5927,
+          "obsWaterFracPct": 60.13
+        },
+        {
+          "id": "S2A_60HVD_20230609_0_L2A",
+          "date": "2023-06-09",
+          "tide": 0.941,
+          "cloud": 2.32,
+          "agree": 86.61,
+          "iou": 0.8445,
+          "iouLand": 0.509,
+          "obsWaterFracPct": 85.67
+        },
+        {
+          "id": "S2B_60HVD_20250305_0_L2A",
+          "date": "2025-03-05",
+          "tide": 0.96,
+          "cloud": 1.98,
+          "agree": 87.22,
+          "iou": 0.8495,
+          "iouLand": 0.5423,
+          "obsWaterFracPct": 83.29
+        },
+        {
+          "id": "S2A_60HVD_20240315_0_L2A",
+          "date": "2024-03-15",
+          "tide": 1.026,
+          "cloud": 4.17,
+          "agree": 81.95,
+          "iou": 0.8014,
+          "iouLand": 0.3361,
+          "obsWaterFracPct": 90.55
+        },
+        {
+          "id": "S2C_60HVD_20250409_0_L2A",
+          "date": "2025-04-09",
+          "tide": 1.027,
+          "cloud": 0.12,
+          "agree": 77.93,
+          "iou": 0.7143,
+          "iouLand": 0.5075,
+          "obsWaterFracPct": 55.38
+        },
+        {
+          "id": "S2B_60HVD_20240529_0_L2A",
+          "date": "2024-05-29",
+          "tide": 1.044,
+          "cloud": 0.64,
+          "agree": 87.27,
+          "iou": 0.8513,
+          "iouLand": 0.5308,
+          "obsWaterFracPct": 81.86
+        },
+        {
+          "id": "S2B_60HVD_20231111_0_L2A",
+          "date": "2023-11-11",
+          "tide": 1.08,
+          "cloud": 4.67,
+          "agree": 87.24,
+          "iou": 0.8474,
+          "iouLand": 0.5624,
+          "obsWaterFracPct": 74.91
+        },
+        {
+          "id": "S2C_60HVD_20250519_0_L2A",
+          "date": "2025-05-19",
+          "tide": 1.088,
+          "cloud": 0.02,
+          "agree": 87.52,
+          "iou": 0.8526,
+          "iouLand": 0.5512,
+          "obsWaterFracPct": 76.38
+        },
+        {
+          "id": "S2B_60HVD_20250723_0_L2A",
+          "date": "2025-07-23",
+          "tide": 1.097,
+          "cloud": 0.02,
+          "agree": 89.74,
+          "iou": 0.8794,
+          "iouLand": 0.593,
+          "obsWaterFracPct": 75.22
+        },
+        {
+          "id": "S2B_60HVD_20260628_0_L2A",
+          "date": "2026-06-28",
+          "tide": 1.158,
+          "cloud": 0.87,
+          "agree": 93.32,
+          "iou": 0.9227,
+          "iouLand": 0.6701,
+          "obsWaterFracPct": 82.22
+        },
+        {
+          "id": "S2A_60HVD_20240901_0_L2A",
+          "date": "2024-09-01",
+          "tide": 1.2,
+          "cloud": 0.07,
+          "agree": 91.68,
+          "iou": 0.9039,
+          "iouLand": 0.6177,
+          "obsWaterFracPct": 78.5
+        },
+        {
+          "id": "S2B_60HVD_20260429_0_L2A",
+          "date": "2026-04-29",
+          "tide": 1.213,
+          "cloud": 2.77,
+          "agree": 65.95,
+          "iou": 0.6343,
+          "iouLand": 0.1682,
+          "obsWaterFracPct": 59.32
+        },
+        {
+          "id": "S2A_60HVD_20231126_0_L2A",
+          "date": "2023-11-26",
+          "tide": 1.353,
+          "cloud": 1.42,
+          "agree": 96.5,
+          "iou": 0.9635,
+          "iouLand": 0.5355,
+          "obsWaterFracPct": 92.83
+        },
+        {
+          "id": "S2B_60HVD_20240330_0_L2A",
+          "date": "2024-03-30",
+          "tide": 1.445,
+          "cloud": 0.01,
+          "agree": 98.94,
+          "iou": 0.989,
+          "iouLand": 0.7707,
+          "obsWaterFracPct": 96.15
+        },
+        {
+          "id": "S2B_60HVD_20241205_0_L2A",
+          "date": "2024-12-05",
+          "tide": 1.482,
+          "cloud": 0.05,
+          "agree": 98.32,
+          "iou": 0.9826,
+          "iouLand": 0.6499,
+          "obsWaterFracPct": 95.67
+        },
+        {
+          "id": "S2B_60HVD_20260618_0_L2A",
+          "date": "2026-06-18",
+          "tide": 1.622,
+          "cloud": 0.13,
+          "agree": 99.02,
+          "iou": 0.9899,
+          "iouLand": 0.7624,
+          "obsWaterFracPct": 96.31
+        },
+        {
+          "id": "S2B_60HVD_20250812_0_L2A",
+          "date": "2025-08-12",
+          "tide": 1.699,
+          "cloud": 0.4,
+          "agree": 99.42,
+          "iou": 0.994,
+          "iouLand": 0.8464,
+          "obsWaterFracPct": 96.48
+        },
+        {
+          "id": "S2B_60HVD_20250315_0_L2A",
+          "date": "2025-03-15",
+          "tide": 1.82,
+          "cloud": 2.48,
+          "agree": 97.09,
+          "iou": 0.9699,
+          "iouLand": 0.5123,
+          "obsWaterFracPct": 94.19
+        },
+        {
+          "id": "S2B_60HVD_20240509_0_L2A",
+          "date": "2024-05-09",
+          "tide": 1.94,
+          "cloud": 0.02,
+          "agree": 99.22,
+          "iou": 0.9919,
+          "iouLand": 0.7876,
+          "obsWaterFracPct": 96.46
+        },
+        {
+          "id": "S2B_60HVD_20230803_0_L2A",
+          "date": "2023-08-03",
+          "tide": 1.975,
+          "cloud": 0.01,
+          "agree": 96.36,
+          "iou": 0.9636,
+          "iouLand": 0,
+          "obsWaterFracPct": 96.36
+        }
+      ]
+    },
+    "uniform": {
+      "label": "AFTER, uniform lag (all 204 scenes, tau=60)",
+      "nFit": 204,
+      "nScored": 97,
+      "tau0": 60,
+      "slope": 0,
+      "tideRange": [
+        0.387,
+        2.162
+      ],
+      "meanIoU": 0.8963,
+      "medianIoU": 0.9049,
+      "meanIoULand": 0.6917,
+      "meanAgree": 92.99,
+      "banded": [
+        {
+          "band": "< 0.75 m",
+          "n": 20,
+          "meanIoU": 0.817,
+          "meanAgree": 91.15
+        },
+        {
+          "band": "0.75-1.00 m",
+          "n": 22,
+          "meanIoU": 0.8666,
+          "meanAgree": 90.78
+        },
+        {
+          "band": "1.00-1.50 m",
+          "n": 30,
+          "meanIoU": 0.8961,
+          "meanAgree": 91.11
+        },
+        {
+          "band": "1.50-2.00 m",
+          "n": 21,
+          "meanIoU": 0.986,
+          "meanAgree": 98.64
+        },
+        {
+          "band": ">= 2.00 m",
+          "n": 4,
+          "meanIoU": 0.987,
+          "meanAgree": 98.72
+        }
+      ],
+      "rows": [
+        {
+          "id": "S2A_60HVD_20210818_1_L2A",
+          "date": "2021-08-18",
+          "tide": 0.387,
+          "cloud": 4.72,
+          "agree": 66.02,
+          "iou": 0.0096,
+          "iouLand": 0.659,
+          "obsWaterFracPct": 1.51
+        },
+        {
+          "id": "S2C_60HVD_20251016_0_L2A",
+          "date": "2025-10-16",
+          "tide": 0.462,
+          "cloud": 0.52,
+          "agree": 95.85,
+          "iou": 0.8923,
+          "iouLand": 0.9368,
+          "obsWaterFracPct": 35.86
+        },
+        {
+          "id": "S2B_60HVD_20190116_0_L2A",
+          "date": "2019-01-16",
+          "tide": 0.557,
+          "cloud": 4,
+          "agree": 94.43,
+          "iou": 0.8777,
+          "iouLand": 0.9073,
+          "obsWaterFracPct": 45
+        },
+        {
+          "id": "S2B_60HVD_20190215_0_L2A",
+          "date": "2019-02-15",
+          "tide": 0.558,
+          "cloud": 0.1,
+          "agree": 96.77,
+          "iou": 0.9244,
+          "iouLand": 0.9467,
+          "obsWaterFracPct": 42.04
+        },
+        {
+          "id": "S2B_60HVD_20210803_0_L2A",
+          "date": "2021-08-03",
+          "tide": 0.563,
+          "cloud": 0.19,
+          "agree": 96.78,
+          "iou": 0.923,
+          "iouLand": 0.9476,
+          "obsWaterFracPct": 39.92
+        },
+        {
+          "id": "S2B_60HVD_20181217_0_L2A",
+          "date": "2018-12-17",
+          "tide": 0.57,
+          "cloud": 1.1,
+          "agree": 96.8,
+          "iou": 0.9277,
+          "iouLand": 0.9458,
+          "obsWaterFracPct": 41.91
+        },
+        {
+          "id": "S2A_60HVD_20190101_0_L2A",
+          "date": "2019-01-01",
+          "tide": 0.58,
+          "cloud": 2.29,
+          "agree": 94.89,
+          "iou": 0.8828,
+          "iouLand": 0.9168,
+          "obsWaterFracPct": 41.82
+        },
+        {
+          "id": "S2B_60HVD_20181018_1_L2A",
+          "date": "2018-10-18",
+          "tide": 0.583,
+          "cloud": 1.83,
+          "agree": 95.88,
+          "iou": 0.909,
+          "iouLand": 0.9299,
+          "obsWaterFracPct": 41.5
+        },
+        {
+          "id": "S2C_60HVD_20260424_0_L2A",
+          "date": "2026-04-24",
+          "tide": 0.589,
+          "cloud": 0.19,
+          "agree": 90.86,
+          "iou": 0.8233,
+          "iouLand": 0.8409,
+          "obsWaterFracPct": 50.23
+        },
+        {
+          "id": "S2A_60HVD_20210917_0_L2A",
+          "date": "2021-09-17",
+          "tide": 0.598,
+          "cloud": 1.15,
+          "agree": 93.67,
+          "iou": 0.8593,
+          "iouLand": 0.8968,
+          "obsWaterFracPct": 44.46
+        },
+        {
+          "id": "S2A_60HVD_20240305_0_L2A",
+          "date": "2024-03-05",
+          "tide": 0.609,
+          "cloud": 0.88,
+          "agree": 94.8,
+          "iou": 0.891,
+          "iouLand": 0.9095,
+          "obsWaterFracPct": 46.93
+        },
+        {
+          "id": "S2C_60HVD_20251115_0_L2A",
+          "date": "2025-11-15",
+          "tide": 0.612,
+          "cloud": 0.36,
+          "agree": 96.54,
+          "iou": 0.9179,
+          "iouLand": 0.9435,
+          "obsWaterFracPct": 40.03
+        },
+        {
+          "id": "S2B_60HVD_20230614_0_L2A",
+          "date": "2023-06-14",
+          "tide": 0.646,
+          "cloud": 1.58,
+          "agree": 87.52,
+          "iou": 0.762,
+          "iouLand": 0.792,
+          "obsWaterFracPct": 52.02
+        },
+        {
+          "id": "S2B_60HVD_20220110_0_L2A",
+          "date": "2022-01-10",
+          "tide": 0.647,
+          "cloud": 2.38,
+          "agree": 89.17,
+          "iou": 0.8069,
+          "iouLand": 0.8023,
+          "obsWaterFracPct": 52.17
+        },
+        {
+          "id": "S2B_60HVD_20250802_0_L2A",
+          "date": "2025-08-02",
+          "tide": 0.65,
+          "cloud": 1.39,
+          "agree": 89.87,
+          "iou": 0.8278,
+          "iouLand": 0.8024,
+          "obsWaterFracPct": 51.88
+        },
+        {
+          "id": "S2B_60HVD_20250504_0_L2A",
+          "date": "2025-05-04",
+          "tide": 0.66,
+          "cloud": 2.41,
+          "agree": 88.67,
+          "iou": 0.8198,
+          "iouLand": 0.766,
+          "obsWaterFracPct": 61.59
+        },
+        {
+          "id": "S2A_60HVD_20240204_0_L2A",
+          "date": "2024-02-04",
+          "tide": 0.66,
+          "cloud": 2.22,
+          "agree": 90.86,
+          "iou": 0.8374,
+          "iouLand": 0.8271,
+          "obsWaterFracPct": 49.55
+        },
+        {
+          "id": "S2A_60HVD_20220224_0_L2A",
+          "date": "2022-02-24",
+          "tide": 0.676,
+          "cloud": 0.85,
+          "agree": 86.34,
+          "iou": 0.7936,
+          "iouLand": 0.7125,
+          "obsWaterFracPct": 61.84
+        },
+        {
+          "id": "S2B_60HVD_20230214_0_L2A",
+          "date": "2023-02-14",
+          "tide": 0.68,
+          "cloud": 3.87,
+          "agree": 82.11,
+          "iou": 0.7494,
+          "iouLand": 0.6151,
+          "obsWaterFracPct": 67.95
+        },
+        {
+          "id": "S2B_60HVD_20180411_0_L2A",
+          "date": "2018-04-11",
+          "tide": 0.72,
+          "cloud": 1.33,
+          "agree": 95.25,
+          "iou": 0.9056,
+          "iouLand": 0.9125,
+          "obsWaterFracPct": 49.01
+        },
+        {
+          "id": "S2B_60HVD_20260608_0_L2A",
+          "date": "2026-06-08",
+          "tide": 0.784,
+          "cloud": 0.03,
+          "agree": 88.45,
+          "iou": 0.8281,
+          "iouLand": 0.7398,
+          "obsWaterFracPct": 58.6
+        },
+        {
+          "id": "S2B_60HVD_20180809_1_L2A",
+          "date": "2018-08-09",
+          "tide": 0.791,
+          "cloud": 0.64,
+          "agree": 90.38,
+          "iou": 0.8344,
+          "iouLand": 0.8132,
+          "obsWaterFracPct": 54.71
+        },
+        {
+          "id": "S2B_60HVD_20180809_0_L2A",
+          "date": "2018-08-09",
+          "tide": 0.793,
+          "cloud": 0.62,
+          "agree": 89.86,
+          "iou": 0.8271,
+          "iouLand": 0.8032,
+          "obsWaterFracPct": 54.63
+        },
+        {
+          "id": "S2B_60HVD_20240320_0_L2A",
+          "date": "2024-03-20",
+          "tide": 0.797,
+          "cloud": 2.17,
+          "agree": 94.14,
+          "iou": 0.9002,
+          "iouLand": 0.8754,
+          "obsWaterFracPct": 58.18
+        },
+        {
+          "id": "S2B_60HVD_20190625_1_L2A",
+          "date": "2019-06-25",
+          "tide": 0.832,
+          "cloud": 0.01,
+          "agree": 85.17,
+          "iou": 0.7774,
+          "iouLand": 0.6924,
+          "obsWaterFracPct": 52.47
+        },
+        {
+          "id": "S2C_60HVD_20260514_0_L2A",
+          "date": "2026-05-14",
+          "tide": 0.848,
+          "cloud": 2.36,
+          "agree": 91.47,
+          "iou": 0.8611,
+          "iouLand": 0.8188,
+          "obsWaterFracPct": 58.53
+        },
+        {
+          "id": "S2A_60HVD_20221022_0_L2A",
+          "date": "2022-10-22",
+          "tide": 0.848,
+          "cloud": 0.3,
+          "agree": 91.93,
+          "iou": 0.8648,
+          "iouLand": 0.8329,
+          "obsWaterFracPct": 51.84
+        },
+        {
+          "id": "S2B_60HVD_20251210_0_L2A",
+          "date": "2025-12-10",
+          "tide": 0.871,
+          "cloud": 2.46,
+          "agree": 82.53,
+          "iou": 0.8044,
+          "iouLand": 0.3803,
+          "obsWaterFracPct": 89.11
+        },
+        {
+          "id": "S2A_60HVD_20210110_1_L2A",
+          "date": "2021-01-10",
+          "tide": 0.872,
+          "cloud": 0.84,
+          "agree": 93.1,
+          "iou": 0.8891,
+          "iouLand": 0.8455,
+          "obsWaterFracPct": 60.6
+        },
+        {
+          "id": "S2A_60HVD_20240703_0_L2A",
+          "date": "2024-07-03",
+          "tide": 0.873,
+          "cloud": 0.02,
+          "agree": 92.71,
+          "iou": 0.8796,
+          "iouLand": 0.8439,
+          "obsWaterFracPct": 57.32
+        },
+        {
+          "id": "S2B_60HVD_20211231_1_L2A",
+          "date": "2021-12-31",
+          "tide": 0.878,
+          "cloud": 0.37,
+          "agree": 92.6,
+          "iou": 0.886,
+          "iouLand": 0.826,
+          "obsWaterFracPct": 63.47
+        },
+        {
+          "id": "S2A_60HVD_20240812_0_L2A",
+          "date": "2024-08-12",
+          "tide": 0.886,
+          "cloud": 0.03,
+          "agree": 86.91,
+          "iou": 0.8204,
+          "iouLand": 0.6747,
+          "obsWaterFracPct": 61.41
+        },
+        {
+          "id": "S2B_60HVD_20190225_0_L2A",
+          "date": "2019-02-25",
+          "tide": 0.894,
+          "cloud": 0.27,
+          "agree": 87.99,
+          "iou": 0.8538,
+          "iouLand": 0.5976,
+          "obsWaterFracPct": 78.07
+        },
+        {
+          "id": "S2A_60HVD_20190302_0_L2A",
+          "date": "2019-03-02",
+          "tide": 0.908,
+          "cloud": 0.08,
+          "agree": 94.2,
+          "iou": 0.9049,
+          "iouLand": 0.8705,
+          "obsWaterFracPct": 55.86
+        },
+        {
+          "id": "S2A_60HVD_20190501_1_L2A",
+          "date": "2019-05-01",
+          "tide": 0.91,
+          "cloud": 0.01,
+          "agree": 93.25,
+          "iou": 0.8993,
+          "iouLand": 0.8301,
+          "obsWaterFracPct": 66.84
+        },
+        {
+          "id": "S2C_60HVD_20250310_0_L2A",
+          "date": "2025-03-10",
+          "tide": 0.914,
+          "cloud": 0.53,
+          "agree": 94.96,
+          "iou": 0.9191,
+          "iouLand": 0.8819,
+          "obsWaterFracPct": 60.13
+        },
+        {
+          "id": "S2A_60HVD_20230609_0_L2A",
+          "date": "2023-06-09",
+          "tide": 0.941,
+          "cloud": 2.32,
+          "agree": 89.24,
+          "iou": 0.8752,
+          "iouLand": 0.5619,
+          "obsWaterFracPct": 85.67
+        },
+        {
+          "id": "S2A_60HVD_20190401_0_L2A",
+          "date": "2019-04-01",
+          "tide": 0.942,
+          "cloud": 0.22,
+          "agree": 96.01,
+          "iou": 0.9375,
+          "iouLand": 0.9004,
+          "obsWaterFracPct": 61.79
+        },
+        {
+          "id": "S2A_60HVD_20190401_1_L2A",
+          "date": "2019-04-01",
+          "tide": 0.947,
+          "cloud": 0.19,
+          "agree": 94.42,
+          "iou": 0.9147,
+          "iouLand": 0.8612,
+          "obsWaterFracPct": 61.41
+        },
+        {
+          "id": "S2B_60HVD_20250305_0_L2A",
+          "date": "2025-03-05",
+          "tide": 0.96,
+          "cloud": 1.98,
+          "agree": 89.13,
+          "iou": 0.873,
+          "iouLand": 0.5694,
+          "obsWaterFracPct": 83.29
+        },
+        {
+          "id": "S2B_60HVD_20210125_0_L2A",
+          "date": "2021-01-25",
+          "tide": 0.968,
+          "cloud": 0.1,
+          "agree": 93.46,
+          "iou": 0.9034,
+          "iouLand": 0.8318,
+          "obsWaterFracPct": 63.59
+        },
+        {
+          "id": "S2A_60HVD_20210219_1_L2A",
+          "date": "2021-02-19",
+          "tide": 0.993,
+          "cloud": 0.4,
+          "agree": 85.16,
+          "iou": 0.8126,
+          "iouLand": 0.5839,
+          "obsWaterFracPct": 64.64
+        },
+        {
+          "id": "S2A_60HVD_20240315_0_L2A",
+          "date": "2024-03-15",
+          "tide": 1.026,
+          "cloud": 4.17,
+          "agree": 89.83,
+          "iou": 0.8881,
+          "iouLand": 0.4726,
+          "obsWaterFracPct": 90.55
+        },
+        {
+          "id": "S2C_60HVD_20250409_0_L2A",
+          "date": "2025-04-09",
+          "tide": 1.027,
+          "cloud": 0.12,
+          "agree": 86.87,
+          "iou": 0.8068,
+          "iouLand": 0.7093,
+          "obsWaterFracPct": 55.38
+        },
+        {
+          "id": "S2B_60HVD_20240529_0_L2A",
+          "date": "2024-05-29",
+          "tide": 1.044,
+          "cloud": 0.64,
+          "agree": 91.66,
+          "iou": 0.9005,
+          "iouLand": 0.6603,
+          "obsWaterFracPct": 81.86
+        },
+        {
+          "id": "S2A_60HVD_20180705_1_L2A",
+          "date": "2018-07-05",
+          "tide": 1.047,
+          "cloud": 1.96,
+          "agree": 85.75,
+          "iou": 0.823,
+          "iouLand": 0.5779,
+          "obsWaterFracPct": 67.12
+        },
+        {
+          "id": "S2B_60HVD_20191102_1_L2A",
+          "date": "2019-11-02",
+          "tide": 1.05,
+          "cloud": 0.04,
+          "agree": 93.05,
+          "iou": 0.9218,
+          "iouLand": 0.6148,
+          "obsWaterFracPct": 88.71
+        },
+        {
+          "id": "S2B_60HVD_20200520_1_L2A",
+          "date": "2020-05-20",
+          "tide": 1.07,
+          "cloud": 0.28,
+          "agree": 89.72,
+          "iou": 0.8727,
+          "iouLand": 0.6514,
+          "obsWaterFracPct": 74.69
+        },
+        {
+          "id": "S2B_60HVD_20231111_0_L2A",
+          "date": "2023-11-11",
+          "tide": 1.08,
+          "cloud": 4.67,
+          "agree": 90.53,
+          "iou": 0.8826,
+          "iouLand": 0.6714,
+          "obsWaterFracPct": 74.91
+        },
+        {
+          "id": "S2C_60HVD_20250519_0_L2A",
+          "date": "2025-05-19",
+          "tide": 1.088,
+          "cloud": 0.02,
+          "agree": 92.88,
+          "iou": 0.9144,
+          "iouLand": 0.7031,
+          "obsWaterFracPct": 76.38
+        },
+        {
+          "id": "S2A_60HVD_20200604_1_L2A",
+          "date": "2020-06-04",
+          "tide": 1.093,
+          "cloud": 4.3,
+          "agree": 87.36,
+          "iou": 0.8502,
+          "iouLand": 0.5529,
+          "obsWaterFracPct": 83.79
+        },
+        {
+          "id": "S2B_60HVD_20250723_0_L2A",
+          "date": "2025-07-23",
+          "tide": 1.097,
+          "cloud": 0.02,
+          "agree": 88.83,
+          "iou": 0.8629,
+          "iouLand": 0.6239,
+          "obsWaterFracPct": 75.22
+        },
+        {
+          "id": "S2B_60HVD_20170715_0_L2A",
+          "date": "2017-07-15",
+          "tide": 1.115,
+          "cloud": 1.54,
+          "agree": 94.7,
+          "iou": 0.9379,
+          "iouLand": 0.7351,
+          "obsWaterFracPct": 81.46
+        },
+        {
+          "id": "S2A_60HVD_20180605_1_L2A",
+          "date": "2018-06-05",
+          "tide": 1.122,
+          "cloud": 3.62,
+          "agree": 91.46,
+          "iou": 0.8981,
+          "iouLand": 0.6547,
+          "obsWaterFracPct": 75.73
+        },
+        {
+          "id": "S2A_60HVD_20210629_1_L2A",
+          "date": "2021-06-29",
+          "tide": 1.152,
+          "cloud": 0.46,
+          "agree": 95.38,
+          "iou": 0.9504,
+          "iouLand": 0.598,
+          "obsWaterFracPct": 89.82
+        },
+        {
+          "id": "S2B_60HVD_20260628_0_L2A",
+          "date": "2026-06-28",
+          "tide": 1.158,
+          "cloud": 0.87,
+          "agree": 90.04,
+          "iou": 0.8831,
+          "iouLand": 0.5982,
+          "obsWaterFracPct": 82.22
+        },
+        {
+          "id": "S2A_60HVD_20220214_0_L2A",
+          "date": "2022-02-14",
+          "tide": 1.184,
+          "cloud": 4.6,
+          "agree": 90.09,
+          "iou": 0.8829,
+          "iouLand": 0.6072,
+          "obsWaterFracPct": 80.26
+        },
+        {
+          "id": "S2A_60HVD_20240901_0_L2A",
+          "date": "2024-09-01",
+          "tide": 1.2,
+          "cloud": 0.07,
+          "agree": 87.93,
+          "iou": 0.8597,
+          "iouLand": 0.5365,
+          "obsWaterFracPct": 78.5
+        },
+        {
+          "id": "S2B_60HVD_20260429_0_L2A",
+          "date": "2026-04-29",
+          "tide": 1.213,
+          "cloud": 2.77,
+          "agree": 74.07,
+          "iou": 0.6842,
+          "iouLand": 0.4083,
+          "obsWaterFracPct": 59.32
+        },
+        {
+          "id": "S2A_60HVD_20220803_0_L2A",
+          "date": "2022-08-03",
+          "tide": 1.251,
+          "cloud": 0.94,
+          "agree": 93.91,
+          "iou": 0.9347,
+          "iouLand": 0.5234,
+          "obsWaterFracPct": 87.82
+        },
+        {
+          "id": "S2B_60HVD_20190814_1_L2A",
+          "date": "2019-08-14",
+          "tide": 1.265,
+          "cloud": 4.56,
+          "agree": 86.52,
+          "iou": 0.8481,
+          "iouLand": 0.4549,
+          "obsWaterFracPct": 80.32
+        },
+        {
+          "id": "S2A_60HVD_20210311_1_L2A",
+          "date": "2021-03-11",
+          "tide": 1.282,
+          "cloud": 1.22,
+          "agree": 87.12,
+          "iou": 0.857,
+          "iouLand": 0.434,
+          "obsWaterFracPct": 83.99
+        },
+        {
+          "id": "S2B_60HVD_20200907_1_L2A",
+          "date": "2020-09-07",
+          "tide": 1.342,
+          "cloud": 0.12,
+          "agree": 95.3,
+          "iou": 0.9505,
+          "iouLand": 0.5222,
+          "obsWaterFracPct": 90.58
+        },
+        {
+          "id": "S2A_60HVD_20231126_0_L2A",
+          "date": "2023-11-26",
+          "tide": 1.353,
+          "cloud": 1.42,
+          "agree": 93.87,
+          "iou": 0.935,
+          "iouLand": 0.4815,
+          "obsWaterFracPct": 92.83
+        },
+        {
+          "id": "S2A_60HVD_20190210_1_L2A",
+          "date": "2019-02-10",
+          "tide": 1.398,
+          "cloud": 2.41,
+          "agree": 97.26,
+          "iou": 0.9715,
+          "iouLand": 0.5843,
+          "obsWaterFracPct": 94.44
+        },
+        {
+          "id": "S2A_60HVD_20200803_1_L2A",
+          "date": "2020-08-03",
+          "tide": 1.414,
+          "cloud": 2.32,
+          "agree": 73.44,
+          "iou": 0.7175,
+          "iouLand": 0.1843,
+          "obsWaterFracPct": 68.51
+        },
+        {
+          "id": "S2A_60HVD_20220505_0_L2A",
+          "date": "2022-05-05",
+          "tide": 1.433,
+          "cloud": 0.26,
+          "agree": 97.86,
+          "iou": 0.9777,
+          "iouLand": 0.6516,
+          "obsWaterFracPct": 94.3
+        },
+        {
+          "id": "S2B_60HVD_20200709_1_L2A",
+          "date": "2020-07-09",
+          "tide": 1.436,
+          "cloud": 0.01,
+          "agree": 98.11,
+          "iou": 0.9804,
+          "iouLand": 0.6642,
+          "obsWaterFracPct": 94.89
+        },
+        {
+          "id": "S2B_60HVD_20240330_0_L2A",
+          "date": "2024-03-30",
+          "tide": 1.445,
+          "cloud": 0.01,
+          "agree": 98.65,
+          "iou": 0.986,
+          "iouLand": 0.7321,
+          "obsWaterFracPct": 96.15
+        },
+        {
+          "id": "S2B_60HVD_20220629_0_L2A",
+          "date": "2022-06-29",
+          "tide": 1.462,
+          "cloud": 1.39,
+          "agree": 96.18,
+          "iou": 0.9602,
+          "iouLand": 0.5184,
+          "obsWaterFracPct": 95.6
+        },
+        {
+          "id": "S2B_60HVD_20241205_0_L2A",
+          "date": "2024-12-05",
+          "tide": 1.482,
+          "cloud": 0.05,
+          "agree": 98.51,
+          "iou": 0.9846,
+          "iouLand": 0.6976,
+          "obsWaterFracPct": 95.67
+        },
+        {
+          "id": "S2A_60HVD_20180215_0_L2A",
+          "date": "2018-02-15",
+          "tide": 1.488,
+          "cloud": 0.12,
+          "agree": 96.31,
+          "iou": 0.9614,
+          "iouLand": 0.5386,
+          "obsWaterFracPct": 94.76
+        },
+        {
+          "id": "S2A_60HVD_20200902_1_L2A",
+          "date": "2020-09-02",
+          "tide": 1.502,
+          "cloud": 0.08,
+          "agree": 96.9,
+          "iou": 0.9675,
+          "iouLand": 0.5879,
+          "obsWaterFracPct": 94.8
+        },
+        {
+          "id": "S2B_60HVD_20200609_1_L2A",
+          "date": "2020-06-09",
+          "tide": 1.6,
+          "cloud": 0.01,
+          "agree": 98.75,
+          "iou": 0.9871,
+          "iouLand": 0.7074,
+          "obsWaterFracPct": 96.22
+        },
+        {
+          "id": "S2B_60HVD_20260618_0_L2A",
+          "date": "2026-06-18",
+          "tide": 1.622,
+          "cloud": 0.13,
+          "agree": 98.83,
+          "iou": 0.988,
+          "iouLand": 0.718,
+          "obsWaterFracPct": 96.31
+        },
+        {
+          "id": "S2B_60HVD_20210515_0_L2A",
+          "date": "2021-05-15",
+          "tide": 1.626,
+          "cloud": 0.39,
+          "agree": 99.16,
+          "iou": 0.9913,
+          "iouLand": 0.7901,
+          "obsWaterFracPct": 96.37
+        },
+        {
+          "id": "S2B_60HVD_20190205_0_L2A",
+          "date": "2019-02-05",
+          "tide": 1.696,
+          "cloud": 0.43,
+          "agree": 98.38,
+          "iou": 0.9833,
+          "iouLand": 0.6744,
+          "obsWaterFracPct": 95.66
+        },
+        {
+          "id": "S2B_60HVD_20250812_0_L2A",
+          "date": "2025-08-12",
+          "tide": 1.699,
+          "cloud": 0.4,
+          "agree": 99.14,
+          "iou": 0.9911,
+          "iouLand": 0.7768,
+          "obsWaterFracPct": 96.48
+        },
+        {
+          "id": "S2A_60HVD_20201201_1_L2A",
+          "date": "2020-12-01",
+          "tide": 1.7,
+          "cloud": 2.94,
+          "agree": 99.12,
+          "iou": 0.9909,
+          "iouLand": 0.7906,
+          "obsWaterFracPct": 96.27
+        },
+        {
+          "id": "S2A_60HVD_20210430_1_L2A",
+          "date": "2021-04-30",
+          "tide": 1.707,
+          "cloud": 0.29,
+          "agree": 99.12,
+          "iou": 0.9909,
+          "iouLand": 0.7623,
+          "obsWaterFracPct": 96.75
+        },
+        {
+          "id": "S2B_60HVD_20190804_1_L2A",
+          "date": "2019-08-04",
+          "tide": 1.72,
+          "cloud": 3.62,
+          "agree": 99.1,
+          "iou": 0.9907,
+          "iouLand": 0.753,
+          "obsWaterFracPct": 96.81
+        },
+        {
+          "id": "S2B_60HVD_20190406_0_L2A",
+          "date": "2019-04-06",
+          "tide": 1.757,
+          "cloud": 0.55,
+          "agree": 98.6,
+          "iou": 0.9856,
+          "iouLand": 0.6687,
+          "obsWaterFracPct": 96.69
+        },
+        {
+          "id": "S2B_60HVD_20190406_1_L2A",
+          "date": "2019-04-06",
+          "tide": 1.818,
+          "cloud": 0.8,
+          "agree": 98.98,
+          "iou": 0.9895,
+          "iouLand": 0.7298,
+          "obsWaterFracPct": 97.06
+        },
+        {
+          "id": "S2B_60HVD_20250315_0_L2A",
+          "date": "2025-03-15",
+          "tide": 1.82,
+          "cloud": 2.48,
+          "agree": 96.97,
+          "iou": 0.9687,
+          "iouLand": 0.5072,
+          "obsWaterFracPct": 94.19
+        },
+        {
+          "id": "S2A_60HVD_20200425_1_L2A",
+          "date": "2020-04-25",
+          "tide": 1.827,
+          "cloud": 0.01,
+          "agree": 99.15,
+          "iou": 0.9912,
+          "iouLand": 0.7682,
+          "obsWaterFracPct": 96.79
+        },
+        {
+          "id": "S2B_60HVD_20221226_0_L2A",
+          "date": "2022-12-26",
+          "tide": 1.855,
+          "cloud": 1.08,
+          "agree": 98.44,
+          "iou": 0.9841,
+          "iouLand": 0.5822,
+          "obsWaterFracPct": 96.48
+        },
+        {
+          "id": "S2A_60HVD_20200225_1_L2A",
+          "date": "2020-02-25",
+          "tide": 1.888,
+          "cloud": 0.19,
+          "agree": 99.05,
+          "iou": 0.9903,
+          "iouLand": 0.729,
+          "obsWaterFracPct": 97.28
+        },
+        {
+          "id": "S2B_60HVD_20180401_0_L2A",
+          "date": "2018-04-01",
+          "tide": 1.908,
+          "cloud": 0.69,
+          "agree": 98.5,
+          "iou": 0.9846,
+          "iouLand": 0.6409,
+          "obsWaterFracPct": 96.51
+        },
+        {
+          "id": "S2A_60HVD_20220813_0_L2A",
+          "date": "2022-08-13",
+          "tide": 1.911,
+          "cloud": 1.29,
+          "agree": 99.09,
+          "iou": 0.9906,
+          "iouLand": 0.77,
+          "obsWaterFracPct": 96.32
+        },
+        {
+          "id": "S2B_60HVD_20240509_0_L2A",
+          "date": "2024-05-09",
+          "tide": 1.94,
+          "cloud": 0.02,
+          "agree": 99.16,
+          "iou": 0.9913,
+          "iouLand": 0.7789,
+          "obsWaterFracPct": 96.46
+        },
+        {
+          "id": "S2A_60HVD_20210331_1_L2A",
+          "date": "2021-03-31",
+          "tide": 1.962,
+          "cloud": 3.15,
+          "agree": 97.79,
+          "iou": 0.9778,
+          "iouLand": 0.0759,
+          "obsWaterFracPct": 99.42
+        },
+        {
+          "id": "S2A_60HVD_20210130_0_L2A",
+          "date": "2021-01-30",
+          "tide": 1.974,
+          "cloud": 0.76,
+          "agree": 98.37,
+          "iou": 0.9833,
+          "iouLand": 0.6,
+          "obsWaterFracPct": 96.52
+        },
+        {
+          "id": "S2B_60HVD_20230803_0_L2A",
+          "date": "2023-08-03",
+          "tide": 1.975,
+          "cloud": 0.01,
+          "agree": 98.93,
+          "iou": 0.989,
+          "iouLand": 0.7229,
+          "obsWaterFracPct": 96.36
+        },
+        {
+          "id": "S2B_60HVD_20200210_1_L2A",
+          "date": "2020-02-10",
+          "tide": 2.053,
+          "cloud": 0.2,
+          "agree": 99.19,
+          "iou": 0.9917,
+          "iouLand": 0.7505,
+          "obsWaterFracPct": 97.19
+        },
+        {
+          "id": "S2B_60HVD_20201216_1_L2A",
+          "date": "2020-12-16",
+          "tide": 2.058,
+          "cloud": 1.2,
+          "agree": 99.02,
+          "iou": 0.99,
+          "iouLand": 0.6843,
+          "obsWaterFracPct": 97.03
+        },
+        {
+          "id": "S2B_60HVD_20200410_1_L2A",
+          "date": "2020-04-10",
+          "tide": 2.075,
+          "cloud": 0.69,
+          "agree": 98.94,
+          "iou": 0.9892,
+          "iouLand": 0.5225,
+          "obsWaterFracPct": 97.94
+        },
+        {
+          "id": "S2B_60HVD_20200311_1_L2A",
+          "date": "2020-03-11",
+          "tide": 2.162,
+          "cloud": 1.33,
+          "agree": 97.72,
+          "iou": 0.9772,
+          "iouLand": 0,
+          "obsWaterFracPct": 97.72
+        }
+      ]
+    },
+    "after": {
+      "label": "AFTER, spatial lag (all 204 scenes, tau=40+4/km)",
+      "nFit": 204,
+      "nScored": 97,
+      "tau0": 40,
+      "slope": 4,
+      "tideRange": [
+        0.387,
+        2.162
+      ],
+      "meanIoU": 0.8994,
+      "medianIoU": 0.9069,
+      "meanIoULand": 0.6966,
+      "meanAgree": 93.2,
+      "banded": [
+        {
+          "band": "< 0.75 m",
+          "n": 20,
+          "meanIoU": 0.822,
+          "meanAgree": 91.55
+        },
+        {
+          "band": "0.75-1.00 m",
+          "n": 22,
+          "meanIoU": 0.8719,
+          "meanAgree": 91.08
+        },
+        {
+          "band": "1.00-1.50 m",
+          "n": 30,
+          "meanIoU": 0.8989,
+          "meanAgree": 91.33
+        },
+        {
+          "band": "1.50-2.00 m",
+          "n": 21,
+          "meanIoU": 0.9856,
+          "meanAgree": 98.6
+        },
+        {
+          "band": ">= 2.00 m",
+          "n": 4,
+          "meanIoU": 0.9882,
+          "meanAgree": 98.83
+        }
+      ],
+      "rows": [
+        {
+          "id": "S2A_60HVD_20210818_1_L2A",
+          "date": "2021-08-18",
+          "tide": 0.387,
+          "cloud": 4.72,
+          "agree": 66.58,
+          "iou": 0.0072,
+          "iouLand": 0.6649,
+          "obsWaterFracPct": 1.51
+        },
+        {
+          "id": "S2C_60HVD_20251016_0_L2A",
+          "date": "2025-10-16",
+          "tide": 0.462,
+          "cloud": 0.52,
+          "agree": 96.03,
+          "iou": 0.8971,
+          "iouLand": 0.9392,
+          "obsWaterFracPct": 35.86
+        },
+        {
+          "id": "S2B_60HVD_20190116_0_L2A",
+          "date": "2019-01-16",
+          "tide": 0.557,
+          "cloud": 4,
+          "agree": 94.69,
+          "iou": 0.8834,
+          "iouLand": 0.9111,
+          "obsWaterFracPct": 45
+        },
+        {
+          "id": "S2B_60HVD_20190215_0_L2A",
+          "date": "2019-02-15",
+          "tide": 0.558,
+          "cloud": 0.1,
+          "agree": 96.7,
+          "iou": 0.9226,
+          "iouLand": 0.9456,
+          "obsWaterFracPct": 42.04
+        },
+        {
+          "id": "S2B_60HVD_20210803_0_L2A",
+          "date": "2021-08-03",
+          "tide": 0.563,
+          "cloud": 0.19,
+          "agree": 96.68,
+          "iou": 0.9208,
+          "iouLand": 0.9459,
+          "obsWaterFracPct": 39.92
+        },
+        {
+          "id": "S2B_60HVD_20181217_0_L2A",
+          "date": "2018-12-17",
+          "tide": 0.57,
+          "cloud": 1.1,
+          "agree": 95.85,
+          "iou": 0.9069,
+          "iouLand": 0.9302,
+          "obsWaterFracPct": 41.91
+        },
+        {
+          "id": "S2A_60HVD_20190101_0_L2A",
+          "date": "2019-01-01",
+          "tide": 0.58,
+          "cloud": 2.29,
+          "agree": 95.07,
+          "iou": 0.8864,
+          "iouLand": 0.9198,
+          "obsWaterFracPct": 41.82
+        },
+        {
+          "id": "S2B_60HVD_20181018_1_L2A",
+          "date": "2018-10-18",
+          "tide": 0.583,
+          "cloud": 1.83,
+          "agree": 95.53,
+          "iou": 0.9014,
+          "iouLand": 0.9245,
+          "obsWaterFracPct": 41.5
+        },
+        {
+          "id": "S2C_60HVD_20260424_0_L2A",
+          "date": "2026-04-24",
+          "tide": 0.589,
+          "cloud": 0.19,
+          "agree": 91.05,
+          "iou": 0.8278,
+          "iouLand": 0.8428,
+          "obsWaterFracPct": 50.23
+        },
+        {
+          "id": "S2A_60HVD_20210917_0_L2A",
+          "date": "2021-09-17",
+          "tide": 0.598,
+          "cloud": 1.15,
+          "agree": 94.24,
+          "iou": 0.8721,
+          "iouLand": 0.9051,
+          "obsWaterFracPct": 44.46
+        },
+        {
+          "id": "S2A_60HVD_20240305_0_L2A",
+          "date": "2024-03-05",
+          "tide": 0.609,
+          "cloud": 0.88,
+          "agree": 94.79,
+          "iou": 0.8918,
+          "iouLand": 0.9086,
+          "obsWaterFracPct": 46.93
+        },
+        {
+          "id": "S2C_60HVD_20251115_0_L2A",
+          "date": "2025-11-15",
+          "tide": 0.612,
+          "cloud": 0.36,
+          "agree": 96.25,
+          "iou": 0.9121,
+          "iouLand": 0.9386,
+          "obsWaterFracPct": 40.03
+        },
+        {
+          "id": "S2B_60HVD_20230614_0_L2A",
+          "date": "2023-06-14",
+          "tide": 0.646,
+          "cloud": 1.58,
+          "agree": 88.7,
+          "iou": 0.7855,
+          "iouLand": 0.8072,
+          "obsWaterFracPct": 52.02
+        },
+        {
+          "id": "S2B_60HVD_20220110_0_L2A",
+          "date": "2022-01-10",
+          "tide": 0.647,
+          "cloud": 2.38,
+          "agree": 90.56,
+          "iou": 0.8301,
+          "iouLand": 0.8246,
+          "obsWaterFracPct": 52.17
+        },
+        {
+          "id": "S2B_60HVD_20250802_0_L2A",
+          "date": "2025-08-02",
+          "tide": 0.65,
+          "cloud": 1.39,
+          "agree": 92.83,
+          "iou": 0.8708,
+          "iouLand": 0.8614,
+          "obsWaterFracPct": 51.88
+        },
+        {
+          "id": "S2B_60HVD_20250504_0_L2A",
+          "date": "2025-05-04",
+          "tide": 0.66,
+          "cloud": 2.41,
+          "agree": 86.87,
+          "iou": 0.7904,
+          "iouLand": 0.7399,
+          "obsWaterFracPct": 61.59
+        },
+        {
+          "id": "S2A_60HVD_20240204_0_L2A",
+          "date": "2024-02-04",
+          "tide": 0.66,
+          "cloud": 2.22,
+          "agree": 93.3,
+          "iou": 0.8753,
+          "iouLand": 0.8734,
+          "obsWaterFracPct": 49.55
+        },
+        {
+          "id": "S2A_60HVD_20220224_0_L2A",
+          "date": "2022-02-24",
+          "tide": 0.676,
+          "cloud": 0.85,
+          "agree": 87.11,
+          "iou": 0.8008,
+          "iouLand": 0.7325,
+          "obsWaterFracPct": 61.84
+        },
+        {
+          "id": "S2B_60HVD_20230214_0_L2A",
+          "date": "2023-02-14",
+          "tide": 0.68,
+          "cloud": 3.87,
+          "agree": 83.7,
+          "iou": 0.7653,
+          "iouLand": 0.6521,
+          "obsWaterFracPct": 67.95
+        },
+        {
+          "id": "S2B_60HVD_20180411_0_L2A",
+          "date": "2018-04-11",
+          "tide": 0.72,
+          "cloud": 1.33,
+          "agree": 94.44,
+          "iou": 0.8919,
+          "iouLand": 0.8973,
+          "obsWaterFracPct": 49.01
+        },
+        {
+          "id": "S2B_60HVD_20260608_0_L2A",
+          "date": "2026-06-08",
+          "tide": 0.784,
+          "cloud": 0.03,
+          "agree": 88.82,
+          "iou": 0.829,
+          "iouLand": 0.756,
+          "obsWaterFracPct": 58.6
+        },
+        {
+          "id": "S2B_60HVD_20180809_1_L2A",
+          "date": "2018-08-09",
+          "tide": 0.791,
+          "cloud": 0.64,
+          "agree": 92.15,
+          "iou": 0.8647,
+          "iouLand": 0.8425,
+          "obsWaterFracPct": 54.71
+        },
+        {
+          "id": "S2B_60HVD_20180809_0_L2A",
+          "date": "2018-08-09",
+          "tide": 0.793,
+          "cloud": 0.62,
+          "agree": 92.09,
+          "iou": 0.8645,
+          "iouLand": 0.8405,
+          "obsWaterFracPct": 54.63
+        },
+        {
+          "id": "S2B_60HVD_20240320_0_L2A",
+          "date": "2024-03-20",
+          "tide": 0.797,
+          "cloud": 2.17,
+          "agree": 95.28,
+          "iou": 0.9201,
+          "iouLand": 0.8965,
+          "obsWaterFracPct": 58.18
+        },
+        {
+          "id": "S2B_60HVD_20190625_1_L2A",
+          "date": "2019-06-25",
+          "tide": 0.832,
+          "cloud": 0.01,
+          "agree": 86.43,
+          "iou": 0.7925,
+          "iouLand": 0.7183,
+          "obsWaterFracPct": 52.47
+        },
+        {
+          "id": "S2C_60HVD_20260514_0_L2A",
+          "date": "2026-05-14",
+          "tide": 0.848,
+          "cloud": 2.36,
+          "agree": 92.92,
+          "iou": 0.8849,
+          "iouLand": 0.8444,
+          "obsWaterFracPct": 58.53
+        },
+        {
+          "id": "S2A_60HVD_20221022_0_L2A",
+          "date": "2022-10-22",
+          "tide": 0.848,
+          "cloud": 0.3,
+          "agree": 92.28,
+          "iou": 0.8698,
+          "iouLand": 0.8404,
+          "obsWaterFracPct": 51.84
+        },
+        {
+          "id": "S2B_60HVD_20251210_0_L2A",
+          "date": "2025-12-10",
+          "tide": 0.871,
+          "cloud": 2.46,
+          "agree": 80.91,
+          "iou": 0.7861,
+          "iouLand": 0.3597,
+          "obsWaterFracPct": 89.11
+        },
+        {
+          "id": "S2A_60HVD_20210110_1_L2A",
+          "date": "2021-01-10",
+          "tide": 0.872,
+          "cloud": 0.84,
+          "agree": 94,
+          "iou": 0.9037,
+          "iouLand": 0.8626,
+          "obsWaterFracPct": 60.6
+        },
+        {
+          "id": "S2A_60HVD_20240703_0_L2A",
+          "date": "2024-07-03",
+          "tide": 0.873,
+          "cloud": 0.02,
+          "agree": 94.13,
+          "iou": 0.9032,
+          "iouLand": 0.8699,
+          "obsWaterFracPct": 57.32
+        },
+        {
+          "id": "S2B_60HVD_20211231_1_L2A",
+          "date": "2021-12-31",
+          "tide": 0.878,
+          "cloud": 0.37,
+          "agree": 92.52,
+          "iou": 0.885,
+          "iouLand": 0.8237,
+          "obsWaterFracPct": 63.47
+        },
+        {
+          "id": "S2A_60HVD_20240812_0_L2A",
+          "date": "2024-08-12",
+          "tide": 0.886,
+          "cloud": 0.03,
+          "agree": 87.9,
+          "iou": 0.8318,
+          "iouLand": 0.699,
+          "obsWaterFracPct": 61.41
+        },
+        {
+          "id": "S2B_60HVD_20190225_0_L2A",
+          "date": "2019-02-25",
+          "tide": 0.894,
+          "cloud": 0.27,
+          "agree": 88.68,
+          "iou": 0.8602,
+          "iouLand": 0.6274,
+          "obsWaterFracPct": 78.07
+        },
+        {
+          "id": "S2A_60HVD_20190302_0_L2A",
+          "date": "2019-03-02",
+          "tide": 0.908,
+          "cloud": 0.08,
+          "agree": 93.24,
+          "iou": 0.8912,
+          "iouLand": 0.8488,
+          "obsWaterFracPct": 55.86
+        },
+        {
+          "id": "S2A_60HVD_20190501_1_L2A",
+          "date": "2019-05-01",
+          "tide": 0.91,
+          "cloud": 0.01,
+          "agree": 94.14,
+          "iou": 0.9127,
+          "iouLand": 0.8488,
+          "obsWaterFracPct": 66.84
+        },
+        {
+          "id": "S2C_60HVD_20250310_0_L2A",
+          "date": "2025-03-10",
+          "tide": 0.914,
+          "cloud": 0.53,
+          "agree": 94.21,
+          "iou": 0.909,
+          "iouLand": 0.863,
+          "obsWaterFracPct": 60.13
+        },
+        {
+          "id": "S2A_60HVD_20230609_0_L2A",
+          "date": "2023-06-09",
+          "tide": 0.941,
+          "cloud": 2.32,
+          "agree": 87.12,
+          "iou": 0.8504,
+          "iouLand": 0.5198,
+          "obsWaterFracPct": 85.67
+        },
+        {
+          "id": "S2A_60HVD_20190401_0_L2A",
+          "date": "2019-04-01",
+          "tide": 0.942,
+          "cloud": 0.22,
+          "agree": 95.38,
+          "iou": 0.9291,
+          "iouLand": 0.883,
+          "obsWaterFracPct": 61.79
+        },
+        {
+          "id": "S2A_60HVD_20190401_1_L2A",
+          "date": "2019-04-01",
+          "tide": 0.947,
+          "cloud": 0.19,
+          "agree": 94.31,
+          "iou": 0.9139,
+          "iouLand": 0.8566,
+          "obsWaterFracPct": 61.41
+        },
+        {
+          "id": "S2B_60HVD_20250305_0_L2A",
+          "date": "2025-03-05",
+          "tide": 0.96,
+          "cloud": 1.98,
+          "agree": 88.08,
+          "iou": 0.8602,
+          "iouLand": 0.5528,
+          "obsWaterFracPct": 83.29
+        },
+        {
+          "id": "S2B_60HVD_20210125_0_L2A",
+          "date": "2021-01-25",
+          "tide": 0.968,
+          "cloud": 0.1,
+          "agree": 92.78,
+          "iou": 0.8952,
+          "iouLand": 0.8114,
+          "obsWaterFracPct": 63.59
+        },
+        {
+          "id": "S2A_60HVD_20210219_1_L2A",
+          "date": "2021-02-19",
+          "tide": 0.993,
+          "cloud": 0.4,
+          "agree": 86.4,
+          "iou": 0.8248,
+          "iouLand": 0.6224,
+          "obsWaterFracPct": 64.64
+        },
+        {
+          "id": "S2A_60HVD_20240315_0_L2A",
+          "date": "2024-03-15",
+          "tide": 1.026,
+          "cloud": 4.17,
+          "agree": 89.02,
+          "iou": 0.8792,
+          "iouLand": 0.4537,
+          "obsWaterFracPct": 90.55
+        },
+        {
+          "id": "S2C_60HVD_20250409_0_L2A",
+          "date": "2025-04-09",
+          "tide": 1.027,
+          "cloud": 0.12,
+          "agree": 85.55,
+          "iou": 0.7918,
+          "iouLand": 0.6792,
+          "obsWaterFracPct": 55.38
+        },
+        {
+          "id": "S2B_60HVD_20240529_0_L2A",
+          "date": "2024-05-29",
+          "tide": 1.044,
+          "cloud": 0.64,
+          "agree": 92.78,
+          "iou": 0.9138,
+          "iouLand": 0.6934,
+          "obsWaterFracPct": 81.86
+        },
+        {
+          "id": "S2A_60HVD_20180705_1_L2A",
+          "date": "2018-07-05",
+          "tide": 1.047,
+          "cloud": 1.96,
+          "agree": 85.43,
+          "iou": 0.8205,
+          "iouLand": 0.5639,
+          "obsWaterFracPct": 67.12
+        },
+        {
+          "id": "S2B_60HVD_20191102_1_L2A",
+          "date": "2019-11-02",
+          "tide": 1.05,
+          "cloud": 0.04,
+          "agree": 92.24,
+          "iou": 0.9136,
+          "iouLand": 0.5678,
+          "obsWaterFracPct": 88.71
+        },
+        {
+          "id": "S2B_60HVD_20200520_1_L2A",
+          "date": "2020-05-20",
+          "tide": 1.07,
+          "cloud": 0.28,
+          "agree": 91.34,
+          "iou": 0.8898,
+          "iouLand": 0.7121,
+          "obsWaterFracPct": 74.69
+        },
+        {
+          "id": "S2B_60HVD_20231111_0_L2A",
+          "date": "2023-11-11",
+          "tide": 1.08,
+          "cloud": 4.67,
+          "agree": 91.14,
+          "iou": 0.889,
+          "iouLand": 0.6956,
+          "obsWaterFracPct": 74.91
+        },
+        {
+          "id": "S2C_60HVD_20250519_0_L2A",
+          "date": "2025-05-19",
+          "tide": 1.088,
+          "cloud": 0.02,
+          "agree": 93.47,
+          "iou": 0.9208,
+          "iouLand": 0.7295,
+          "obsWaterFracPct": 76.38
+        },
+        {
+          "id": "S2A_60HVD_20200604_1_L2A",
+          "date": "2020-06-04",
+          "tide": 1.093,
+          "cloud": 4.3,
+          "agree": 87.41,
+          "iou": 0.8508,
+          "iouLand": 0.5537,
+          "obsWaterFracPct": 83.79
+        },
+        {
+          "id": "S2B_60HVD_20250723_0_L2A",
+          "date": "2025-07-23",
+          "tide": 1.097,
+          "cloud": 0.02,
+          "agree": 89.68,
+          "iou": 0.8718,
+          "iouLand": 0.6541,
+          "obsWaterFracPct": 75.22
+        },
+        {
+          "id": "S2B_60HVD_20170715_0_L2A",
+          "date": "2017-07-15",
+          "tide": 1.115,
+          "cloud": 1.54,
+          "agree": 94.59,
+          "iou": 0.9366,
+          "iouLand": 0.73,
+          "obsWaterFracPct": 81.46
+        },
+        {
+          "id": "S2A_60HVD_20180605_1_L2A",
+          "date": "2018-06-05",
+          "tide": 1.122,
+          "cloud": 3.62,
+          "agree": 91.17,
+          "iou": 0.8946,
+          "iouLand": 0.6471,
+          "obsWaterFracPct": 75.73
+        },
+        {
+          "id": "S2A_60HVD_20210629_1_L2A",
+          "date": "2021-06-29",
+          "tide": 1.152,
+          "cloud": 0.46,
+          "agree": 95,
+          "iou": 0.9459,
+          "iouLand": 0.5981,
+          "obsWaterFracPct": 89.82
+        },
+        {
+          "id": "S2B_60HVD_20260628_0_L2A",
+          "date": "2026-06-28",
+          "tide": 1.158,
+          "cloud": 0.87,
+          "agree": 90.38,
+          "iou": 0.8873,
+          "iouLand": 0.6034,
+          "obsWaterFracPct": 82.22
+        },
+        {
+          "id": "S2A_60HVD_20220214_0_L2A",
+          "date": "2022-02-14",
+          "tide": 1.184,
+          "cloud": 4.6,
+          "agree": 90.43,
+          "iou": 0.8885,
+          "iouLand": 0.5974,
+          "obsWaterFracPct": 80.26
+        },
+        {
+          "id": "S2A_60HVD_20240901_0_L2A",
+          "date": "2024-09-01",
+          "tide": 1.2,
+          "cloud": 0.07,
+          "agree": 89.89,
+          "iou": 0.8815,
+          "iouLand": 0.5916,
+          "obsWaterFracPct": 78.5
+        },
+        {
+          "id": "S2B_60HVD_20260429_0_L2A",
+          "date": "2026-04-29",
+          "tide": 1.213,
+          "cloud": 2.77,
+          "agree": 73.32,
+          "iou": 0.6815,
+          "iouLand": 0.3782,
+          "obsWaterFracPct": 59.32
+        },
+        {
+          "id": "S2A_60HVD_20220803_0_L2A",
+          "date": "2022-08-03",
+          "tide": 1.251,
+          "cloud": 0.94,
+          "agree": 94.26,
+          "iou": 0.9382,
+          "iouLand": 0.55,
+          "obsWaterFracPct": 87.82
+        },
+        {
+          "id": "S2B_60HVD_20190814_1_L2A",
+          "date": "2019-08-14",
+          "tide": 1.265,
+          "cloud": 4.56,
+          "agree": 87.87,
+          "iou": 0.8642,
+          "iouLand": 0.4674,
+          "obsWaterFracPct": 80.32
+        },
+        {
+          "id": "S2A_60HVD_20210311_1_L2A",
+          "date": "2021-03-11",
+          "tide": 1.282,
+          "cloud": 1.22,
+          "agree": 89.48,
+          "iou": 0.8834,
+          "iouLand": 0.4829,
+          "obsWaterFracPct": 83.99
+        },
+        {
+          "id": "S2B_60HVD_20200907_1_L2A",
+          "date": "2020-09-07",
+          "tide": 1.342,
+          "cloud": 0.12,
+          "agree": 95.58,
+          "iou": 0.9533,
+          "iouLand": 0.5507,
+          "obsWaterFracPct": 90.58
+        },
+        {
+          "id": "S2A_60HVD_20231126_0_L2A",
+          "date": "2023-11-26",
+          "tide": 1.353,
+          "cloud": 1.42,
+          "agree": 93.05,
+          "iou": 0.926,
+          "iouLand": 0.4617,
+          "obsWaterFracPct": 92.83
+        },
+        {
+          "id": "S2A_60HVD_20190210_1_L2A",
+          "date": "2019-02-10",
+          "tide": 1.398,
+          "cloud": 2.41,
+          "agree": 96.91,
+          "iou": 0.9678,
+          "iouLand": 0.5561,
+          "obsWaterFracPct": 94.44
+        },
+        {
+          "id": "S2A_60HVD_20200803_1_L2A",
+          "date": "2020-08-03",
+          "tide": 1.414,
+          "cloud": 2.32,
+          "agree": 73.43,
+          "iou": 0.7165,
+          "iouLand": 0.1912,
+          "obsWaterFracPct": 68.51
+        },
+        {
+          "id": "S2A_60HVD_20220505_0_L2A",
+          "date": "2022-05-05",
+          "tide": 1.433,
+          "cloud": 0.26,
+          "agree": 97.94,
+          "iou": 0.9785,
+          "iouLand": 0.6663,
+          "obsWaterFracPct": 94.3
+        },
+        {
+          "id": "S2B_60HVD_20200709_1_L2A",
+          "date": "2020-07-09",
+          "tide": 1.436,
+          "cloud": 0.01,
+          "agree": 98.11,
+          "iou": 0.9803,
+          "iouLand": 0.6648,
+          "obsWaterFracPct": 94.89
+        },
+        {
+          "id": "S2B_60HVD_20240330_0_L2A",
+          "date": "2024-03-30",
+          "tide": 1.445,
+          "cloud": 0.01,
+          "agree": 98.8,
+          "iou": 0.9875,
+          "iouLand": 0.7534,
+          "obsWaterFracPct": 96.15
+        },
+        {
+          "id": "S2B_60HVD_20220629_0_L2A",
+          "date": "2022-06-29",
+          "tide": 1.462,
+          "cloud": 1.39,
+          "agree": 96.48,
+          "iou": 0.9633,
+          "iouLand": 0.5365,
+          "obsWaterFracPct": 95.6
+        },
+        {
+          "id": "S2B_60HVD_20241205_0_L2A",
+          "date": "2024-12-05",
+          "tide": 1.482,
+          "cloud": 0.05,
+          "agree": 98.55,
+          "iou": 0.985,
+          "iouLand": 0.7065,
+          "obsWaterFracPct": 95.67
+        },
+        {
+          "id": "S2A_60HVD_20180215_0_L2A",
+          "date": "2018-02-15",
+          "tide": 1.488,
+          "cloud": 0.12,
+          "agree": 96.69,
+          "iou": 0.9654,
+          "iouLand": 0.556,
+          "obsWaterFracPct": 94.76
+        },
+        {
+          "id": "S2A_60HVD_20200902_1_L2A",
+          "date": "2020-09-02",
+          "tide": 1.502,
+          "cloud": 0.08,
+          "agree": 97.33,
+          "iou": 0.9721,
+          "iouLand": 0.6148,
+          "obsWaterFracPct": 94.8
+        },
+        {
+          "id": "S2B_60HVD_20200609_1_L2A",
+          "date": "2020-06-09",
+          "tide": 1.6,
+          "cloud": 0.01,
+          "agree": 98.76,
+          "iou": 0.9872,
+          "iouLand": 0.7122,
+          "obsWaterFracPct": 96.22
+        },
+        {
+          "id": "S2B_60HVD_20260618_0_L2A",
+          "date": "2026-06-18",
+          "tide": 1.622,
+          "cloud": 0.13,
+          "agree": 98.78,
+          "iou": 0.9875,
+          "iouLand": 0.71,
+          "obsWaterFracPct": 96.31
+        },
+        {
+          "id": "S2B_60HVD_20210515_0_L2A",
+          "date": "2021-05-15",
+          "tide": 1.626,
+          "cloud": 0.39,
+          "agree": 99.15,
+          "iou": 0.9912,
+          "iouLand": 0.7899,
+          "obsWaterFracPct": 96.37
+        },
+        {
+          "id": "S2B_60HVD_20190205_0_L2A",
+          "date": "2019-02-05",
+          "tide": 1.696,
+          "cloud": 0.43,
+          "agree": 98.27,
+          "iou": 0.9821,
+          "iouLand": 0.6601,
+          "obsWaterFracPct": 95.66
+        },
+        {
+          "id": "S2B_60HVD_20250812_0_L2A",
+          "date": "2025-08-12",
+          "tide": 1.699,
+          "cloud": 0.4,
+          "agree": 99.1,
+          "iou": 0.9907,
+          "iouLand": 0.7687,
+          "obsWaterFracPct": 96.48
+        },
+        {
+          "id": "S2A_60HVD_20201201_1_L2A",
+          "date": "2020-12-01",
+          "tide": 1.7,
+          "cloud": 2.94,
+          "agree": 98.98,
+          "iou": 0.9894,
+          "iouLand": 0.7661,
+          "obsWaterFracPct": 96.27
+        },
+        {
+          "id": "S2A_60HVD_20210430_1_L2A",
+          "date": "2021-04-30",
+          "tide": 1.707,
+          "cloud": 0.29,
+          "agree": 99.08,
+          "iou": 0.9905,
+          "iouLand": 0.75,
+          "obsWaterFracPct": 96.75
+        },
+        {
+          "id": "S2B_60HVD_20190804_1_L2A",
+          "date": "2019-08-04",
+          "tide": 1.72,
+          "cloud": 3.62,
+          "agree": 99.09,
+          "iou": 0.9906,
+          "iouLand": 0.7471,
+          "obsWaterFracPct": 96.81
+        },
+        {
+          "id": "S2B_60HVD_20190406_0_L2A",
+          "date": "2019-04-06",
+          "tide": 1.757,
+          "cloud": 0.55,
+          "agree": 98.49,
+          "iou": 0.9845,
+          "iouLand": 0.653,
+          "obsWaterFracPct": 96.69
+        },
+        {
+          "id": "S2B_60HVD_20190406_1_L2A",
+          "date": "2019-04-06",
+          "tide": 1.818,
+          "cloud": 0.8,
+          "agree": 98.91,
+          "iou": 0.9888,
+          "iouLand": 0.7161,
+          "obsWaterFracPct": 97.06
+        },
+        {
+          "id": "S2B_60HVD_20250315_0_L2A",
+          "date": "2025-03-15",
+          "tide": 1.82,
+          "cloud": 2.48,
+          "agree": 96.99,
+          "iou": 0.9689,
+          "iouLand": 0.5104,
+          "obsWaterFracPct": 94.19
+        },
+        {
+          "id": "S2A_60HVD_20200425_1_L2A",
+          "date": "2020-04-25",
+          "tide": 1.827,
+          "cloud": 0.01,
+          "agree": 99.14,
+          "iou": 0.9912,
+          "iouLand": 0.7667,
+          "obsWaterFracPct": 96.79
+        },
+        {
+          "id": "S2B_60HVD_20221226_0_L2A",
+          "date": "2022-12-26",
+          "tide": 1.855,
+          "cloud": 1.08,
+          "agree": 97.8,
+          "iou": 0.9777,
+          "iouLand": 0.4246,
+          "obsWaterFracPct": 96.48
+        },
+        {
+          "id": "S2A_60HVD_20200225_1_L2A",
+          "date": "2020-02-25",
+          "tide": 1.888,
+          "cloud": 0.19,
+          "agree": 99.05,
+          "iou": 0.9902,
+          "iouLand": 0.7283,
+          "obsWaterFracPct": 97.28
+        },
+        {
+          "id": "S2B_60HVD_20180401_0_L2A",
+          "date": "2018-04-01",
+          "tide": 1.908,
+          "cloud": 0.69,
+          "agree": 98.49,
+          "iou": 0.9844,
+          "iouLand": 0.6389,
+          "obsWaterFracPct": 96.51
+        },
+        {
+          "id": "S2A_60HVD_20220813_0_L2A",
+          "date": "2022-08-13",
+          "tide": 1.911,
+          "cloud": 1.29,
+          "agree": 99.13,
+          "iou": 0.9911,
+          "iouLand": 0.7786,
+          "obsWaterFracPct": 96.32
+        },
+        {
+          "id": "S2B_60HVD_20240509_0_L2A",
+          "date": "2024-05-09",
+          "tide": 1.94,
+          "cloud": 0.02,
+          "agree": 99.16,
+          "iou": 0.9914,
+          "iouLand": 0.7796,
+          "obsWaterFracPct": 96.46
+        },
+        {
+          "id": "S2A_60HVD_20210331_1_L2A",
+          "date": "2021-03-31",
+          "tide": 1.962,
+          "cloud": 3.15,
+          "agree": 97.68,
+          "iou": 0.9767,
+          "iouLand": 0.0524,
+          "obsWaterFracPct": 99.42
+        },
+        {
+          "id": "S2A_60HVD_20210130_0_L2A",
+          "date": "2021-01-30",
+          "tide": 1.974,
+          "cloud": 0.76,
+          "agree": 98.35,
+          "iou": 0.9831,
+          "iouLand": 0.5962,
+          "obsWaterFracPct": 96.52
+        },
+        {
+          "id": "S2B_60HVD_20230803_0_L2A",
+          "date": "2023-08-03",
+          "tide": 1.975,
+          "cloud": 0.01,
+          "agree": 98.93,
+          "iou": 0.989,
+          "iouLand": 0.7232,
+          "obsWaterFracPct": 96.36
+        },
+        {
+          "id": "S2B_60HVD_20200210_1_L2A",
+          "date": "2020-02-10",
+          "tide": 2.053,
+          "cloud": 0.2,
+          "agree": 99.2,
+          "iou": 0.9918,
+          "iouLand": 0.7485,
+          "obsWaterFracPct": 97.19
+        },
+        {
+          "id": "S2B_60HVD_20201216_1_L2A",
+          "date": "2020-12-16",
+          "tide": 2.058,
+          "cloud": 1.2,
+          "agree": 98.99,
+          "iou": 0.9897,
+          "iouLand": 0.6896,
+          "obsWaterFracPct": 97.03
+        },
+        {
+          "id": "S2B_60HVD_20200410_1_L2A",
+          "date": "2020-04-10",
+          "tide": 2.075,
+          "cloud": 0.69,
+          "agree": 97.86,
+          "iou": 0.9786,
+          "iouLand": 0.0056,
+          "obsWaterFracPct": 97.94
+        },
+        {
+          "id": "S2B_60HVD_20200311_1_L2A",
+          "date": "2020-03-11",
+          "tide": 2.162,
+          "cloud": 1.33,
+          "agree": 99.27,
+          "iou": 0.9926,
+          "iouLand": 0.697,
+          "obsWaterFracPct": 97.72
+        }
+      ]
+    }
+  },
+  "hypsometry": {
+    "perScene": [
+      {
+        "tide": 0.387,
+        "date": "2021-08-18",
+        "obsKm2": 43.62,
+        "recKm2": 86.13
+      },
+      {
+        "tide": 0.462,
+        "date": "2025-10-16",
+        "obsKm2": 92.63,
+        "recKm2": 95.78
+      },
+      {
+        "tide": 0.557,
+        "date": "2019-01-16",
+        "obsKm2": 105.66,
+        "recKm2": 99.33
+      },
+      {
+        "tide": 0.558,
+        "date": "2019-02-15",
+        "obsKm2": 101.33,
+        "recKm2": 99.39
+      },
+      {
+        "tide": 0.563,
+        "date": "2021-08-03",
+        "obsKm2": 98.41,
+        "recKm2": 100.05
+      },
+      {
+        "tide": 0.57,
+        "date": "2018-12-17",
+        "obsKm2": 101.19,
+        "recKm2": 100.45
+      },
+      {
+        "tide": 0.58,
+        "date": "2019-01-01",
+        "obsKm2": 100.16,
+        "recKm2": 100.96
+      },
+      {
+        "tide": 0.583,
+        "date": "2018-10-18",
+        "obsKm2": 100.51,
+        "recKm2": 101.3
+      },
+      {
+        "tide": 0.589,
+        "date": "2026-04-24",
+        "obsKm2": 112.96,
+        "recKm2": 102.04
+      },
+      {
+        "tide": 0.598,
+        "date": "2021-09-17",
+        "obsKm2": 104.74,
+        "recKm2": 102.27
+      },
+      {
+        "tide": 0.609,
+        "date": "2024-03-05",
+        "obsKm2": 108.21,
+        "recKm2": 103.47
+      },
+      {
+        "tide": 0.612,
+        "date": "2025-11-15",
+        "obsKm2": 98.47,
+        "recKm2": 103.6
+      },
+      {
+        "tide": 0.646,
+        "date": "2023-06-14",
+        "obsKm2": 115.5,
+        "recKm2": 107.53
+      },
+      {
+        "tide": 0.647,
+        "date": "2022-01-10",
+        "obsKm2": 115.1,
+        "recKm2": 107.74
+      },
+      {
+        "tide": 0.65,
+        "date": "2025-08-02",
+        "obsKm2": 115.17,
+        "recKm2": 108.06
+      },
+      {
+        "tide": 0.66,
+        "date": "2025-05-04",
+        "obsKm2": 128.75,
+        "recKm2": 108.95
+      },
+      {
+        "tide": 0.66,
+        "date": "2024-02-04",
+        "obsKm2": 111.9,
+        "recKm2": 108.95
+      },
+      {
+        "tide": 0.676,
+        "date": "2022-02-24",
+        "obsKm2": 128.67,
+        "recKm2": 110.9
+      },
+      {
+        "tide": 0.68,
+        "date": "2023-02-14",
+        "obsKm2": 137.92,
+        "recKm2": 111.29
+      },
+      {
+        "tide": 0.72,
+        "date": "2018-04-11",
+        "obsKm2": 111.13,
+        "recKm2": 116.29
+      },
+      {
+        "tide": 0.784,
+        "date": "2026-06-08",
+        "obsKm2": 124.52,
+        "recKm2": 122.74
+      },
+      {
+        "tide": 0.791,
+        "date": "2018-08-09",
+        "obsKm2": 119.15,
+        "recKm2": 123.04
+      },
+      {
+        "tide": 0.793,
+        "date": "2018-08-09",
+        "obsKm2": 119.07,
+        "recKm2": 123.07
+      },
+      {
+        "tide": 0.797,
+        "date": "2024-03-20",
+        "obsKm2": 123.91,
+        "recKm2": 123.56
+      },
+      {
+        "tide": 0.832,
+        "date": "2019-06-25",
+        "obsKm2": 116.02,
+        "recKm2": 125.86
+      },
+      {
+        "tide": 0.848,
+        "date": "2026-05-14",
+        "obsKm2": 124.57,
+        "recKm2": 127.73
+      },
+      {
+        "tide": 0.848,
+        "date": "2022-10-22",
+        "obsKm2": 114.94,
+        "recKm2": 127.73
+      },
+      {
+        "tide": 0.871,
+        "date": "2025-12-10",
+        "obsKm2": 167.48,
+        "recKm2": 130.63
+      },
+      {
+        "tide": 0.872,
+        "date": "2021-01-10",
+        "obsKm2": 127.28,
+        "recKm2": 130.77
+      },
+      {
+        "tide": 0.873,
+        "date": "2024-07-03",
+        "obsKm2": 122.86,
+        "recKm2": 130.82
+      },
+      {
+        "tide": 0.878,
+        "date": "2021-12-31",
+        "obsKm2": 131.37,
+        "recKm2": 131.39
+      },
+      {
+        "tide": 0.886,
+        "date": "2024-08-12",
+        "obsKm2": 128.55,
+        "recKm2": 131.92
+      },
+      {
+        "tide": 0.894,
+        "date": "2019-02-25",
+        "obsKm2": 151.71,
+        "recKm2": 133.05
+      },
+      {
+        "tide": 0.908,
+        "date": "2019-03-02",
+        "obsKm2": 120.73,
+        "recKm2": 134.69
+      },
+      {
+        "tide": 0.91,
+        "date": "2019-05-01",
+        "obsKm2": 136.07,
+        "recKm2": 134.99
+      },
+      {
+        "tide": 0.914,
+        "date": "2025-03-10",
+        "obsKm2": 126.56,
+        "recKm2": 135.06
+      },
+      {
+        "tide": 0.941,
+        "date": "2023-06-09",
+        "obsKm2": 162.65,
+        "recKm2": 137.72
+      },
+      {
+        "tide": 0.942,
+        "date": "2019-04-01",
+        "obsKm2": 129.05,
+        "recKm2": 137.81
+      },
+      {
+        "tide": 0.947,
+        "date": "2019-04-01",
+        "obsKm2": 128.45,
+        "recKm2": 138.18
+      },
+      {
+        "tide": 0.96,
+        "date": "2025-03-05",
+        "obsKm2": 159.03,
+        "recKm2": 139.98
+      },
+      {
+        "tide": 0.968,
+        "date": "2021-01-25",
+        "obsKm2": 131.54,
+        "recKm2": 140.53
+      },
+      {
+        "tide": 0.993,
+        "date": "2021-02-19",
+        "obsKm2": 132.9,
+        "recKm2": 143.19
+      },
+      {
+        "tide": 1.026,
+        "date": "2024-03-15",
+        "obsKm2": 169.2,
+        "recKm2": 146.1
+      },
+      {
+        "tide": 1.027,
+        "date": "2025-04-09",
+        "obsKm2": 120.03,
+        "recKm2": 146.17
+      },
+      {
+        "tide": 1.044,
+        "date": "2024-05-29",
+        "obsKm2": 157.18,
+        "recKm2": 147.22
+      },
+      {
+        "tide": 1.047,
+        "date": "2018-07-05",
+        "obsKm2": 136.68,
+        "recKm2": 147.38
+      },
+      {
+        "tide": 1.05,
+        "date": "2019-11-02",
+        "obsKm2": 166.61,
+        "recKm2": 148.55
+      },
+      {
+        "tide": 1.07,
+        "date": "2020-05-20",
+        "obsKm2": 147.03,
+        "recKm2": 150.7
+      },
+      {
+        "tide": 1.08,
+        "date": "2023-11-11",
+        "obsKm2": 147.28,
+        "recKm2": 151.94
+      },
+      {
+        "tide": 1.088,
+        "date": "2025-05-19",
+        "obsKm2": 149.48,
+        "recKm2": 152.45
+      },
+      {
+        "tide": 1.093,
+        "date": "2020-06-04",
+        "obsKm2": 159.99,
+        "recKm2": 152.95
+      },
+      {
+        "tide": 1.097,
+        "date": "2025-07-23",
+        "obsKm2": 147.96,
+        "recKm2": 153.31
+      },
+      {
+        "tide": 1.115,
+        "date": "2017-07-15",
+        "obsKm2": 156.78,
+        "recKm2": 154.16
+      },
+      {
+        "tide": 1.122,
+        "date": "2018-06-05",
+        "obsKm2": 148.66,
+        "recKm2": 155.1
+      },
+      {
+        "tide": 1.152,
+        "date": "2021-06-29",
+        "obsKm2": 168.32,
+        "recKm2": 158.17
+      },
+      {
+        "tide": 1.158,
+        "date": "2026-06-28",
+        "obsKm2": 157.94,
+        "recKm2": 158.59
+      },
+      {
+        "tide": 1.184,
+        "date": "2022-02-14",
+        "obsKm2": 153.93,
+        "recKm2": 160.32
+      },
+      {
+        "tide": 1.2,
+        "date": "2024-09-01",
+        "obsKm2": 152.49,
+        "recKm2": 161.42
+      },
+      {
+        "tide": 1.213,
+        "date": "2026-04-29",
+        "obsKm2": 117.69,
+        "recKm2": 163.78
+      },
+      {
+        "tide": 1.251,
+        "date": "2022-08-03",
+        "obsKm2": 164.59,
+        "recKm2": 166.62
+      },
+      {
+        "tide": 1.265,
+        "date": "2019-08-14",
+        "obsKm2": 154.49,
+        "recKm2": 168.07
+      },
+      {
+        "tide": 1.282,
+        "date": "2021-03-11",
+        "obsKm2": 160.06,
+        "recKm2": 169.3
+      },
+      {
+        "tide": 1.342,
+        "date": "2020-09-07",
+        "obsKm2": 169.15,
+        "recKm2": 172.24
+      },
+      {
+        "tide": 1.353,
+        "date": "2023-11-26",
+        "obsKm2": 172.62,
+        "recKm2": 172.51
+      },
+      {
+        "tide": 1.398,
+        "date": "2019-02-10",
+        "obsKm2": 175.88,
+        "recKm2": 173.95
+      },
+      {
+        "tide": 1.414,
+        "date": "2020-08-03",
+        "obsKm2": 131,
+        "recKm2": 174.15
+      },
+      {
+        "tide": 1.433,
+        "date": "2022-05-05",
+        "obsKm2": 173.94,
+        "recKm2": 174.39
+      },
+      {
+        "tide": 1.436,
+        "date": "2020-07-09",
+        "obsKm2": 175.53,
+        "recKm2": 174.44
+      },
+      {
+        "tide": 1.445,
+        "date": "2024-03-30",
+        "obsKm2": 177.1,
+        "recKm2": 174.7
+      },
+      {
+        "tide": 1.462,
+        "date": "2022-06-29",
+        "obsKm2": 175.16,
+        "recKm2": 174.95
+      },
+      {
+        "tide": 1.482,
+        "date": "2024-12-05",
+        "obsKm2": 177,
+        "recKm2": 175.17
+      },
+      {
+        "tide": 1.488,
+        "date": "2018-02-15",
+        "obsKm2": 175.99,
+        "recKm2": 175.24
+      },
+      {
+        "tide": 1.502,
+        "date": "2020-09-02",
+        "obsKm2": 175.16,
+        "recKm2": 175.7
+      },
+      {
+        "tide": 1.6,
+        "date": "2020-06-09",
+        "obsKm2": 177.26,
+        "recKm2": 176.72
+      },
+      {
+        "tide": 1.622,
+        "date": "2026-06-18",
+        "obsKm2": 177.6,
+        "recKm2": 176.81
+      },
+      {
+        "tide": 1.626,
+        "date": "2021-05-15",
+        "obsKm2": 177.45,
+        "recKm2": 176.85
+      },
+      {
+        "tide": 1.696,
+        "date": "2019-02-05",
+        "obsKm2": 176.34,
+        "recKm2": 177.22
+      },
+      {
+        "tide": 1.699,
+        "date": "2025-08-12",
+        "obsKm2": 177.71,
+        "recKm2": 177.25
+      },
+      {
+        "tide": 1.7,
+        "date": "2020-12-01",
+        "obsKm2": 177.19,
+        "recKm2": 177.27
+      },
+      {
+        "tide": 1.707,
+        "date": "2021-04-30",
+        "obsKm2": 177.91,
+        "recKm2": 177.28
+      },
+      {
+        "tide": 1.72,
+        "date": "2019-08-04",
+        "obsKm2": 178.05,
+        "recKm2": 177.33
+      },
+      {
+        "tide": 1.757,
+        "date": "2019-04-06",
+        "obsKm2": 178.22,
+        "recKm2": 177.48
+      },
+      {
+        "tide": 1.818,
+        "date": "2019-04-06",
+        "obsKm2": 178.35,
+        "recKm2": 177.65
+      },
+      {
+        "tide": 1.82,
+        "date": "2025-03-15",
+        "obsKm2": 174.38,
+        "recKm2": 177.66
+      },
+      {
+        "tide": 1.827,
+        "date": "2020-04-25",
+        "obsKm2": 177.95,
+        "recKm2": 177.68
+      },
+      {
+        "tide": 1.855,
+        "date": "2022-12-26",
+        "obsKm2": 178.13,
+        "recKm2": 177.76
+      },
+      {
+        "tide": 1.888,
+        "date": "2020-02-25",
+        "obsKm2": 178.69,
+        "recKm2": 177.92
+      },
+      {
+        "tide": 1.908,
+        "date": "2018-04-01",
+        "obsKm2": 178.45,
+        "recKm2": 177.99
+      },
+      {
+        "tide": 1.911,
+        "date": "2022-08-13",
+        "obsKm2": 176.41,
+        "recKm2": 178.04
+      },
+      {
+        "tide": 1.94,
+        "date": "2024-05-09",
+        "obsKm2": 177.5,
+        "recKm2": 178.14
+      },
+      {
+        "tide": 1.962,
+        "date": "2021-03-31",
+        "obsKm2": 181.47,
+        "recKm2": 178.32
+      },
+      {
+        "tide": 1.974,
+        "date": "2021-01-30",
+        "obsKm2": 177.58,
+        "recKm2": 178.42
+      },
+      {
+        "tide": 1.975,
+        "date": "2023-08-03",
+        "obsKm2": 177.45,
+        "recKm2": 178.44
+      },
+      {
+        "tide": 2.053,
+        "date": "2020-02-10",
+        "obsKm2": 178.62,
+        "recKm2": 179.36
+      },
+      {
+        "tide": 2.058,
+        "date": "2020-12-16",
+        "obsKm2": 178.43,
+        "recKm2": 179.51
+      },
+      {
+        "tide": 2.075,
+        "date": "2020-04-10",
+        "obsKm2": 179.38,
+        "recKm2": 179.77
+      },
+      {
+        "tide": 2.162,
+        "date": "2020-03-11",
+        "obsKm2": 180.25,
+        "recKm2": 182.29
+      }
+    ],
+    "dense": [
+      {
+        "tide": 0.2,
+        "km2": 42.46
+      },
+      {
+        "tide": 0.25,
+        "km2": 42.46
+      },
+      {
+        "tide": 0.3,
+        "km2": 42.46
+      },
+      {
+        "tide": 0.35,
+        "km2": 77.46
+      },
+      {
+        "tide": 0.4,
+        "km2": 89.83
+      },
+      {
+        "tide": 0.45,
+        "km2": 95.03
+      },
+      {
+        "tide": 0.5,
+        "km2": 97.03
+      },
+      {
+        "tide": 0.55,
+        "km2": 99.11
+      },
+      {
+        "tide": 0.6,
+        "km2": 102.48
+      },
+      {
+        "tide": 0.65,
+        "km2": 108.06
+      },
+      {
+        "tide": 0.7,
+        "km2": 113.7
+      },
+      {
+        "tide": 0.75,
+        "km2": 118.81
+      },
+      {
+        "tide": 0.8,
+        "km2": 123.62
+      },
+      {
+        "tide": 0.85,
+        "km2": 128.21
+      },
+      {
+        "tide": 0.9,
+        "km2": 133.49
+      },
+      {
+        "tide": 0.95,
+        "km2": 138.39
+      },
+      {
+        "tide": 1,
+        "km2": 144.25
+      },
+      {
+        "tide": 1.05,
+        "km2": 148.55
+      },
+      {
+        "tide": 1.1,
+        "km2": 153.49
+      },
+      {
+        "tide": 1.15,
+        "km2": 157.71
+      },
+      {
+        "tide": 1.2,
+        "km2": 161.42
+      },
+      {
+        "tide": 1.25,
+        "km2": 166.54
+      },
+      {
+        "tide": 1.3,
+        "km2": 170.51
+      },
+      {
+        "tide": 1.35,
+        "km2": 172.47
+      },
+      {
+        "tide": 1.4,
+        "km2": 173.95
+      },
+      {
+        "tide": 1.45,
+        "km2": 174.73
+      },
+      {
+        "tide": 1.5,
+        "km2": 175.67
+      },
+      {
+        "tide": 1.55,
+        "km2": 176.35
+      },
+      {
+        "tide": 1.6,
+        "km2": 176.72
+      },
+      {
+        "tide": 1.65,
+        "km2": 176.97
+      },
+      {
+        "tide": 1.7,
+        "km2": 177.27
+      },
+      {
+        "tide": 1.75,
+        "km2": 177.45
+      },
+      {
+        "tide": 1.8,
+        "km2": 177.62
+      },
+      {
+        "tide": 1.85,
+        "km2": 177.75
+      },
+      {
+        "tide": 1.9,
+        "km2": 177.95
+      },
+      {
+        "tide": 1.95,
+        "km2": 178.17
+      },
+      {
+        "tide": 2,
+        "km2": 178.79
+      },
+      {
+        "tide": 2.05,
+        "km2": 179.35
+      },
+      {
+        "tide": 2.1,
+        "km2": 182.18
+      },
+      {
+        "tide": 2.15,
+        "km2": 182.29
+      },
+      {
+        "tide": 2.2,
+        "km2": 182.29
+      },
+      {
+        "tide": 2.25,
+        "km2": 182.29
+      },
+      {
+        "tide": 2.3,
+        "km2": 182.29
+      }
+    ],
+    "observedMonotonicityViolations": 43,
+    "worstObservedDropKm2": -49.17,
+    "reconstructedVsObserved": {
+      "biasKm2": 0.68,
+      "rmseKm2": 11.95
+    }
+  },
+  "places": [
+    {
+      "place": "Bowentown entrance",
+      "px": 39602,
+      "km2": 9.55,
+      "iou": 0.9589,
+      "errRate": 3.47,
+      "meanMisfit": 12.959,
+      "meanAlongChannelKm": 2.5
+    },
+    {
+      "place": "Katikati / northern basin",
+      "px": 210761,
+      "km2": 50.84,
+      "iou": 0.9263,
+      "errRate": 5.54,
+      "meanMisfit": 15.039,
+      "meanAlongChannelKm": 6.8
+    },
+    {
+      "place": "Matakana Island banks",
+      "px": 138693,
+      "km2": 33.45,
+      "iou": 0.9223,
+      "errRate": 5.49,
+      "meanMisfit": 15.086,
+      "meanAlongChannelKm": 5.81
+    },
+    {
+      "place": "Omokoroa",
+      "px": 52582,
+      "km2": 12.68,
+      "iou": 0.9214,
+      "errRate": 5.71,
+      "meanMisfit": 15.026,
+      "meanAlongChannelKm": 6.27
+    },
+    {
+      "place": "Tauranga entrance / Mount",
+      "px": 9110,
+      "km2": 2.2,
+      "iou": 0.7775,
+      "errRate": 13.1,
+      "meanMisfit": 27.396,
+      "meanAlongChannelKm": 1.76
+    },
+    {
+      "place": "Waikareao arm",
+      "px": 10912,
+      "km2": 2.63,
+      "iou": 0.7563,
+      "errRate": 11.94,
+      "meanMisfit": 26.75,
+      "meanAlongChannelKm": 3.33
+    },
+    {
+      "place": "Waimapu arm",
+      "px": 15720,
+      "km2": 3.79,
+      "iou": 0.7619,
+      "errRate": 11.81,
+      "meanMisfit": 27.997,
+      "meanAlongChannelKm": 6.21
+    },
+    {
+      "place": "Rangataua / Welcome Bay",
+      "px": 15602,
+      "km2": 3.76,
+      "iou": 0.7903,
+      "errRate": 11.58,
+      "meanMisfit": 28.205,
+      "meanAlongChannelKm": 7.14
+    }
+  ],
+  "misfitHistogram": [
+    36,
+    1934,
+    4323,
+    5807,
+    8563,
+    12980,
+    17639,
+    22572,
+    505872
+  ]
+}

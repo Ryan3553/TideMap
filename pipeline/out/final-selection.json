@@ -1,0 +1,298 @@
+{
+  "nFit": 204,
+  "nScored": 97,
+  "scoredPx": 194155,
+  "grid": [
+    {
+      "tau0": 20,
+      "slope": 0,
+      "meanIoU": 0.8698
+    },
+    {
+      "tau0": 20,
+      "slope": 1,
+      "meanIoU": 0.8765
+    },
+    {
+      "tau0": 20,
+      "slope": 2,
+      "meanIoU": 0.8835
+    },
+    {
+      "tau0": 20,
+      "slope": 3,
+      "meanIoU": 0.8896
+    },
+    {
+      "tau0": 20,
+      "slope": 4,
+      "meanIoU": 0.8952
+    },
+    {
+      "tau0": 20,
+      "slope": 5,
+      "meanIoU": 0.898
+    },
+    {
+      "tau0": 20,
+      "slope": 6,
+      "meanIoU": 0.8995
+    },
+    {
+      "tau0": 30,
+      "slope": 0,
+      "meanIoU": 0.8799
+    },
+    {
+      "tau0": 30,
+      "slope": 1,
+      "meanIoU": 0.8859
+    },
+    {
+      "tau0": 30,
+      "slope": 2,
+      "meanIoU": 0.8915
+    },
+    {
+      "tau0": 30,
+      "slope": 3,
+      "meanIoU": 0.8965
+    },
+    {
+      "tau0": 30,
+      "slope": 4,
+      "meanIoU": 0.899
+    },
+    {
+      "tau0": 30,
+      "slope": 5,
+      "meanIoU": 0.9003
+    },
+    {
+      "tau0": 30,
+      "slope": 6,
+      "meanIoU": 0.8991
+    },
+    {
+      "tau0": 40,
+      "slope": 0,
+      "meanIoU": 0.8876
+    },
+    {
+      "tau0": 40,
+      "slope": 1,
+      "meanIoU": 0.892
+    },
+    {
+      "tau0": 40,
+      "slope": 2,
+      "meanIoU": 0.8975
+    },
+    {
+      "tau0": 40,
+      "slope": 3,
+      "meanIoU": 0.8996
+    },
+    {
+      "tau0": 40,
+      "slope": 4,
+      "meanIoU": 0.9005
+    },
+    {
+      "tau0": 40,
+      "slope": 5,
+      "meanIoU": 0.8986
+    },
+    {
+      "tau0": 40,
+      "slope": 6,
+      "meanIoU": 0.8944
+    },
+    {
+      "tau0": 50,
+      "slope": 0,
+      "meanIoU": 0.8915
+    },
+    {
+      "tau0": 50,
+      "slope": 1,
+      "meanIoU": 0.8981
+    },
+    {
+      "tau0": 50,
+      "slope": 2,
+      "meanIoU": 0.9
+    },
+    {
+      "tau0": 50,
+      "slope": 3,
+      "meanIoU": 0.8992
+    },
+    {
+      "tau0": 50,
+      "slope": 4,
+      "meanIoU": 0.8967
+    },
+    {
+      "tau0": 50,
+      "slope": 5,
+      "meanIoU": 0.8921
+    },
+    {
+      "tau0": 50,
+      "slope": 6,
+      "meanIoU": 0.8855
+    },
+    {
+      "tau0": 60,
+      "slope": 0,
+      "meanIoU": 0.8975
+    },
+    {
+      "tau0": 60,
+      "slope": 1,
+      "meanIoU": 0.8988
+    },
+    {
+      "tau0": 60,
+      "slope": 2,
+      "meanIoU": 0.8969
+    },
+    {
+      "tau0": 60,
+      "slope": 3,
+      "meanIoU": 0.8943
+    },
+    {
+      "tau0": 60,
+      "slope": 4,
+      "meanIoU": 0.889
+    },
+    {
+      "tau0": 60,
+      "slope": 5,
+      "meanIoU": 0.8819
+    },
+    {
+      "tau0": 60,
+      "slope": 6,
+      "meanIoU": 0.8753
+    },
+    {
+      "tau0": 70,
+      "slope": 0,
+      "meanIoU": 0.8973
+    },
+    {
+      "tau0": 70,
+      "slope": 1,
+      "meanIoU": 0.8928
+    },
+    {
+      "tau0": 70,
+      "slope": 2,
+      "meanIoU": 0.8907
+    },
+    {
+      "tau0": 70,
+      "slope": 3,
+      "meanIoU": 0.8853
+    },
+    {
+      "tau0": 70,
+      "slope": 4,
+      "meanIoU": 0.8779
+    },
+    {
+      "tau0": 70,
+      "slope": 5,
+      "meanIoU": 0.8716
+    },
+    {
+      "tau0": 70,
+      "slope": 6,
+      "meanIoU": 0.8641
+    },
+    {
+      "tau0": 80,
+      "slope": 0,
+      "meanIoU": 0.8884
+    },
+    {
+      "tau0": 80,
+      "slope": 1,
+      "meanIoU": 0.8871
+    },
+    {
+      "tau0": 80,
+      "slope": 2,
+      "meanIoU": 0.8812
+    },
+    {
+      "tau0": 80,
+      "slope": 3,
+      "meanIoU": 0.8735
+    },
+    {
+      "tau0": 80,
+      "slope": 4,
+      "meanIoU": 0.8669
+    },
+    {
+      "tau0": 80,
+      "slope": 5,
+      "meanIoU": 0.8597
+    },
+    {
+      "tau0": 80,
+      "slope": 6,
+      "meanIoU": 0.8516
+    }
+  ],
+  "selectionSpatial": {
+    "tau0": 40,
+    "slope": 4,
+    "meanIoU": 0.9005
+  },
+  "selectionUniform": {
+    "tau0": 60,
+    "slope": 0,
+    "meanIoU": 0.8975
+  },
+  "nested": [
+    {
+      "label": "A->B",
+      "spatial": {
+        "tau0": 30,
+        "slope": 5,
+        "v": 0.8946275617631669
+      },
+      "heldOutSpatial": 0.906,
+      "uniform": {
+        "tau0": 70,
+        "slope": 0,
+        "v": 0.8908344655523797
+      },
+      "heldOutUniform": 0.9039
+    },
+    {
+      "label": "B->A",
+      "spatial": {
+        "tau0": 50,
+        "slope": 2,
+        "v": 0.9071201850677547
+      },
+      "heldOutSpatial": 0.8931,
+      "uniform": {
+        "tau0": 60,
+        "slope": 0,
+        "v": 0.9053419973229501
+      },
+      "heldOutUniform": 0.8898
+    }
+  ],
+  "honestSpatial": 0.8996,
+  "honestUniform": 0.8969,
+  "honestGain": 0.0027,
+  "maxAlongChannelKm": 12.77
+}

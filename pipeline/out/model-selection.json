@@ -1,0 +1,148 @@
+{
+  "subsample": 4,
+  "grid": [
+    {
+      "rule": "global-otsu-129",
+      "tau": 80,
+      "meanIoU": 0.7264,
+      "intertidalPx": 360451
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 90,
+      "meanIoU": 0.7219,
+      "intertidalPx": 360199
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 80,
+      "meanIoU": 0.7142,
+      "intertidalPx": 362150
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 90,
+      "meanIoU": 0.7106,
+      "intertidalPx": 362168
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 100,
+      "meanIoU": 0.7033,
+      "intertidalPx": 362041
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 70,
+      "meanIoU": 0.7031,
+      "intertidalPx": 360340
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 100,
+      "meanIoU": 0.6969,
+      "intertidalPx": 364459
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 45,
+      "meanIoU": 0.6909,
+      "intertidalPx": 360845
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 70,
+      "meanIoU": 0.6891,
+      "intertidalPx": 362006
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 120,
+      "meanIoU": 0.6831,
+      "intertidalPx": 361970
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 60,
+      "meanIoU": 0.6823,
+      "intertidalPx": 361064
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 45,
+      "meanIoU": 0.6811,
+      "intertidalPx": 360342
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 110,
+      "meanIoU": 0.6771,
+      "intertidalPx": 362103
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 60,
+      "meanIoU": 0.6737,
+      "intertidalPx": 361259
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 110,
+      "meanIoU": 0.6713,
+      "intertidalPx": 364247
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 30,
+      "meanIoU": 0.671,
+      "intertidalPx": 360781
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 30,
+      "meanIoU": 0.6677,
+      "intertidalPx": 360330
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 120,
+      "meanIoU": 0.6667,
+      "intertidalPx": 364189
+    },
+    {
+      "rule": "global-otsu-129",
+      "tau": 0,
+      "meanIoU": 0.5133,
+      "intertidalPx": 277106
+    },
+    {
+      "rule": "per-scene-frame-otsu",
+      "tau": 0,
+      "meanIoU": 0.5086,
+      "intertidalPx": 320667
+    }
+  ],
+  "selectionWinner": {
+    "rule": "global-otsu-129",
+    "tau": 80,
+    "meanIoU": 0.7264,
+    "intertidalPx": 360451
+  },
+  "nested": [
+    {
+      "label": "select on A -> score B",
+      "chosenRule": "global-otsu-129",
+      "chosenTau": 90,
+      "selectionIoU": 0.7367,
+      "heldOutIoU": 0.7063
+    },
+    {
+      "label": "select on B -> score A",
+      "chosenRule": "global-otsu-129",
+      "chosenTau": 80,
+      "selectionIoU": 0.7179,
+      "heldOutIoU": 0.7345
+    }
+  ],
+  "honestNestedIoU": 0.7204
+}

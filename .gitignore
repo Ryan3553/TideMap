@@ -1,0 +1,14 @@
+node_modules/
+
+# Regenerable derivations — rebuild with the scripts, don't version the bytes
+pipeline/cache/
+pipeline/out/*.bin
+prototype/data/
+prototype/*.jpg
+prototype/*.png
+prototype/tidemap-*.html
+
+# Large source rasters: kept on disk under sources/, provenance committed instead.
+# See sources/MANIFEST.md — every one is reproducible from the recorded parameters.
+sources/**/*.png
+sources/**/*.tif

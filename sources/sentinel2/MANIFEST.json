@@ -1,0 +1,15 @@
+{
+  "source": "Copernicus Sentinel-2 L2A via Earth Search (Element 84) on AWS Open Data",
+  "stac": "https://earth-search.aws.element84.com/v1/search",
+  "collection": "sentinel-2-l2a",
+  "tile": "60HVD",
+  "licence": "Copernicus open licence — free reuse with attribution",
+  "auth": "none required; COGs are public on s3://sentinel-cogs",
+  "usedFor": {
+    "dryingHeightRaster": "204 scenes 2017-2026, cloud<5%, see scenes.json",
+    "basemap": "S2A_60HVD_20240703_0_L2A (0.42 m tide, cloud 0%)",
+    "photoSeries": "9 scenes, research/series/manifest.json"
+  },
+  "ndwiRecipe": "titiler.xyz /stac/bbox/... ?assets=green&assets=nir&expression=(b1-b2)/(b1%2Bb2)&rescale=-1,1",
+  "note": "Fully reproducible from the STAC ids; raw COGs not archived because they are permanently public."
+}

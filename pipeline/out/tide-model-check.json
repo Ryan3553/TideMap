@@ -1,0 +1,29 @@
+{
+  "holdout2024": {
+    "n": 1414,
+    "bias": 0.0116,
+    "rmse": 0.0328,
+    "maxAbs": 0.0804
+  },
+  "inSample": {
+    "n": 7057,
+    "bias": 0,
+    "rmse": 0.0303,
+    "maxAbs": 0.075
+  },
+  "sceneInstants": {
+    "n": 35,
+    "bias": 0.003,
+    "rmse": 0.1063,
+    "maxAbs": 0.2573
+  },
+  "scenesOutsideTables": 0,
+  "tableYears": [
+    2022,
+    2023,
+    2024,
+    2025,
+    2026,
+    2027
+  ]
+}

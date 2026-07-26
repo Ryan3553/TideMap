@@ -1,0 +1,2067 @@
+{
+  "thresholdGray": 129,
+  "referenceIntertidalPx": 579726,
+  "rTideRate": -0.565,
+  "rAbsTideRate": 0.284,
+  "rCloud": -0.281,
+  "rSummerness": -0.037,
+  "floodCount": 97,
+  "ebbCount": 107,
+  "floodMeanResidualPct": -7.3,
+  "ebbMeanResidualPct": 6.6,
+  "matchedPair": {
+    "gaugeTideDiff": 0.03,
+    "flood": {
+      "date": "2021-08-18",
+      "tide": 0.343,
+      "waterFracPct": 1.5
+    },
+    "ebb": {
+      "date": "2023-06-14",
+      "tide": 0.373,
+      "waterFracPct": 52
+    }
+  },
+  "rows": [
+    {
+      "id": "S2A_60HVD_20210719_0_L2A",
+      "date": "2021-07-19",
+      "tideGauge": 0.48,
+      "tideEff": 0.313,
+      "waterFrac": 0.3284,
+      "rateMPerHour": 0.2251,
+      "cloud": 7.49,
+      "residual": -0.1556
+    },
+    {
+      "id": "S2A_60HVD_20190710_1_L2A",
+      "date": "2019-07-10",
+      "tideGauge": 0.611,
+      "tideEff": 0.381,
+      "waterFrac": 0.374,
+      "rateMPerHour": 0.3654,
+      "cloud": 11.26,
+      "residual": -0.1555
+    },
+    {
+      "id": "S2A_60HVD_20210818_1_L2A",
+      "date": "2021-08-18",
+      "tideGauge": 0.343,
+      "tideEff": 0.387,
+      "waterFrac": 0.015,
+      "rateMPerHour": 0.0918,
+      "cloud": 4.72,
+      "residual": -0.4215
+    },
+    {
+      "id": "S2B_60HVD_20191122_1_L2A",
+      "date": "2019-11-22",
+      "tideGauge": 0.424,
+      "tideEff": 0.405,
+      "waterFrac": 0.3369,
+      "rateMPerHour": 0.1207,
+      "cloud": 6.75,
+      "residual": -0.1277
+    },
+    {
+      "id": "S2A_60HVD_20220425_0_L2A",
+      "date": "2022-04-25",
+      "tideGauge": 0.517,
+      "tideEff": 0.445,
+      "waterFrac": 0.4252,
+      "rateMPerHour": 0.2146,
+      "cloud": 12.07,
+      "residual": -0.0717
+    },
+    {
+      "id": "S2B_60HVD_20251130_0_L2A",
+      "date": "2025-11-30",
+      "tideGauge": 0.577,
+      "tideEff": 0.461,
+      "waterFrac": 0.3532,
+      "rateMPerHour": 0.1729,
+      "cloud": 18.55,
+      "residual": -0.1645
+    },
+    {
+      "id": "S2C_60HVD_20251016_0_L2A",
+      "date": "2025-10-16",
+      "tideGauge": 0.436,
+      "tideEff": 0.462,
+      "waterFrac": 0.3585,
+      "rateMPerHour": 0.15,
+      "cloud": 0.52,
+      "residual": -0.1103
+    },
+    {
+      "id": "S2A_60HVD_20201111_1_L2A",
+      "date": "2020-11-11",
+      "tideGauge": 0.417,
+      "tideEff": 0.467,
+      "waterFrac": 0.3506,
+      "rateMPerHour": 0.0647,
+      "cloud": 13.08,
+      "residual": -0.1116
+    },
+    {
+      "id": "S2A_60HVD_20180126_0_L2A",
+      "date": "2018-01-26",
+      "tideGauge": 0.764,
+      "tideEff": 0.483,
+      "waterFrac": 0.4349,
+      "rateMPerHour": 0.2557,
+      "cloud": 11.87,
+      "residual": -0.1477
+    },
+    {
+      "id": "S2B_60HVD_20241026_0_L2A",
+      "date": "2024-10-26",
+      "tideGauge": 0.585,
+      "tideEff": 0.508,
+      "waterFrac": 0.425,
+      "rateMPerHour": 0.2256,
+      "cloud": 5.69,
+      "residual": -0.0955
+    },
+    {
+      "id": "S2A_60HVD_20250109_0_L2A",
+      "date": "2025-01-09",
+      "tideGauge": 0.518,
+      "tideEff": 0.509,
+      "waterFrac": 0.4206,
+      "rateMPerHour": 0.1337,
+      "cloud": 7.28,
+      "residual": -0.0766
+    },
+    {
+      "id": "S2B_60HVD_20210704_1_L2A",
+      "date": "2021-07-04",
+      "tideGauge": 0.589,
+      "tideEff": 0.521,
+      "waterFrac": 0.3486,
+      "rateMPerHour": 0.1743,
+      "cloud": 13.01,
+      "residual": -0.1733
+    },
+    {
+      "id": "S2A_60HVD_20191008_1_L2A",
+      "date": "2019-10-08",
+      "tideGauge": 0.553,
+      "tideEff": 0.524,
+      "waterFrac": 0.3618,
+      "rateMPerHour": 0.1355,
+      "cloud": 11,
+      "residual": -0.1476
+    },
+    {
+      "id": "S2A_60HVD_20230729_0_L2A",
+      "date": "2023-07-29",
+      "tideGauge": 0.378,
+      "tideEff": 0.536,
+      "waterFrac": 0.3657,
+      "rateMPerHour": 0.0117,
+      "cloud": 9.94,
+      "residual": -0.0829
+    },
+    {
+      "id": "S2B_60HVD_20190116_0_L2A",
+      "date": "2019-01-16",
+      "tideGauge": 0.708,
+      "tideEff": 0.557,
+      "waterFrac": 0.4499,
+      "rateMPerHour": 0.1637,
+      "cloud": 4,
+      "residual": -0.1133
+    },
+    {
+      "id": "S2B_60HVD_20190215_0_L2A",
+      "date": "2019-02-15",
+      "tideGauge": 0.568,
+      "tideEff": 0.558,
+      "waterFrac": 0.4206,
+      "rateMPerHour": 0.0911,
+      "cloud": 0.1,
+      "residual": -0.094
+    },
+    {
+      "id": "S2A_60HVD_20230907_0_L2A",
+      "date": "2023-09-07",
+      "tideGauge": 0.766,
+      "tideEff": 0.562,
+      "waterFrac": 0.4744,
+      "rateMPerHour": 0.3243,
+      "cloud": 5.06,
+      "residual": -0.1089
+    },
+    {
+      "id": "S2B_60HVD_20210803_0_L2A",
+      "date": "2021-08-03",
+      "tideGauge": 0.599,
+      "tideEff": 0.563,
+      "waterFrac": 0.3991,
+      "rateMPerHour": 0.1301,
+      "cloud": 0.19,
+      "residual": -0.1263
+    },
+    {
+      "id": "S2A_60HVD_20240504_0_L2A",
+      "date": "2024-05-04",
+      "tideGauge": 0.378,
+      "tideEff": 0.566,
+      "waterFrac": 0.4483,
+      "rateMPerHour": 0.0042,
+      "cloud": 13.06,
+      "residual": -0.0003
+    },
+    {
+      "id": "S2B_60HVD_20181217_0_L2A",
+      "date": "2018-12-17",
+      "tideGauge": 0.788,
+      "tideEff": 0.57,
+      "waterFrac": 0.4191,
+      "rateMPerHour": 0.1991,
+      "cloud": 1.1,
+      "residual": -0.1719
+    },
+    {
+      "id": "S2A_60HVD_20190101_0_L2A",
+      "date": "2019-01-01",
+      "tideGauge": 0.485,
+      "tideEff": 0.58,
+      "waterFrac": 0.4182,
+      "rateMPerHour": 0.0686,
+      "cloud": 2.29,
+      "residual": -0.0676
+    },
+    {
+      "id": "S2B_60HVD_20181018_1_L2A",
+      "date": "2018-10-18",
+      "tideGauge": 0.778,
+      "tideEff": 0.583,
+      "waterFrac": 0.415,
+      "rateMPerHour": 0.2315,
+      "cloud": 1.83,
+      "residual": -0.1725
+    },
+    {
+      "id": "S2C_60HVD_20260424_0_L2A",
+      "date": "2026-04-24",
+      "tideGauge": 0.801,
+      "tideEff": 0.589,
+      "waterFrac": 0.5022,
+      "rateMPerHour": 0.3516,
+      "cloud": 0.19,
+      "residual": -0.0933
+    },
+    {
+      "id": "S2B_60HVD_20210902_1_L2A",
+      "date": "2021-09-02",
+      "tideGauge": 0.572,
+      "tideEff": 0.595,
+      "waterFrac": 0.352,
+      "rateMPerHour": 0.0801,
+      "cloud": 8.52,
+      "residual": -0.164
+    },
+    {
+      "id": "S2A_60HVD_20210917_0_L2A",
+      "date": "2021-09-17",
+      "tideGauge": 0.351,
+      "tideEff": 0.598,
+      "waterFrac": 0.4446,
+      "rateMPerHour": -0.0516,
+      "cloud": 1.15,
+      "residual": 0.0054
+    },
+    {
+      "id": "S2A_60HVD_20191107_1_L2A",
+      "date": "2019-11-07",
+      "tideGauge": 0.601,
+      "tideEff": 0.601,
+      "waterFrac": 0.4194,
+      "rateMPerHour": 0.0889,
+      "cloud": 14.38,
+      "residual": -0.1066
+    },
+    {
+      "id": "S2B_60HVD_20220907_0_L2A",
+      "date": "2022-09-07",
+      "tideGauge": 0.324,
+      "tideEff": 0.605,
+      "waterFrac": 0.4765,
+      "rateMPerHour": -0.0771,
+      "cloud": 14.97,
+      "residual": 0.0466
+    },
+    {
+      "id": "S2B_60HVD_20220510_0_L2A",
+      "date": "2022-05-10",
+      "tideGauge": 0.842,
+      "tideEff": 0.606,
+      "waterFrac": 0.4237,
+      "rateMPerHour": 0.2259,
+      "cloud": 6.88,
+      "residual": -0.186
+    },
+    {
+      "id": "S2A_60HVD_20240305_0_L2A",
+      "date": "2024-03-05",
+      "tideGauge": 0.775,
+      "tideEff": 0.609,
+      "waterFrac": 0.4693,
+      "rateMPerHour": 0.1927,
+      "cloud": 0.88,
+      "residual": -0.1172
+    },
+    {
+      "id": "S2C_60HVD_20251115_0_L2A",
+      "date": "2025-11-15",
+      "tideGauge": 0.495,
+      "tideEff": 0.612,
+      "waterFrac": 0.4003,
+      "rateMPerHour": 0.0668,
+      "cloud": 0.36,
+      "residual": -0.0889
+    },
+    {
+      "id": "S2B_60HVD_20180710_0_L2A",
+      "date": "2018-07-10",
+      "tideGauge": 0.352,
+      "tideEff": 0.633,
+      "waterFrac": 0.1884,
+      "rateMPerHour": -0.0578,
+      "cloud": 7.88,
+      "residual": -0.2512
+    },
+    {
+      "id": "S2A_60HVD_20241011_0_L2A",
+      "date": "2024-10-11",
+      "tideGauge": 0.971,
+      "tideEff": 0.641,
+      "waterFrac": 0.5852,
+      "rateMPerHour": 0.3097,
+      "cloud": 16.41,
+      "residual": -0.0693
+    },
+    {
+      "id": "S2B_60HVD_20230614_0_L2A",
+      "date": "2023-06-14",
+      "tideGauge": 0.373,
+      "tideEff": 0.646,
+      "waterFrac": 0.5203,
+      "rateMPerHour": -0.0477,
+      "cloud": 1.58,
+      "residual": 0.0734
+    },
+    {
+      "id": "S2B_60HVD_20220110_0_L2A",
+      "date": "2022-01-10",
+      "tideGauge": 0.836,
+      "tideEff": 0.647,
+      "waterFrac": 0.5218,
+      "rateMPerHour": 0.3266,
+      "cloud": 2.38,
+      "residual": -0.0858
+    },
+    {
+      "id": "S2B_60HVD_20250802_0_L2A",
+      "date": "2025-08-02",
+      "tideGauge": 0.873,
+      "tideEff": 0.65,
+      "waterFrac": 0.5187,
+      "rateMPerHour": 0.2865,
+      "cloud": 1.39,
+      "residual": -0.1018
+    },
+    {
+      "id": "S2B_60HVD_20250504_0_L2A",
+      "date": "2025-05-04",
+      "tideGauge": 0.884,
+      "tideEff": 0.66,
+      "waterFrac": 0.6158,
+      "rateMPerHour": 0.3237,
+      "cloud": 2.41,
+      "residual": -0.0085
+    },
+    {
+      "id": "S2A_60HVD_20240204_0_L2A",
+      "date": "2024-02-04",
+      "tideGauge": 0.92,
+      "tideEff": 0.66,
+      "waterFrac": 0.4959,
+      "rateMPerHour": 0.2458,
+      "cloud": 2.22,
+      "residual": -0.1409
+    },
+    {
+      "id": "S2B_60HVD_20190416_0_L2A",
+      "date": "2019-04-16",
+      "tideGauge": 0.351,
+      "tideEff": 0.663,
+      "waterFrac": 0.2274,
+      "rateMPerHour": -0.096,
+      "cloud": 7.71,
+      "residual": -0.2118
+    },
+    {
+      "id": "S2A_60HVD_20230301_0_L2A",
+      "date": "2023-03-01",
+      "tideGauge": 0.746,
+      "tideEff": 0.67,
+      "waterFrac": 0.5311,
+      "rateMPerHour": 0.1845,
+      "cloud": 8.98,
+      "residual": -0.0453
+    },
+    {
+      "id": "S2A_60HVD_20220224_0_L2A",
+      "date": "2022-02-24",
+      "tideGauge": 0.997,
+      "tideEff": 0.676,
+      "waterFrac": 0.6173,
+      "rateMPerHour": 0.3592,
+      "cloud": 0.85,
+      "residual": -0.0462
+    },
+    {
+      "id": "S2B_60HVD_20230214_0_L2A",
+      "date": "2023-02-14",
+      "tideGauge": 1.031,
+      "tideEff": 0.68,
+      "waterFrac": 0.6794,
+      "rateMPerHour": 0.3231,
+      "cloud": 3.87,
+      "residual": 0.0041
+    },
+    {
+      "id": "S2B_60HVD_20180411_0_L2A",
+      "date": "2018-04-11",
+      "tideGauge": 0.613,
+      "tideEff": 0.72,
+      "waterFrac": 0.4899,
+      "rateMPerHour": 0.0286,
+      "cloud": 1.33,
+      "residual": -0.0403
+    },
+    {
+      "id": "S2B_60HVD_20220410_0_L2A",
+      "date": "2022-04-10",
+      "tideGauge": 0.951,
+      "tideEff": 0.722,
+      "waterFrac": 0.5238,
+      "rateMPerHour": 0.2368,
+      "cloud": 13.71,
+      "residual": -0.1238
+    },
+    {
+      "id": "S2B_60HVD_20250223_0_L2A",
+      "date": "2025-02-23",
+      "tideGauge": 0.715,
+      "tideEff": 0.729,
+      "waterFrac": 0.442,
+      "rateMPerHour": 0.0835,
+      "cloud": 16.36,
+      "residual": -0.1236
+    },
+    {
+      "id": "S2B_60HVD_20180312_0_L2A",
+      "date": "2018-03-12",
+      "tideGauge": 0.679,
+      "tideEff": 0.73,
+      "waterFrac": 0.4526,
+      "rateMPerHour": 0.0607,
+      "cloud": 10.58,
+      "residual": -0.1005
+    },
+    {
+      "id": "S2B_60HVD_20190416_1_L2A",
+      "date": "2019-04-16",
+      "tideGauge": 0.381,
+      "tideEff": 0.731,
+      "waterFrac": 0.2341,
+      "rateMPerHour": -0.1224,
+      "cloud": 9.35,
+      "residual": -0.2156
+    },
+    {
+      "id": "S2A_60HVD_20200205_1_L2A",
+      "date": "2020-02-05",
+      "tideGauge": 0.604,
+      "tideEff": 0.736,
+      "waterFrac": 0.447,
+      "rateMPerHour": 0.0089,
+      "cloud": 9.22,
+      "residual": -0.0801
+    },
+    {
+      "id": "S2B_60HVD_20250404_0_L2A",
+      "date": "2025-04-04",
+      "tideGauge": 1.117,
+      "tideEff": 0.77,
+      "waterFrac": 0.6602,
+      "rateMPerHour": 0.3318,
+      "cloud": 9.17,
+      "residual": -0.045
+    },
+    {
+      "id": "S2B_60HVD_20260608_0_L2A",
+      "date": "2026-06-08",
+      "tideGauge": 1.101,
+      "tideEff": 0.784,
+      "waterFrac": 0.5861,
+      "rateMPerHour": 0.316,
+      "cloud": 0.03,
+      "residual": -0.1135
+    },
+    {
+      "id": "S2B_60HVD_20180809_1_L2A",
+      "date": "2018-08-09",
+      "tideGauge": 0.426,
+      "tideEff": 0.791,
+      "waterFrac": 0.547,
+      "rateMPerHour": -0.1448,
+      "cloud": 0.64,
+      "residual": 0.0817
+    },
+    {
+      "id": "S2B_60HVD_20180809_0_L2A",
+      "date": "2018-08-09",
+      "tideGauge": 0.428,
+      "tideEff": 0.793,
+      "waterFrac": 0.5463,
+      "rateMPerHour": -0.1454,
+      "cloud": 0.62,
+      "residual": 0.0803
+    },
+    {
+      "id": "S2A_60HVD_20240911_0_L2A",
+      "date": "2024-09-11",
+      "tideGauge": 1.096,
+      "tideEff": 0.796,
+      "waterFrac": 0.5865,
+      "rateMPerHour": 0.2932,
+      "cloud": 9.71,
+      "residual": -0.1114
+    },
+    {
+      "id": "S2A_60HVD_20200405_1_L2A",
+      "date": "2020-04-05",
+      "tideGauge": 0.463,
+      "tideEff": 0.796,
+      "waterFrac": 0.5963,
+      "rateMPerHour": -0.124,
+      "cloud": 13.71,
+      "residual": 0.1182
+    },
+    {
+      "id": "S2B_60HVD_20240320_0_L2A",
+      "date": "2024-03-20",
+      "tideGauge": 0.63,
+      "tideEff": 0.797,
+      "waterFrac": 0.5819,
+      "rateMPerHour": 0.0013,
+      "cloud": 2.17,
+      "residual": 0.0458
+    },
+    {
+      "id": "S2B_60HVD_20210204_1_L2A",
+      "date": "2021-02-04",
+      "tideGauge": 1.158,
+      "tideEff": 0.822,
+      "waterFrac": 0.5029,
+      "rateMPerHour": 0.3686,
+      "cloud": 16.18,
+      "residual": -0.2165
+    },
+    {
+      "id": "S2B_60HVD_20220917_0_L2A",
+      "date": "2022-09-17",
+      "tideGauge": 1.064,
+      "tideEff": 0.823,
+      "waterFrac": 0.6494,
+      "rateMPerHour": 0.2643,
+      "cloud": 9.36,
+      "residual": -0.0374
+    },
+    {
+      "id": "S2B_60HVD_20190625_1_L2A",
+      "date": "2019-06-25",
+      "tideGauge": 1.074,
+      "tideEff": 0.832,
+      "waterFrac": 0.5247,
+      "rateMPerHour": 0.2853,
+      "cloud": 0.01,
+      "residual": -0.1656
+    },
+    {
+      "id": "S2A_60HVD_20210420_1_L2A",
+      "date": "2021-04-20",
+      "tideGauge": 1.151,
+      "tideEff": 0.844,
+      "waterFrac": 0.7237,
+      "rateMPerHour": 0.2869,
+      "cloud": 15.71,
+      "residual": 0.0067
+    },
+    {
+      "id": "S2C_60HVD_20260514_0_L2A",
+      "date": "2026-05-14",
+      "tideGauge": 0.525,
+      "tideEff": 0.848,
+      "waterFrac": 0.5852,
+      "rateMPerHour": -0.1207,
+      "cloud": 2.36,
+      "residual": 0.0855
+    },
+    {
+      "id": "S2A_60HVD_20221022_0_L2A",
+      "date": "2022-10-22",
+      "tideGauge": 0.58,
+      "tideEff": 0.848,
+      "waterFrac": 0.5182,
+      "rateMPerHour": -0.0811,
+      "cloud": 0.3,
+      "residual": -0.0006
+    },
+    {
+      "id": "S2B_60HVD_20190426_1_L2A",
+      "date": "2019-04-26",
+      "tideGauge": 1.046,
+      "tideEff": 0.851,
+      "waterFrac": 0.6245,
+      "rateMPerHour": 0.2592,
+      "cloud": 18.65,
+      "residual": -0.0561
+    },
+    {
+      "id": "S2B_60HVD_20251210_0_L2A",
+      "date": "2025-12-10",
+      "tideGauge": 1.427,
+      "tideEff": 0.871,
+      "waterFrac": 0.8911,
+      "rateMPerHour": 0.2979,
+      "cloud": 2.46,
+      "residual": 0.0783
+    },
+    {
+      "id": "S2A_60HVD_20210110_1_L2A",
+      "date": "2021-01-10",
+      "tideGauge": 0.514,
+      "tideEff": 0.872,
+      "waterFrac": 0.6061,
+      "rateMPerHour": -0.1376,
+      "cloud": 0.84,
+      "residual": 0.1103
+    },
+    {
+      "id": "S2A_60HVD_20240703_0_L2A",
+      "date": "2024-07-03",
+      "tideGauge": 0.475,
+      "tideEff": 0.873,
+      "waterFrac": 0.5731,
+      "rateMPerHour": -0.1617,
+      "cloud": 0.02,
+      "residual": 0.0908
+    },
+    {
+      "id": "S2B_60HVD_20221017_0_L2A",
+      "date": "2022-10-17",
+      "tideGauge": 1.069,
+      "tideEff": 0.877,
+      "waterFrac": 0.6926,
+      "rateMPerHour": 0.254,
+      "cloud": 10.42,
+      "residual": 0.0041
+    },
+    {
+      "id": "S2B_60HVD_20211231_1_L2A",
+      "date": "2021-12-31",
+      "tideGauge": 0.547,
+      "tideEff": 0.878,
+      "waterFrac": 0.6348,
+      "rateMPerHour": -0.1345,
+      "cloud": 0.37,
+      "residual": 0.1275
+    },
+    {
+      "id": "S2B_60HVD_20250623_0_L2A",
+      "date": "2025-06-23",
+      "tideGauge": 0.481,
+      "tideEff": 0.88,
+      "waterFrac": 0.357,
+      "rateMPerHour": -0.1771,
+      "cloud": 12.99,
+      "residual": -0.1274
+    },
+    {
+      "id": "S2A_60HVD_20240812_0_L2A",
+      "date": "2024-08-12",
+      "tideGauge": 1.137,
+      "tideEff": 0.886,
+      "waterFrac": 0.6142,
+      "rateMPerHour": 0.2767,
+      "cloud": 0.03,
+      "residual": -0.0979
+    },
+    {
+      "id": "S2B_60HVD_20190225_0_L2A",
+      "date": "2019-02-25",
+      "tideGauge": 1.417,
+      "tideEff": 0.894,
+      "waterFrac": 0.7806,
+      "rateMPerHour": 0.2874,
+      "cloud": 0.27,
+      "residual": -0.0288
+    },
+    {
+      "id": "S2A_60HVD_20240414_0_L2A",
+      "date": "2024-04-14",
+      "tideGauge": 1.311,
+      "tideEff": 0.903,
+      "waterFrac": 0.6814,
+      "rateMPerHour": 0.2678,
+      "cloud": 8.51,
+      "residual": -0.0912
+    },
+    {
+      "id": "S2B_60HVD_20190516_1_L2A",
+      "date": "2019-05-16",
+      "tideGauge": 0.465,
+      "tideEff": 0.904,
+      "waterFrac": 0.5896,
+      "rateMPerHour": -0.1926,
+      "cloud": 17.36,
+      "residual": 0.1108
+    },
+    {
+      "id": "S2A_60HVD_20190302_0_L2A",
+      "date": "2019-03-02",
+      "tideGauge": 0.633,
+      "tideEff": 0.908,
+      "waterFrac": 0.5586,
+      "rateMPerHour": -0.0716,
+      "cloud": 0.08,
+      "residual": 0.0214
+    },
+    {
+      "id": "S2A_60HVD_20190501_1_L2A",
+      "date": "2019-05-01",
+      "tideGauge": 0.609,
+      "tideEff": 0.91,
+      "waterFrac": 0.6682,
+      "rateMPerHour": -0.0887,
+      "cloud": 0.01,
+      "residual": 0.1394
+    },
+    {
+      "id": "S2C_60HVD_20250310_0_L2A",
+      "date": "2025-03-10",
+      "tideGauge": 0.596,
+      "tideEff": 0.914,
+      "waterFrac": 0.6013,
+      "rateMPerHour": -0.1058,
+      "cloud": 0.53,
+      "residual": 0.077
+    },
+    {
+      "id": "S2A_60HVD_20200505_1_L2A",
+      "date": "2020-05-05",
+      "tideGauge": 0.502,
+      "tideEff": 0.915,
+      "waterFrac": 0.6001,
+      "rateMPerHour": -0.1988,
+      "cloud": 17.63,
+      "residual": 0.1084
+    },
+    {
+      "id": "S2C_60HVD_20260613_0_L2A",
+      "date": "2026-06-13",
+      "tideGauge": 0.547,
+      "tideEff": 0.93,
+      "waterFrac": 0.6562,
+      "rateMPerHour": -0.1853,
+      "cloud": 5.79,
+      "residual": 0.1489
+    },
+    {
+      "id": "S2B_60HVD_20201226_1_L2A",
+      "date": "2020-12-26",
+      "tideGauge": 0.667,
+      "tideEff": 0.931,
+      "waterFrac": 0.4379,
+      "rateMPerHour": -0.0753,
+      "cloud": 15.05,
+      "residual": -0.1111
+    },
+    {
+      "id": "S2A_60HVD_20230609_0_L2A",
+      "date": "2023-06-09",
+      "tideGauge": 1.396,
+      "tideEff": 0.941,
+      "waterFrac": 0.8568,
+      "rateMPerHour": 0.2715,
+      "cloud": 2.32,
+      "residual": 0.0547
+    },
+    {
+      "id": "S2A_60HVD_20190401_0_L2A",
+      "date": "2019-04-01",
+      "tideGauge": 0.638,
+      "tideEff": 0.942,
+      "waterFrac": 0.6179,
+      "rateMPerHour": -0.0919,
+      "cloud": 0.22,
+      "residual": 0.079
+    },
+    {
+      "id": "S2A_60HVD_20200116_0_L2A",
+      "date": "2020-01-16",
+      "tideGauge": 1.422,
+      "tideEff": 0.944,
+      "waterFrac": 0.6709,
+      "rateMPerHour": 0.3316,
+      "cloud": 16.25,
+      "residual": -0.1402
+    },
+    {
+      "id": "S2A_60HVD_20190401_1_L2A",
+      "date": "2019-04-01",
+      "tideGauge": 0.64,
+      "tideEff": 0.947,
+      "waterFrac": 0.614,
+      "rateMPerHour": -0.0932,
+      "cloud": 0.19,
+      "residual": 0.0744
+    },
+    {
+      "id": "S2B_60HVD_20250305_0_L2A",
+      "date": "2025-03-05",
+      "tideGauge": 1.428,
+      "tideEff": 0.96,
+      "waterFrac": 0.8327,
+      "rateMPerHour": 0.3119,
+      "cloud": 1.98,
+      "residual": 0.0195
+    },
+    {
+      "id": "S2B_60HVD_20210125_0_L2A",
+      "date": "2021-01-25",
+      "tideGauge": 0.713,
+      "tideEff": 0.968,
+      "waterFrac": 0.6356,
+      "rateMPerHour": -0.0742,
+      "cloud": 0.1,
+      "residual": 0.0707
+    },
+    {
+      "id": "S2A_60HVD_20210219_1_L2A",
+      "date": "2021-02-19",
+      "tideGauge": 1.207,
+      "tideEff": 0.993,
+      "waterFrac": 0.6463,
+      "rateMPerHour": 0.2752,
+      "cloud": 0.4,
+      "residual": -0.0902
+    },
+    {
+      "id": "S2C_60HVD_20250608_0_L2A",
+      "date": "2025-06-08",
+      "tideGauge": 0.677,
+      "tideEff": 0.997,
+      "waterFrac": 0.6101,
+      "rateMPerHour": -0.1188,
+      "cloud": 8.33,
+      "residual": 0.0577
+    },
+    {
+      "id": "S2B_60HVD_20210425_1_L2A",
+      "date": "2021-04-25",
+      "tideGauge": 0.62,
+      "tideEff": 0.998,
+      "waterFrac": 0.7737,
+      "rateMPerHour": -0.2054,
+      "cloud": 11.18,
+      "residual": 0.2411
+    },
+    {
+      "id": "S2A_60HVD_20240315_0_L2A",
+      "date": "2024-03-15",
+      "tideGauge": 1.579,
+      "tideEff": 1.026,
+      "waterFrac": 0.9055,
+      "rateMPerHour": 0.2634,
+      "cloud": 4.17,
+      "residual": 0.0399
+    },
+    {
+      "id": "S2B_60HVD_20210105_1_L2A",
+      "date": "2021-01-05",
+      "tideGauge": 1.376,
+      "tideEff": 1.026,
+      "waterFrac": 0.7788,
+      "rateMPerHour": 0.3158,
+      "cloud": 11.75,
+      "residual": -0.0163
+    },
+    {
+      "id": "S2C_60HVD_20250409_0_L2A",
+      "date": "2025-04-09",
+      "tideGauge": 0.648,
+      "tideEff": 1.027,
+      "waterFrac": 0.5538,
+      "rateMPerHour": -0.1525,
+      "cloud": 0.12,
+      "residual": 0.0114
+    },
+    {
+      "id": "S2B_60HVD_20240529_0_L2A",
+      "date": "2024-05-29",
+      "tideGauge": 1.348,
+      "tideEff": 1.044,
+      "waterFrac": 0.8188,
+      "rateMPerHour": 0.2551,
+      "cloud": 0.64,
+      "residual": 0.0334
+    },
+    {
+      "id": "S2C_60HVD_20250906_0_L2A",
+      "date": "2025-09-06",
+      "tideGauge": 0.73,
+      "tideEff": 1.047,
+      "waterFrac": 0.7383,
+      "rateMPerHour": -0.1809,
+      "cloud": 12.23,
+      "residual": 0.1675
+    },
+    {
+      "id": "S2A_60HVD_20180705_1_L2A",
+      "date": "2018-07-05",
+      "tideGauge": 1.286,
+      "tideEff": 1.047,
+      "waterFrac": 0.6709,
+      "rateMPerHour": 0.2537,
+      "cloud": 1.96,
+      "residual": -0.093
+    },
+    {
+      "id": "S2B_60HVD_20180421_0_L2A",
+      "date": "2018-04-21",
+      "tideGauge": 1.465,
+      "tideEff": 1.048,
+      "waterFrac": 0.7606,
+      "rateMPerHour": 0.2566,
+      "cloud": 10.19,
+      "residual": -0.0654
+    },
+    {
+      "id": "S2B_60HVD_20191102_1_L2A",
+      "date": "2019-11-02",
+      "tideGauge": 1.632,
+      "tideEff": 1.05,
+      "waterFrac": 0.8871,
+      "rateMPerHour": 0.2204,
+      "cloud": 0.04,
+      "residual": 0.0031
+    },
+    {
+      "id": "S2B_60HVD_20230912_0_L2A",
+      "date": "2023-09-12",
+      "tideGauge": 0.709,
+      "tideEff": 1.052,
+      "waterFrac": 0.2767,
+      "rateMPerHour": -0.1449,
+      "cloud": 19.86,
+      "residual": -0.2868
+    },
+    {
+      "id": "S2A_60HVD_20240802_0_L2A",
+      "date": "2024-08-02",
+      "tideGauge": 0.676,
+      "tideEff": 1.066,
+      "waterFrac": 0.6745,
+      "rateMPerHour": -0.1904,
+      "cloud": 15.72,
+      "residual": 0.1224
+    },
+    {
+      "id": "S2B_60HVD_20200520_1_L2A",
+      "date": "2020-05-20",
+      "tideGauge": 0.767,
+      "tideEff": 1.07,
+      "waterFrac": 0.7469,
+      "rateMPerHour": -0.1414,
+      "cloud": 0.28,
+      "residual": 0.1632
+    },
+    {
+      "id": "S2B_60HVD_20190615_1_L2A",
+      "date": "2019-06-15",
+      "tideGauge": 0.644,
+      "tideEff": 1.073,
+      "waterFrac": 0.6941,
+      "rateMPerHour": -0.2094,
+      "cloud": 17,
+      "residual": 0.1531
+    },
+    {
+      "id": "S2B_60HVD_20231111_0_L2A",
+      "date": "2023-11-11",
+      "tideGauge": 0.803,
+      "tideEff": 1.08,
+      "waterFrac": 0.7491,
+      "rateMPerHour": -0.1398,
+      "cloud": 4.67,
+      "residual": 0.1529
+    },
+    {
+      "id": "S2C_60HVD_20250519_0_L2A",
+      "date": "2025-05-19",
+      "tideGauge": 1.327,
+      "tideEff": 1.088,
+      "waterFrac": 0.7637,
+      "rateMPerHour": 0.2493,
+      "cloud": 0.02,
+      "residual": -0.0144
+    },
+    {
+      "id": "S2A_60HVD_20200604_1_L2A",
+      "date": "2020-06-04",
+      "tideGauge": 0.662,
+      "tideEff": 1.093,
+      "waterFrac": 0.8378,
+      "rateMPerHour": -0.2447,
+      "cloud": 4.3,
+      "residual": 0.2906
+    },
+    {
+      "id": "S2B_60HVD_20250723_0_L2A",
+      "date": "2025-07-23",
+      "tideGauge": 0.698,
+      "tideEff": 1.097,
+      "waterFrac": 0.7521,
+      "rateMPerHour": -0.2247,
+      "cloud": 0.02,
+      "residual": 0.1924
+    },
+    {
+      "id": "S2A_60HVD_20180406_0_L2A",
+      "date": "2018-04-06",
+      "tideGauge": 1.432,
+      "tideEff": 1.098,
+      "waterFrac": 0.7549,
+      "rateMPerHour": 0.19,
+      "cloud": 7.69,
+      "residual": -0.0597
+    },
+    {
+      "id": "S2A_60HVD_20211126_0_L2A",
+      "date": "2021-11-26",
+      "tideGauge": 1.347,
+      "tideEff": 1.105,
+      "waterFrac": 0.5472,
+      "rateMPerHour": 0.242,
+      "cloud": 6.86,
+      "residual": -0.2379
+    },
+    {
+      "id": "S2A_60HVD_20210927_1_L2A",
+      "date": "2021-09-27",
+      "tideGauge": 1.382,
+      "tideEff": 1.109,
+      "waterFrac": 0.805,
+      "rateMPerHour": 0.1824,
+      "cloud": 8.82,
+      "residual": 0.0078
+    },
+    {
+      "id": "S2B_60HVD_20170715_0_L2A",
+      "date": "2017-07-15",
+      "tideGauge": 1.392,
+      "tideEff": 1.115,
+      "waterFrac": 0.8145,
+      "rateMPerHour": 0.2329,
+      "cloud": 1.54,
+      "residual": 0.0138
+    },
+    {
+      "id": "S2A_60HVD_20180605_1_L2A",
+      "date": "2018-06-05",
+      "tideGauge": 1.322,
+      "tideEff": 1.122,
+      "waterFrac": 0.7572,
+      "rateMPerHour": 0.2085,
+      "cloud": 3.62,
+      "residual": -0.0192
+    },
+    {
+      "id": "S2A_60HVD_20180506_0_L2A",
+      "date": "2018-05-06",
+      "tideGauge": 1.356,
+      "tideEff": 1.129,
+      "waterFrac": 0.6325,
+      "rateMPerHour": 0.1855,
+      "cloud": 8.7,
+      "residual": -0.1557
+    },
+    {
+      "id": "S2A_60HVD_20180205_0_L2A",
+      "date": "2018-02-05",
+      "tideGauge": 1.769,
+      "tideEff": 1.13,
+      "waterFrac": 0.8387,
+      "rateMPerHour": 0.222,
+      "cloud": 12.35,
+      "residual": -0.0929
+    },
+    {
+      "id": "S2B_60HVD_20230525_0_L2A",
+      "date": "2023-05-25",
+      "tideGauge": 1.448,
+      "tideEff": 1.148,
+      "waterFrac": 0.8599,
+      "rateMPerHour": 0.1664,
+      "cloud": 9.08,
+      "residual": 0.0398
+    },
+    {
+      "id": "S2B_60HVD_20200331_1_L2A",
+      "date": "2020-03-31",
+      "tideGauge": 1.389,
+      "tideEff": 1.148,
+      "waterFrac": 0.777,
+      "rateMPerHour": 0.2513,
+      "cloud": 15.5,
+      "residual": -0.0226
+    },
+    {
+      "id": "S2A_60HVD_20210629_1_L2A",
+      "date": "2021-06-29",
+      "tideGauge": 1.727,
+      "tideEff": 1.152,
+      "waterFrac": 0.8981,
+      "rateMPerHour": 0.1575,
+      "cloud": 0.46,
+      "residual": -0.0189
+    },
+    {
+      "id": "S2B_60HVD_20260628_0_L2A",
+      "date": "2026-06-28",
+      "tideGauge": 0.87,
+      "tideEff": 1.158,
+      "waterFrac": 0.822,
+      "rateMPerHour": -0.1541,
+      "cloud": 0.87,
+      "residual": 0.2026
+    },
+    {
+      "id": "S2A_60HVD_20190411_1_L2A",
+      "date": "2019-04-11",
+      "tideGauge": 1.442,
+      "tideEff": 1.161,
+      "waterFrac": 0.7865,
+      "rateMPerHour": 0.2427,
+      "cloud": 9.52,
+      "residual": -0.0315
+    },
+    {
+      "id": "S2B_60HVD_20181227_0_L2A",
+      "date": "2018-12-27",
+      "tideGauge": 1.814,
+      "tideEff": 1.163,
+      "waterFrac": 0.8599,
+      "rateMPerHour": 0.2376,
+      "cloud": 15.78,
+      "residual": -0.0873
+    },
+    {
+      "id": "S2A_60HVD_20190411_0_L2A",
+      "date": "2019-04-11",
+      "tideGauge": 1.446,
+      "tideEff": 1.165,
+      "waterFrac": 0.7895,
+      "rateMPerHour": 0.2408,
+      "cloud": 7.14,
+      "residual": -0.0299
+    },
+    {
+      "id": "S2A_60HVD_20220214_0_L2A",
+      "date": "2022-02-14",
+      "tideGauge": 0.913,
+      "tideEff": 1.184,
+      "waterFrac": 0.7986,
+      "rateMPerHour": -0.1352,
+      "cloud": 4.6,
+      "residual": 0.1642
+    },
+    {
+      "id": "S2A_60HVD_20220115_0_L2A",
+      "date": "2022-01-15",
+      "tideGauge": 0.881,
+      "tideEff": 1.185,
+      "waterFrac": 0.8601,
+      "rateMPerHour": -0.1377,
+      "cloud": 11.32,
+      "residual": 0.2368
+    },
+    {
+      "id": "S2A_60HVD_20240901_0_L2A",
+      "date": "2024-09-01",
+      "tideGauge": 0.85,
+      "tideEff": 1.2,
+      "waterFrac": 0.7849,
+      "rateMPerHour": -0.1949,
+      "cloud": 0.07,
+      "residual": 0.1724
+    },
+    {
+      "id": "S2B_60HVD_20191003_1_L2A",
+      "date": "2019-10-03",
+      "tideGauge": 1.832,
+      "tideEff": 1.203,
+      "waterFrac": 0.7569,
+      "rateMPerHour": 0.1658,
+      "cloud": 13.41,
+      "residual": -0.1966
+    },
+    {
+      "id": "S2B_60HVD_20260429_0_L2A",
+      "date": "2026-04-29",
+      "tideGauge": 0.798,
+      "tideEff": 1.213,
+      "waterFrac": 0.5932,
+      "rateMPerHour": -0.2155,
+      "cloud": 2.77,
+      "residual": -0.0012
+    },
+    {
+      "id": "S2A_60HVD_20240214_0_L2A",
+      "date": "2024-02-14",
+      "tideGauge": 1.851,
+      "tideEff": 1.233,
+      "waterFrac": 0.9111,
+      "rateMPerHour": 0.2142,
+      "cloud": 5.47,
+      "residual": -0.0489
+    },
+    {
+      "id": "S2A_60HVD_20220803_0_L2A",
+      "date": "2022-08-03",
+      "tideGauge": 1.539,
+      "tideEff": 1.251,
+      "waterFrac": 0.8732,
+      "rateMPerHour": 0.1647,
+      "cloud": 0.94,
+      "residual": 0.0215
+    },
+    {
+      "id": "S2A_60HVD_20210709_1_L2A",
+      "date": "2021-07-09",
+      "tideGauge": 0.918,
+      "tideEff": 1.252,
+      "waterFrac": 0.7207,
+      "rateMPerHour": -0.2352,
+      "cloud": 5.52,
+      "residual": 0.0846
+    },
+    {
+      "id": "S2B_60HVD_20210813_1_L2A",
+      "date": "2021-08-13",
+      "tideGauge": 1.691,
+      "tideEff": 1.264,
+      "waterFrac": 0.8843,
+      "rateMPerHour": 0.1511,
+      "cloud": 13.98,
+      "residual": -0.0202
+    },
+    {
+      "id": "S2B_60HVD_20190814_1_L2A",
+      "date": "2019-08-14",
+      "tideGauge": 0.953,
+      "tideEff": 1.265,
+      "waterFrac": 0.8031,
+      "rateMPerHour": -0.1868,
+      "cloud": 4.56,
+      "residual": 0.1548
+    },
+    {
+      "id": "S2A_60HVD_20210311_1_L2A",
+      "date": "2021-03-11",
+      "tideGauge": 0.86,
+      "tideEff": 1.282,
+      "waterFrac": 0.8397,
+      "rateMPerHour": -0.2359,
+      "cloud": 1.22,
+      "residual": 0.2237
+    },
+    {
+      "id": "S2B_60HVD_20200907_1_L2A",
+      "date": "2020-09-07",
+      "tideGauge": 1.68,
+      "tideEff": 1.342,
+      "waterFrac": 0.9058,
+      "rateMPerHour": 0.0756,
+      "cloud": 0.12,
+      "residual": 0.0051
+    },
+    {
+      "id": "S2A_60HVD_20231126_0_L2A",
+      "date": "2023-11-26",
+      "tideGauge": 0.955,
+      "tideEff": 1.353,
+      "waterFrac": 0.9283,
+      "rateMPerHour": -0.2618,
+      "cloud": 1.42,
+      "residual": 0.2793
+    },
+    {
+      "id": "S2B_60HVD_20260718_0_L2A",
+      "date": "2026-07-18",
+      "tideGauge": 1.857,
+      "tideEff": 1.361,
+      "waterFrac": 0.8604,
+      "rateMPerHour": 0.0482,
+      "cloud": 15.97,
+      "residual": -0.1017
+    },
+    {
+      "id": "S2A_60HVD_20190111_0_L2A",
+      "date": "2019-01-11",
+      "tideGauge": 1.716,
+      "tideEff": 1.369,
+      "waterFrac": 0.828,
+      "rateMPerHour": 0.1434,
+      "cloud": 15.43,
+      "residual": -0.0852
+    },
+    {
+      "id": "S2B_60HVD_20230306_0_L2A",
+      "date": "2023-03-06",
+      "tideGauge": 1.069,
+      "tideEff": 1.376,
+      "waterFrac": 0.8929,
+      "rateMPerHour": -0.2148,
+      "cloud": 11.22,
+      "residual": 0.2044
+    },
+    {
+      "id": "S2A_60HVD_20190210_1_L2A",
+      "date": "2019-02-10",
+      "tideGauge": 1.688,
+      "tideEff": 1.398,
+      "waterFrac": 0.9443,
+      "rateMPerHour": 0.1551,
+      "cloud": 2.41,
+      "residual": 0.0408
+    },
+    {
+      "id": "S2A_60HVD_20200803_1_L2A",
+      "date": "2020-08-03",
+      "tideGauge": 1.054,
+      "tideEff": 1.414,
+      "waterFrac": 0.6851,
+      "rateMPerHour": -0.2586,
+      "cloud": 2.32,
+      "residual": 0.0018
+    },
+    {
+      "id": "S2B_60HVD_20191112_0_L2A",
+      "date": "2019-11-12",
+      "tideGauge": 1.023,
+      "tideEff": 1.42,
+      "waterFrac": 0.5668,
+      "rateMPerHour": -0.283,
+      "cloud": 19.87,
+      "residual": -0.1058
+    },
+    {
+      "id": "S2B_60HVD_20241115_0_L2A",
+      "date": "2024-11-15",
+      "tideGauge": 0.974,
+      "tideEff": 1.421,
+      "waterFrac": 0.7922,
+      "rateMPerHour": -0.3157,
+      "cloud": 8.78,
+      "residual": 0.1366
+    },
+    {
+      "id": "S2C_60HVD_20250926_0_L2A",
+      "date": "2025-09-26",
+      "tideGauge": 1.735,
+      "tideEff": 1.432,
+      "waterFrac": 0.7693,
+      "rateMPerHour": 0.0119,
+      "cloud": 17.4,
+      "residual": -0.1505
+    },
+    {
+      "id": "S2A_60HVD_20220505_0_L2A",
+      "date": "2022-05-05",
+      "tideGauge": 1.728,
+      "tideEff": 1.433,
+      "waterFrac": 0.9398,
+      "rateMPerHour": 0.0258,
+      "cloud": 0.26,
+      "residual": 0.0225
+    },
+    {
+      "id": "S2B_60HVD_20200709_1_L2A",
+      "date": "2020-07-09",
+      "tideGauge": 1.813,
+      "tideEff": 1.436,
+      "waterFrac": 0.9488,
+      "rateMPerHour": 0.0119,
+      "cloud": 0.01,
+      "residual": 0.0019
+    },
+    {
+      "id": "S2B_60HVD_20240330_0_L2A",
+      "date": "2024-03-30",
+      "tideGauge": 1.699,
+      "tideEff": 1.445,
+      "waterFrac": 0.9612,
+      "rateMPerHour": 0.0935,
+      "cloud": 0.01,
+      "residual": 0.0539
+    },
+    {
+      "id": "S2B_60HVD_20240130_0_L2A",
+      "date": "2024-01-30",
+      "tideGauge": 1.797,
+      "tideEff": 1.461,
+      "waterFrac": 0.9591,
+      "rateMPerHour": 0.0665,
+      "cloud": 10.57,
+      "residual": 0.0178
+    },
+    {
+      "id": "S2B_60HVD_20231231_0_L2A",
+      "date": "2023-12-31",
+      "tideGauge": 1.818,
+      "tideEff": 1.462,
+      "waterFrac": 0.8775,
+      "rateMPerHour": 0.0422,
+      "cloud": 13.5,
+      "residual": -0.0711
+    },
+    {
+      "id": "S2B_60HVD_20220629_0_L2A",
+      "date": "2022-06-29",
+      "tideGauge": 1.069,
+      "tideEff": 1.462,
+      "waterFrac": 0.9499,
+      "rateMPerHour": -0.3008,
+      "cloud": 1.39,
+      "residual": 0.2614
+    },
+    {
+      "id": "S2B_60HVD_20240229_0_L2A",
+      "date": "2024-02-29",
+      "tideGauge": 1.767,
+      "tideEff": 1.479,
+      "waterFrac": 0.9087,
+      "rateMPerHour": 0.0731,
+      "cloud": 14.38,
+      "residual": -0.0222
+    },
+    {
+      "id": "S2A_60HVD_20241021_0_L2A",
+      "date": "2024-10-21",
+      "tideGauge": 1.963,
+      "tideEff": 1.48,
+      "waterFrac": 0.8649,
+      "rateMPerHour": 0.0272,
+      "cloud": 18.13,
+      "residual": -0.134
+    },
+    {
+      "id": "S2B_60HVD_20241205_0_L2A",
+      "date": "2024-12-05",
+      "tideGauge": 1.82,
+      "tideEff": 1.482,
+      "waterFrac": 0.9567,
+      "rateMPerHour": 0.041,
+      "cloud": 0.05,
+      "residual": 0.0074
+    },
+    {
+      "id": "S2A_60HVD_20180215_0_L2A",
+      "date": "2018-02-15",
+      "tideGauge": 1.104,
+      "tideEff": 1.488,
+      "waterFrac": 0.9475,
+      "rateMPerHour": -0.2785,
+      "cloud": 0.12,
+      "residual": 0.2468
+    },
+    {
+      "id": "S2A_60HVD_20231226_0_L2A",
+      "date": "2023-12-26",
+      "tideGauge": 1.151,
+      "tideEff": 1.493,
+      "waterFrac": 0.8647,
+      "rateMPerHour": -0.2498,
+      "cloud": 13.69,
+      "residual": 0.1477
+    },
+    {
+      "id": "S2A_60HVD_20230410_0_L2A",
+      "date": "2023-04-10",
+      "tideGauge": 1.834,
+      "tideEff": 1.502,
+      "waterFrac": 0.9475,
+      "rateMPerHour": 0.0441,
+      "cloud": 14.26,
+      "residual": -0.0066
+    },
+    {
+      "id": "S2A_60HVD_20200902_1_L2A",
+      "date": "2020-09-02",
+      "tideGauge": 1.145,
+      "tideEff": 1.502,
+      "waterFrac": 0.948,
+      "rateMPerHour": -0.2716,
+      "cloud": 0.08,
+      "residual": 0.2331
+    },
+    {
+      "id": "S2A_60HVD_20200724_1_L2A",
+      "date": "2020-07-24",
+      "tideGauge": 1.919,
+      "tideEff": 1.548,
+      "waterFrac": 0.7236,
+      "rateMPerHour": -0.0139,
+      "cloud": 15.05,
+      "residual": -0.2601
+    },
+    {
+      "id": "S2A_60HVD_20201002_1_L2A",
+      "date": "2020-10-02",
+      "tideGauge": 1.17,
+      "tideEff": 1.559,
+      "waterFrac": 0.854,
+      "rateMPerHour": -0.2974,
+      "cloud": 9.5,
+      "residual": 0.1304
+    },
+    {
+      "id": "S2A_60HVD_20240125_0_L2A",
+      "date": "2024-01-25",
+      "tideGauge": 1.241,
+      "tideEff": 1.56,
+      "waterFrac": 0.9479,
+      "rateMPerHour": -0.2486,
+      "cloud": 16.37,
+      "residual": 0.1996
+    },
+    {
+      "id": "S2B_60HVD_20191212_0_L2A",
+      "date": "2019-12-12",
+      "tideGauge": 1.095,
+      "tideEff": 1.578,
+      "waterFrac": 0.7802,
+      "rateMPerHour": -0.3455,
+      "cloud": 18.44,
+      "residual": 0.0826
+    },
+    {
+      "id": "S2A_60HVD_20180317_0_L2A",
+      "date": "2018-03-17",
+      "tideGauge": 1.084,
+      "tideEff": 1.587,
+      "waterFrac": 0.8015,
+      "rateMPerHour": -0.3638,
+      "cloud": 8.18,
+      "residual": 0.1078
+    },
+    {
+      "id": "S2B_60HVD_20200609_1_L2A",
+      "date": "2020-06-09",
+      "tideGauge": 1.888,
+      "tideEff": 1.6,
+      "waterFrac": 0.9619,
+      "rateMPerHour": -0.0737,
+      "cloud": 0.01,
+      "residual": -0.011
+    },
+    {
+      "id": "S2B_60HVD_20260618_0_L2A",
+      "date": "2026-06-18",
+      "tideGauge": 1.946,
+      "tideEff": 1.622,
+      "waterFrac": 0.9627,
+      "rateMPerHour": -0.0945,
+      "cloud": 0.13,
+      "residual": -0.0303
+    },
+    {
+      "id": "S2B_60HVD_20210515_0_L2A",
+      "date": "2021-05-15",
+      "tideGauge": 1.745,
+      "tideEff": 1.626,
+      "waterFrac": 0.9637,
+      "rateMPerHour": -0.1096,
+      "cloud": 0.39,
+      "residual": 0.0405
+    },
+    {
+      "id": "S2A_60HVD_20190720_1_L2A",
+      "date": "2019-07-20",
+      "tideGauge": 1.737,
+      "tideEff": 1.662,
+      "waterFrac": 0.9661,
+      "rateMPerHour": -0.1419,
+      "cloud": 17.12,
+      "residual": 0.0456
+    },
+    {
+      "id": "S2A_60HVD_20220306_0_L2A",
+      "date": "2022-03-06",
+      "tideGauge": 1.951,
+      "tideEff": 1.663,
+      "waterFrac": 0.8421,
+      "rateMPerHour": -0.0526,
+      "cloud": 18.55,
+      "residual": -0.1527
+    },
+    {
+      "id": "S2B_60HVD_20220828_0_L2A",
+      "date": "2022-08-28",
+      "tideGauge": 1.191,
+      "tideEff": 1.668,
+      "waterFrac": 0.7082,
+      "rateMPerHour": -0.3848,
+      "cloud": 16.73,
+      "residual": -0.0227
+    },
+    {
+      "id": "S2B_60HVD_20190205_0_L2A",
+      "date": "2019-02-05",
+      "tideGauge": 1.27,
+      "tideEff": 1.696,
+      "waterFrac": 0.9566,
+      "rateMPerHour": -0.3219,
+      "cloud": 0.43,
+      "residual": 0.1983
+    },
+    {
+      "id": "S2B_60HVD_20250812_0_L2A",
+      "date": "2025-08-12",
+      "tideGauge": 1.848,
+      "tideEff": 1.699,
+      "waterFrac": 0.9646,
+      "rateMPerHour": -0.1701,
+      "cloud": 0.4,
+      "residual": 0.0056
+    },
+    {
+      "id": "S2A_60HVD_20240524_0_L2A",
+      "date": "2024-05-24",
+      "tideGauge": 1.18,
+      "tideEff": 1.699,
+      "waterFrac": 0.961,
+      "rateMPerHour": -0.4158,
+      "cloud": 7.02,
+      "residual": 0.2339
+    },
+    {
+      "id": "S2A_60HVD_20201201_1_L2A",
+      "date": "2020-12-01",
+      "tideGauge": 1.244,
+      "tideEff": 1.7,
+      "waterFrac": 0.9627,
+      "rateMPerHour": -0.3458,
+      "cloud": 2.94,
+      "residual": 0.2134
+    },
+    {
+      "id": "S2A_60HVD_20210430_1_L2A",
+      "date": "2021-04-30",
+      "tideGauge": 2.032,
+      "tideEff": 1.707,
+      "waterFrac": 0.9674,
+      "rateMPerHour": -0.0918,
+      "cloud": 0.29,
+      "residual": -0.0555
+    },
+    {
+      "id": "S2B_60HVD_20180928_1_L2A",
+      "date": "2018-09-28",
+      "tideGauge": 1.827,
+      "tideEff": 1.719,
+      "waterFrac": 0.8516,
+      "rateMPerHour": -0.1559,
+      "cloud": 18,
+      "residual": -0.1001
+    },
+    {
+      "id": "S2B_60HVD_20190804_1_L2A",
+      "date": "2019-08-04",
+      "tideGauge": 2.026,
+      "tideEff": 1.72,
+      "waterFrac": 0.9678,
+      "rateMPerHour": -0.0974,
+      "cloud": 3.62,
+      "residual": -0.053
+    },
+    {
+      "id": "S2B_60HVD_20210415_2_L2A",
+      "date": "2021-04-15",
+      "tideGauge": 1.752,
+      "tideEff": 1.722,
+      "waterFrac": 0.809,
+      "rateMPerHour": -0.1669,
+      "cloud": 12.69,
+      "residual": -0.1167
+    },
+    {
+      "id": "S2A_60HVD_20240921_0_L2A",
+      "date": "2024-09-21",
+      "tideGauge": 2.01,
+      "tideEff": 1.73,
+      "waterFrac": 0.9252,
+      "rateMPerHour": -0.1235,
+      "cloud": 17.18,
+      "residual": -0.0901
+    },
+    {
+      "id": "S2B_60HVD_20250613_0_L2A",
+      "date": "2025-06-13",
+      "tideGauge": 1.485,
+      "tideEff": 1.751,
+      "waterFrac": 0.9607,
+      "rateMPerHour": -0.3272,
+      "cloud": 6.65,
+      "residual": 0.1277
+    },
+    {
+      "id": "S2B_60HVD_20190406_0_L2A",
+      "date": "2019-04-06",
+      "tideGauge": 1.204,
+      "tideEff": 1.757,
+      "waterFrac": 0.9669,
+      "rateMPerHour": -0.4132,
+      "cloud": 0.55,
+      "residual": 0.2315
+    },
+    {
+      "id": "S2A_60HVD_20190121_0_L2A",
+      "date": "2019-01-21",
+      "tideGauge": 1.198,
+      "tideEff": 1.76,
+      "waterFrac": 0.9278,
+      "rateMPerHour": -0.4149,
+      "cloud": 14.3,
+      "residual": 0.1945
+    },
+    {
+      "id": "S2B_60HVD_20200111_1_L2A",
+      "date": "2020-01-11",
+      "tideGauge": 1.269,
+      "tideEff": 1.816,
+      "waterFrac": 0.9649,
+      "rateMPerHour": -0.4128,
+      "cloud": 8.09,
+      "residual": 0.2069
+    },
+    {
+      "id": "S2B_60HVD_20190406_1_L2A",
+      "date": "2019-04-06",
+      "tideGauge": 1.298,
+      "tideEff": 1.818,
+      "waterFrac": 0.9703,
+      "rateMPerHour": -0.411,
+      "cloud": 0.8,
+      "residual": 0.2023
+    },
+    {
+      "id": "S2B_60HVD_20250315_0_L2A",
+      "date": "2025-03-15",
+      "tideGauge": 1.404,
+      "tideEff": 1.82,
+      "waterFrac": 0.9416,
+      "rateMPerHour": -0.3615,
+      "cloud": 2.48,
+      "residual": 0.1368
+    },
+    {
+      "id": "S2A_60HVD_20200425_1_L2A",
+      "date": "2020-04-25",
+      "tideGauge": 1.581,
+      "tideEff": 1.827,
+      "waterFrac": 0.9679,
+      "rateMPerHour": -0.3057,
+      "cloud": 0.01,
+      "residual": 0.1016
+    },
+    {
+      "id": "S2A_60HVD_20201231_2_L2A",
+      "date": "2020-12-31",
+      "tideGauge": 1.383,
+      "tideEff": 1.829,
+      "waterFrac": 0.9714,
+      "rateMPerHour": -0.3637,
+      "cloud": 10.21,
+      "residual": 0.1738
+    },
+    {
+      "id": "S2B_60HVD_20220120_0_L2A",
+      "date": "2022-01-20",
+      "tideGauge": 1.7,
+      "tideEff": 1.845,
+      "waterFrac": 0.6408,
+      "rateMPerHour": -0.2442,
+      "cloud": 10.41,
+      "residual": -0.2668
+    },
+    {
+      "id": "S2B_60HVD_20221226_0_L2A",
+      "date": "2022-12-26",
+      "tideGauge": 2.075,
+      "tideEff": 1.855,
+      "waterFrac": 0.9648,
+      "rateMPerHour": -0.1345,
+      "cloud": 1.08,
+      "residual": -0.073
+    },
+    {
+      "id": "S2B_60HVD_20220219_0_L2A",
+      "date": "2022-02-19",
+      "tideGauge": 1.863,
+      "tideEff": 1.862,
+      "waterFrac": 0.94,
+      "rateMPerHour": -0.2023,
+      "cloud": 10.92,
+      "residual": -0.0242
+    },
+    {
+      "id": "S2A_60HVD_20191227_1_L2A",
+      "date": "2019-12-27",
+      "tideGauge": 1.459,
+      "tideEff": 1.878,
+      "waterFrac": 0.8038,
+      "rateMPerHour": -0.3556,
+      "cloud": 7.31,
+      "residual": -0.0201
+    },
+    {
+      "id": "S2B_60HVD_20260519_0_L2A",
+      "date": "2026-05-19",
+      "tideGauge": 1.933,
+      "tideEff": 1.885,
+      "waterFrac": 0.9409,
+      "rateMPerHour": -0.2648,
+      "cloud": 8.01,
+      "residual": -0.0476
+    },
+    {
+      "id": "S2A_60HVD_20200225_1_L2A",
+      "date": "2020-02-25",
+      "tideGauge": 1.509,
+      "tideEff": 1.888,
+      "waterFrac": 0.9727,
+      "rateMPerHour": -0.3403,
+      "cloud": 0.19,
+      "residual": 0.1314
+    },
+    {
+      "id": "S2A_60HVD_20200126_0_L2A",
+      "date": "2020-01-26",
+      "tideGauge": 1.499,
+      "tideEff": 1.894,
+      "waterFrac": 0.9327,
+      "rateMPerHour": -0.3417,
+      "cloud": 18.53,
+      "residual": 0.0949
+    },
+    {
+      "id": "S2A_60HVD_20240723_0_L2A",
+      "date": "2024-07-23",
+      "tideGauge": 1.628,
+      "tideEff": 1.895,
+      "waterFrac": 0.898,
+      "rateMPerHour": -0.3788,
+      "cloud": 7.85,
+      "residual": 0.0154
+    },
+    {
+      "id": "S2A_60HVD_20180516_0_L2A",
+      "date": "2018-05-16",
+      "tideGauge": 1.309,
+      "tideEff": 1.907,
+      "waterFrac": 0.9325,
+      "rateMPerHour": -0.4869,
+      "cloud": 8.97,
+      "residual": 0.1606
+    },
+    {
+      "id": "S2B_60HVD_20180401_0_L2A",
+      "date": "2018-04-01",
+      "tideGauge": 1.412,
+      "tideEff": 1.908,
+      "waterFrac": 0.9651,
+      "rateMPerHour": -0.4088,
+      "cloud": 0.69,
+      "residual": 0.1575
+    },
+    {
+      "id": "S2A_60HVD_20220813_0_L2A",
+      "date": "2022-08-13",
+      "tideGauge": 1.442,
+      "tideEff": 1.911,
+      "waterFrac": 0.958,
+      "rateMPerHour": -0.4298,
+      "cloud": 1.29,
+      "residual": 0.14
+    },
+    {
+      "id": "S2B_60HVD_20240509_0_L2A",
+      "date": "2024-05-09",
+      "tideGauge": 1.468,
+      "tideEff": 1.94,
+      "waterFrac": 0.9644,
+      "rateMPerHour": -0.4507,
+      "cloud": 0.02,
+      "residual": 0.1373
+    },
+    {
+      "id": "S2A_60HVD_20220912_0_L2A",
+      "date": "2022-09-12",
+      "tideGauge": 1.608,
+      "tideEff": 1.959,
+      "waterFrac": 0.5442,
+      "rateMPerHour": -0.3785,
+      "cloud": 15.52,
+      "residual": -0.3315
+    },
+    {
+      "id": "S2A_60HVD_20210331_1_L2A",
+      "date": "2021-03-31",
+      "tideGauge": 2.015,
+      "tideEff": 1.962,
+      "waterFrac": 0.994,
+      "rateMPerHour": -0.2392,
+      "cloud": 3.15,
+      "residual": -0.023
+    },
+    {
+      "id": "S2A_60HVD_20210130_0_L2A",
+      "date": "2021-01-30",
+      "tideGauge": 1.604,
+      "tideEff": 1.974,
+      "waterFrac": 0.9652,
+      "rateMPerHour": -0.3691,
+      "cloud": 0.76,
+      "residual": 0.0909
+    },
+    {
+      "id": "S2B_60HVD_20230803_0_L2A",
+      "date": "2023-08-03",
+      "tideGauge": 1.565,
+      "tideEff": 1.975,
+      "waterFrac": 0.9636,
+      "rateMPerHour": -0.4412,
+      "cloud": 0.01,
+      "residual": 0.1029
+    },
+    {
+      "id": "S2C_60HVD_20260305_0_L2A",
+      "date": "2026-03-05",
+      "tideGauge": 1.696,
+      "tideEff": 1.979,
+      "waterFrac": 0.9529,
+      "rateMPerHour": -0.3527,
+      "cloud": 6.15,
+      "residual": 0.0467
+    },
+    {
+      "id": "S2A_60HVD_20211106_0_L2A",
+      "date": "2021-11-06",
+      "tideGauge": 1.548,
+      "tideEff": 2.014,
+      "waterFrac": 0.9386,
+      "rateMPerHour": -0.4535,
+      "cloud": 11.77,
+      "residual": 0.0838
+    },
+    {
+      "id": "S2B_60HVD_20210115_0_L2A",
+      "date": "2021-01-15",
+      "tideGauge": 1.78,
+      "tideEff": 2.023,
+      "waterFrac": 0.9698,
+      "rateMPerHour": -0.3153,
+      "cloud": 7.23,
+      "residual": 0.0344
+    },
+    {
+      "id": "S2A_60HVD_20180715_0_L2A",
+      "date": "2018-07-15",
+      "tideGauge": 1.845,
+      "tideEff": 2.025,
+      "waterFrac": 0.8194,
+      "rateMPerHour": -0.3401,
+      "cloud": 17.83,
+      "residual": -0.1386
+    },
+    {
+      "id": "S2A_60HVD_20180615_1_L2A",
+      "date": "2018-06-15",
+      "tideGauge": 1.578,
+      "tideEff": 2.029,
+      "waterFrac": 0.9615,
+      "rateMPerHour": -0.4506,
+      "cloud": 8.98,
+      "residual": 0.0962
+    },
+    {
+      "id": "S2A_60HVD_20180615_0_L2A",
+      "date": "2018-06-15",
+      "tideGauge": 1.582,
+      "tideEff": 2.03,
+      "waterFrac": 0.9604,
+      "rateMPerHour": -0.4496,
+      "cloud": 7.26,
+      "residual": 0.0937
+    },
+    {
+      "id": "S2B_60HVD_20200210_1_L2A",
+      "date": "2020-02-10",
+      "tideGauge": 1.527,
+      "tideEff": 2.053,
+      "waterFrac": 0.9717,
+      "rateMPerHour": -0.4531,
+      "cloud": 0.2,
+      "residual": 0.1241
+    },
+    {
+      "id": "S2B_60HVD_20201216_1_L2A",
+      "date": "2020-12-16",
+      "tideGauge": 1.676,
+      "tideEff": 2.058,
+      "waterFrac": 0.9701,
+      "rateMPerHour": -0.3901,
+      "cloud": 1.2,
+      "residual": 0.0708
+    },
+    {
+      "id": "S2B_60HVD_20200410_1_L2A",
+      "date": "2020-04-10",
+      "tideGauge": 1.927,
+      "tideEff": 2.075,
+      "waterFrac": 0.9793,
+      "rateMPerHour": -0.3359,
+      "cloud": 0.69,
+      "residual": -0.0071
+    },
+    {
+      "id": "S2B_60HVD_20200311_1_L2A",
+      "date": "2020-03-11",
+      "tideGauge": 1.778,
+      "tideEff": 2.162,
+      "waterFrac": 0.9772,
+      "rateMPerHour": -0.4305,
+      "cloud": 1.33,
+      "residual": 0.0425
+    }
+  ]
+}

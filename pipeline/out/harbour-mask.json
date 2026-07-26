@@ -1,0 +1,292 @@
+{
+  "description": "Renderer mask for the Tauranga Harbour drying-height raster. 255 = draw, 0 = ignore. Derived from the fitted water classes by flood-filling the single connected harbour water body landward of the coastline, then dilating 2 px.",
+  "size": {
+    "width": 2600,
+    "height": 2600
+  },
+  "rowOrder": "row 0 is NORTH (top of the bbox, latitude -37.41). Identical orientation to drying-height.png, classes.png and misfit.png.",
+  "selfCheck": {
+    "note": "Load this mask together with classes.png and reproduce the four numbers below. If inside/outside come out swapped, one of your two load paths is flipping rows.",
+    "maskAreaKm2": 194.3,
+    "intertidalInsideKm2": 138.1,
+    "intertidalOutsideKm2": 29.9,
+    "subtidalInsideKm2": 47.6,
+    "pixelAreaKm2": 0.000241212
+  },
+  "method": "water = subtidal|intertidal; the open ocean is separated morphologically (erode by 32 px to sever the two entrance necks, label, dilate the ocean component back, subtract); the remaining component containing 176.06E 37.62S is the harbour; dilated 2 px. NO hand-drawn polygon is involved.",
+  "erosionRadiusPx": 32,
+  "excludedComponents": {
+    "minKm2": 0.05,
+    "listed": [
+      {
+        "km2": 12.27,
+        "lon": 175.9824,
+        "lat": -37.4317,
+        "place": "(diffuse scatter - centroid not meaningful)",
+        "meanMisfit": 7.4,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 1,
+        "spanKm": 6.1,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 6.73,
+        "lon": 176.0349,
+        "lat": -37.5053,
+        "place": "(diffuse scatter - centroid not meaningful)",
+        "meanMisfit": 13.4,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 7,
+        "spanKm": 17.1,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 1.04,
+        "lon": 176.2615,
+        "lat": -37.6794,
+        "place": "(diffuse scatter - centroid not meaningful)",
+        "meanMisfit": 31.5,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 41,
+        "spanKm": 17,
+        "verdict": "open-coast beach/surf"
+      },
+      {
+        "km2": 0.68,
+        "lon": 176.2233,
+        "lat": -37.4442,
+        "place": "",
+        "meanMisfit": 2.4,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 2.1,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.52,
+        "lon": 175.9773,
+        "lat": -37.744,
+        "place": "",
+        "meanMisfit": 3.1,
+        "pctInsidePolygon": 100,
+        "pctWaterConnected": 0,
+        "pctTouchingLand": 37,
+        "spanKm": 1.1,
+        "verdict": "inland flooding"
+      },
+      {
+        "km2": 0.43,
+        "lon": 175.9419,
+        "lat": -37.7091,
+        "place": "",
+        "meanMisfit": 2.1,
+        "pctInsidePolygon": 100,
+        "pctWaterConnected": 0,
+        "pctTouchingLand": 33,
+        "spanKm": 1.1,
+        "verdict": "inland flooding"
+      },
+      {
+        "km2": 0.35,
+        "lon": 176.2239,
+        "lat": -37.4368,
+        "place": "",
+        "meanMisfit": 2.4,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 1.3,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.25,
+        "lon": 175.9907,
+        "lat": -37.7112,
+        "place": "",
+        "meanMisfit": 1.8,
+        "pctInsidePolygon": 100,
+        "pctWaterConnected": 0,
+        "pctTouchingLand": 40,
+        "spanKm": 0.8,
+        "verdict": "inland flooding"
+      },
+      {
+        "km2": 0.24,
+        "lon": 175.9326,
+        "lat": -37.7051,
+        "place": "",
+        "meanMisfit": 2.6,
+        "pctInsidePolygon": 100,
+        "pctWaterConnected": 0,
+        "pctTouchingLand": 39,
+        "spanKm": 0.7,
+        "verdict": "inland flooding"
+      },
+      {
+        "km2": 0.21,
+        "lon": 175.9993,
+        "lat": -37.4701,
+        "place": "Bowentown entrance",
+        "meanMisfit": 7.2,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 1,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.21,
+        "lon": 175.9959,
+        "lat": -37.7328,
+        "place": "",
+        "meanMisfit": 1.7,
+        "pctInsidePolygon": 100,
+        "pctWaterConnected": 0,
+        "pctTouchingLand": 61,
+        "spanKm": 0.8,
+        "verdict": "inland flooding"
+      },
+      {
+        "km2": 0.15,
+        "lon": 176.2234,
+        "lat": -37.4512,
+        "place": "",
+        "meanMisfit": 3.3,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.9,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.13,
+        "lon": 176.335,
+        "lat": -37.4775,
+        "place": "",
+        "meanMisfit": 1.2,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.9,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.12,
+        "lon": 176.23,
+        "lat": -37.4671,
+        "place": "",
+        "meanMisfit": 3,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.8,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.1,
+        "lon": 176.1998,
+        "lat": -37.506,
+        "place": "",
+        "meanMisfit": 3.1,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.6,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.07,
+        "lon": 176.2272,
+        "lat": -37.4605,
+        "place": "",
+        "meanMisfit": 2.2,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.5,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.06,
+        "lon": 176.1728,
+        "lat": -37.6261,
+        "place": "Tauranga entrance / Mount",
+        "meanMisfit": 39.4,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 50,
+        "spanKm": 1,
+        "verdict": "open-coast beach/surf"
+      },
+      {
+        "km2": 0.06,
+        "lon": 176.23,
+        "lat": -37.473,
+        "place": "",
+        "meanMisfit": 3,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.7,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.05,
+        "lon": 176.0118,
+        "lat": -37.455,
+        "place": "",
+        "meanMisfit": 4.9,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.4,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.05,
+        "lon": 176.222,
+        "lat": -37.4266,
+        "place": "",
+        "meanMisfit": 2.1,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.5,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.05,
+        "lon": 176.2321,
+        "lat": -37.464,
+        "place": "",
+        "meanMisfit": 2.3,
+        "pctInsidePolygon": 0,
+        "pctWaterConnected": 100,
+        "pctTouchingLand": 0,
+        "spanKm": 0.5,
+        "verdict": "open-water sun glint"
+      },
+      {
+        "km2": 0.05,
+        "lon": 175.9479,
+        "lat": -37.706,
+        "place": "",
+        "meanMisfit": 3.1,
+        "pctInsidePolygon": 100,
+        "pctWaterConnected": 0,
+        "pctTouchingLand": 55,
+        "spanKm": 0.3,
+        "verdict": "inland flooding"
+      }
+    ],
+    "smallBlobCount": 5623,
+    "smallBlobKm2": 6.05
+  },
+  "totals": {
+    "frameIntertidalKm2": 168
+  }
+}

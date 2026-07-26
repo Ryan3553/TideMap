@@ -1,0 +1,314 @@
+<title>Tauranga Harbour — the piece, moving</title>
+<style>
+  :root{
+    --ink:#E8EEF0; --dim:#8FA3AA; --faint:#4E6169; --line:#1B2B31;
+    --accent:#7FD4C9;             /* shallow-water green, taken from the harbour itself */
+    --warn:#E0A05C;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#050C0F; color:var(--ink);
+    font-family:ui-sans-serif,"Helvetica Neue",Helvetica,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px;}
+
+  .lede{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+  .eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);font-weight:600;}
+  h1{margin:0;font-size:clamp(22px,3.2vw,34px);font-weight:400;letter-spacing:-.01em;line-height:1.1;}
+  h1 em{font-family:ui-serif,"Iowan Old Style","Times New Roman",serif;font-style:italic;}
+  .lede p{margin:0;max-width:64ch;color:var(--dim);font-size:14.5px;line-height:1.6;}
+
+  .piece{position:relative;aspect-ratio:4/3;background:#000;border-radius:2px;overflow:hidden;
+         box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+  .hud{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;z-index:2;
+       display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+       background:linear-gradient(to top,rgba(3,9,11,.82),rgba(3,9,11,0));
+       transition:opacity .5s;}
+  .piece.idle .hud{opacity:0;}
+  .clock{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+  .clock .t{font-size:26px;letter-spacing:-.02em;}
+  .clock .d{font-size:11.5px;color:var(--dim);letter-spacing:.06em;margin-top:2px;}
+  .tideread{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;text-align:right;}
+  .tideread .h{font-size:26px;color:var(--accent);letter-spacing:-.02em;}
+  .tideread .s{font-size:11.5px;color:var(--dim);letter-spacing:.06em;margin-top:2px;}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+  button{font:inherit;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    padding:8px 12px;border-radius:2px;border:1px solid var(--line);background:#0A171B;color:var(--ink);cursor:pointer;}
+  button:hover{border-color:var(--accent);color:var(--accent);}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#041416;}
+  .spacer{flex:1;}
+  .hint{font-size:12px;color:var(--faint);line-height:1.5;max-width:60ch;margin-top:10px;}
+
+  .notes{margin-top:38px;padding-top:22px;border-top:1px solid var(--line);
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;}
+  .note h3{margin:0 0 6px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);font-weight:600;}
+  .note p{margin:0;font-size:13px;line-height:1.65;color:var(--dim);max-width:44ch;}
+  .note b{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;font-weight:500;color:var(--accent);}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+
+<div class="wrap">
+  <div class="lede">
+    <div class="eyebrow">Prototype · real tide · real sun · real drying pattern</div>
+    <h1>Tauranga Harbour, <em>breathing</em></h1>
+    <p>Nothing here is a photograph of a moment. The land is one satellite basemap; every
+       waterline is computed from a per-pixel drying-height map and the predicted tide.
+       Run it fast to see the shape of a day; run it in real time to see why the piece
+       cannot rely on the tide alone for movement.</p>
+  </div>
+
+  <div class="piece" id="piece">
+    <canvas id="c"></canvas>
+    <div class="hud">
+      <div class="clock"><div class="t" id="clockT">—</div><div class="d" id="clockD">—</div></div>
+      <div class="tideread"><div class="h" id="tideH">—</div><div class="s" id="tideS">—</div></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="sp0" data-speed="1">Real time</button>
+    <button id="sp1" data-speed="600">10 min / s</button>
+    <button id="sp2" data-speed="1800" aria-pressed="true">30 min / s</button>
+    <button id="sp3" data-speed="5400">90 min / s</button>
+    <span class="spacer"></span>
+    <button id="damp" aria-pressed="true">Damp band</button>
+    <button id="night" aria-pressed="true">Day &amp; night</button>
+    <button id="now">Back to now</button>
+  </div>
+  <p class="hint" id="hint"></p>
+
+  <div class="notes">
+    <div class="note">
+      <h3>What the damp band is</h3>
+      <p>Freshly exposed flat is dark and wet; it pales as it dries. On an ebb a dark band
+        follows the retreating water. On a flood there is none. Turn it off and try to tell
+        which way the tide is going — that is the whole argument for keeping it.</p>
+    </div>
+    <div class="note">
+      <h3>Why real time looks still</h3>
+      <p>The waterline advances a metre or two a minute at its fastest — about <b>one pixel
+        every ten minutes</b> here. Light is what moves perceptibly. The tide is the slow
+        truth underneath it.</p>
+    </div>
+    <div class="note">
+      <h3>Honest gaps</h3>
+      <p>Below <b>0.33 m</b> the drying map has no data, and never can: Sentinel-2's fixed
+        morning overpass is phase-locked with the spring–neap cycle here, so spring low water
+        is never observed. The piece breathes from 0.33 m up, then holds still at the very
+        bottom. Water colour and sky are mine, not measured; the <i>shape</i> is real.</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+__TIDE_MODULE__
+
+const BASE_SRC  = "__BASE__";
+const FIELD_SRC = "__FIELD__";
+
+// ---------- solar altitude for Tauranga (NOAA low-precision, good to ~0.1 deg) ----------
+const LAT = -37.65 * Math.PI / 180, LON = 176.17;
+function sunAltitudeDeg(date) {
+  const jd = date.getTime() / 86400000 + 2440587.5;
+  const n = jd - 2451545.0;
+  const L = (280.460 + 0.9856474 * n) % 360;
+  const g = ((357.528 + 0.9856003 * n) % 360) * Math.PI / 180;
+  const lam = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * Math.PI / 180;
+  const eps = (23.439 - 0.0000004 * n) * Math.PI / 180;
+  const dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+  const ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam));
+  const gmst = (18.697374558 + 24.06570982441908 * n) % 24;
+  const lst = ((gmst + LON / 15) % 24) * 15 * Math.PI / 180;
+  const H = lst - ra;
+  return Math.asin(Math.sin(LAT) * Math.sin(dec) + Math.cos(LAT) * Math.cos(dec) * Math.cos(H)) * 180 / Math.PI;
+}
+// Moon illuminated fraction — mean synodic phase, plenty for a readout.
+function moonIllum(date) {
+  const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
+  const age = (((date.getTime() - ref) / 86400000) % syn + syn) % syn;
+  return { frac: (1 - Math.cos(2 * Math.PI * age / syn)) / 2, age };
+}
+
+// ---------- GL ----------
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+if (!gl) {
+  document.getElementById('piece').innerHTML =
+    '<p style="padding:28px;color:#8FA3AA;font:14px system-ui">This preview needs WebGL, ' +
+    'which this browser has turned off. Everything else on the page still applies.</p>';
+  throw new Error('no webgl');
+}
+const VS = `attribute vec2 p; varying vec2 vUv;
+void main(){ vUv = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.0,1.0); }`;
+const FS = `precision highp float;
+varying vec2 vUv;
+uniform sampler2D uBase, uField;
+uniform float uTide, uTidePast, uDamp, uDay, uMoonLight;
+uniform vec3 uSunTint;
+void main(){
+  vec3 base = texture2D(uBase, vUv).rgb;
+  vec4 f    = texture2D(uField, vUv);
+  float cls = f.g;                      // 0 subtidal | 0.5 intertidal | 1 supratidal
+  float dryH = f.r * 2.5;               // metres above chart datum
+  float lum = dot(base, vec3(0.299,0.587,0.114));
+
+  float isSub   = 1.0 - step(0.25, cls);
+  float isInter = step(0.25, cls) * (1.0 - step(0.75, cls));
+  float isLand  = step(0.75, cls);
+
+  // --- water ---
+  vec3 deep = vec3(0.015,0.062,0.088), shallow = vec3(0.085,0.235,0.245);
+  float submerged = isInter * step(dryH, uTide) + isSub;
+  float d = clamp((uTide - dryH) / 1.3, 0.0, 1.0);                 // intertidal depth proxy
+  vec3 wInter = mix(shallow, deep, d);
+  vec3 wSub   = mix(deep, shallow, smoothstep(0.04, 0.32, lum));   // channels from basemap tone
+  vec3 water  = mix(wInter, wSub, isSub);
+  water *= 0.80 + 0.42 * lum;                                      // keep some real texture
+
+  // --- exposed ground, with the damp band behind an ebbing waterline ---
+  vec3 ground = base * 1.06;
+  float ebb = step(uTide + 0.0005, uTidePast);
+  float inBand = ebb * step(uTide, dryH) * step(dryH, uTidePast);
+  float wetness = inBand * (1.0 - (dryH - uTide) / max(uTidePast - uTide, 1e-4));
+  wetness *= uDamp;
+  ground = mix(ground, ground * 0.52 + shallow * 0.16, wetness);
+
+  vec3 surface = mix(ground, water, submerged);
+
+  // --- light ---
+  vec3 lit = surface * uSunTint * uDay;
+  vec3 moon = surface * vec3(0.42,0.56,0.80) * uMoonLight;
+  float city = isLand * smoothstep(0.40, 0.68, lum) * (1.0 - uDay);
+  vec3 glow = vec3(1.00,0.72,0.38) * city * 0.55;
+  vec3 col = lit + moon + glow;
+
+  float v = distance(vUv, vec2(0.5)) ;
+  col *= 1.0 - 0.28 * smoothstep(0.45, 0.95, v);
+  gl_FragColor = vec4(pow(clamp(col,0.0,1.0), vec3(0.94)), 1.0);
+}`;
+function sh(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'p');
+gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const U = n => gl.getUniformLocation(prog, n);
+
+function tex(img, unit, smooth) {
+  const t = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const fl = smooth ? gl.LINEAR : gl.NEAREST;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, fl);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, fl);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+  return t;
+}
+const load = src => new Promise((res, rej) => {
+  const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src;
+});
+
+// ---------- clock ----------
+const DAMP_MINUTES = 100;
+let virtual = new Date();
+let speed = 1800, last = performance.now();
+const nzFmt = new Intl.DateTimeFormat('en-NZ', { timeZone: 'Pacific/Auckland', hour: '2-digit', minute: '2-digit', hour12: false });
+const nzDate = new Intl.DateTimeFormat('en-NZ', { timeZone: 'Pacific/Auckland', weekday: 'short', day: 'numeric', month: 'short' });
+
+let showDamp = 1, dayNight = 1;
+
+function sunTint(alt) {
+  // colour and intensity of daylight by solar altitude
+  const day = Math.max(0, Math.min(1, (alt + 6) / 12));
+  const warm = Math.max(0, Math.min(1, (12 - alt) / 18));
+  const tint = [
+    1.00 * (1 + 0.28 * warm),
+    1.00 * (1 - 0.06 * warm),
+    1.00 * (1 - 0.34 * warm),
+  ];
+  const inten = 0.28 + 0.72 * Math.max(0, Math.min(1, (alt + 4) / 26));
+  return { day, tint, inten };
+}
+
+function frame(now) {
+  const dt = (now - last) / 1000; last = now;
+  virtual = new Date(virtual.getTime() + dt * speed * 1000);
+
+  // The raster only resolves 0.332–2.127 m; outside that the image is frozen by
+  // definition, so clamp rather than let it silently look like a rendering bug.
+  const clamp = v => Math.max(0.332, Math.min(2.127, v));
+  const hTrue = predict(virtual);
+  const h = clamp(hTrue);
+  const hPast = clamp(predict(new Date(virtual.getTime() - DAMP_MINUTES * 60000)));
+  const alt = sunAltitudeDeg(virtual);
+  const { day, tint, inten } = sunTint(alt);
+  const mi = moonIllum(virtual);
+
+  const dayF = dayNight ? day * inten : 1.0;
+  const moonF = dayNight ? (1 - day) * (0.05 + 0.16 * mi.frac) : 0.0;
+
+  gl.uniform1f(U('uTide'), h);
+  gl.uniform1f(U('uTidePast'), hPast);
+  gl.uniform1f(U('uDamp'), showDamp);
+  gl.uniform1f(U('uDay'), dayF);
+  gl.uniform1f(U('uMoonLight'), moonF);
+  gl.uniform3f(U('uSunTint'), tint[0], tint[1], tint[2]);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  document.getElementById('clockT').textContent = nzFmt.format(virtual);
+  document.getElementById('clockD').textContent = nzDate.format(virtual).toUpperCase() + ' · NZ';
+  document.getElementById('tideH').textContent = hTrue.toFixed(2) + ' m';
+  const rising = hTrue > predict(new Date(virtual.getTime() - 600000));
+  document.getElementById('tideS').textContent =
+    (rising ? 'FLOODING' : 'EBBING') + ' · MOON ' + Math.round(mi.frac * 100) + '%';
+  requestAnimationFrame(frame);
+}
+
+// ---------- controls ----------
+const speedBtns = [...document.querySelectorAll('[data-speed]')];
+function setSpeed(v, btn) {
+  speed = v; speedBtns.forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  document.getElementById('hint').textContent = v === 1
+    ? 'Real time. The waterline is moving — about one pixel every ten minutes. This is the problem the damp band and the changing light exist to solve.'
+    : '';
+}
+speedBtns.forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed, b)));
+const dampBtn = document.getElementById('damp');
+dampBtn.addEventListener('click', () => {
+  showDamp = showDamp ? 0 : 1; dampBtn.setAttribute('aria-pressed', String(!!showDamp));
+});
+const nightBtn = document.getElementById('night');
+nightBtn.addEventListener('click', () => {
+  dayNight = dayNight ? 0 : 1; nightBtn.setAttribute('aria-pressed', String(!!dayNight));
+});
+document.getElementById('now').addEventListener('click', () => { virtual = new Date(); });
+
+const piece = document.getElementById('piece');
+let idle; const wake = () => {
+  piece.classList.remove('idle'); clearTimeout(idle);
+  idle = setTimeout(() => piece.classList.add('idle'), 4000);
+};
+piece.addEventListener('pointermove', wake); wake();
+
+// ---------- go ----------
+const [baseImg, fieldImg] = await Promise.all([load(BASE_SRC), load(FIELD_SRC)]);
+canvas.width = baseImg.width; canvas.height = baseImg.height;
+gl.viewport(0, 0, canvas.width, canvas.height);
+tex(baseImg, 0, true); tex(fieldImg, 1, false);
+gl.uniform1i(U('uBase'), 0); gl.uniform1i(U('uField'), 1);
+requestAnimationFrame(frame);
+</script>
