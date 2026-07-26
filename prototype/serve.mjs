@@ -24,11 +24,29 @@ http.createServer((req,res)=>{
     });
     res.end(b);
   });
+}).on('error', e => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`port ${PORT} is already in use — another copy of this server is probably still running.`);
+    console.error(`  netstat -ano | findstr :${PORT}     then     taskkill /F /PID <pid>`);
+    process.exit(1);
+  }
+  throw e;
 }).listen(PORT, '0.0.0.0', () => {
-  const addrs = Object.values(os.networkInterfaces()).flat()
-    .filter(a => a && a.family === 'IPv4' && !a.internal).map(a => a.address);
+  // Name the adapter. Every machine here has several private IPs and only one of them is the
+  // wifi the iPad is on; an unlabelled list of addresses is a guessing game.
+  const nets = Object.entries(os.networkInterfaces())
+    .flatMap(([name, addrs]) => (addrs || []).map(a => ({ ...a, name })))
+    .filter(a => a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.'));
+  const isWifi = n => /wi-?fi|wlan|wireless/i.test(n);
+  nets.sort((a, b) => (isWifi(b.name) ? 1 : 0) - (isWifi(a.name) ? 1 : 0));
   console.log(`serving ${root}`);
-  console.log(`  studio   http://localhost:${PORT}/tidemap-v2.html`);
-  console.log(`  iPad app http://localhost:${PORT}/ipad/`);
-  for (const a of addrs) console.log(`  on wifi  http://${a}:${PORT}/ipad/   <- open this on the iPad`);
+  console.log(`  studio    http://localhost:${PORT}/tidemap-v2.html`);
+  console.log(`  iPad app  http://localhost:${PORT}/ipad/`);
+  console.log('');
+  for (const a of nets) {
+    const tag = isWifi(a.name) ? '  <- OPEN THIS ON THE IPAD (in Safari)' : '';
+    console.log(`  ${a.name.padEnd(12)} http://${a.address}:${PORT}/ipad/${tag}`);
+  }
+  if (!nets.some(a => isWifi(a.name))) console.log('  (no wifi adapter found — use whichever address is on the same network as the iPad)');
+  console.log('\n  Note the port: 5179. And use Safari — Chrome on iOS cannot Add to Home Screen.');
 });

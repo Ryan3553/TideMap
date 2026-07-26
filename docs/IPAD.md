@@ -28,8 +28,19 @@ something on the device.
 node prototype/serve.mjs
 ```
 
-It prints the LAN address. On the iPad, same wifi, open `http://<that address>:5179/ipad/`,
-then **Share → Add to Home Screen**.
+It prints one line per network adapter with the adapter's name, and marks the wifi one. On the
+iPad, same wifi, open that address — **in Safari** — then **Share → Add to Home Screen**.
+
+Three things that will waste your time if you get them wrong:
+
+- **The port is 5179.** Not 5170. A wrong port gives `ERR_CONNECTION_TIMED_OUT`, which looks
+  exactly like a firewall problem and isn't.
+- **Safari, not Chrome.** Chrome on iOS cannot install a PWA; its "Add to Home Screen" makes a
+  bookmark that opens in Chrome with full browser chrome, which is not the piece.
+- **One server at a time.** Windows will happily let two `node serve.mjs` processes bind 5179
+  at once and then route connections to either of them, so a stale copy running older code
+  produces failures that come and go. `netstat -ano | findstr :5179` should show exactly one
+  PID. The server now refuses to start on a busy port rather than joining it.
 
 What you get: full screen, correct icon, no Safari chrome. What you don't: **offline**, and the
 **wake lock**. Both need a secure context, and a plain `http://192.168…` address is not one, so
