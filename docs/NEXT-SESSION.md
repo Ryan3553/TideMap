@@ -7,12 +7,12 @@
 ## Ryan's queue for the next round (2026-07-27 morning)
 
 > **2026-07-27 evening: item 0 is DONE** — arteries built and live in the page, on a
-> composite of real bathymetry (2 m coastal LiDAR + chart contours/soundings + NIWA 25 m,
-> `build-depth-composite.py`), because **the LDS key cannot export layer 122679: it lacks
-> the Exports scope** ("Invalid API key scope" on every export/datasources call; WFS/WMTS
-> work fine). **Ryan: on data.linz.govt.nz go to your API keys and tick "Exports" (or full
-> API access) on the key** — then next round runs `fetch` for 122679 and slots the true
-> multibeam in as priority 0 of `build-depth-composite.py` (the hook is documented there).
+> composite of real bathymetry (`build-depth-composite.py`). **Ryan added the Exports
+> scope the same evening and the true HS79 multibeam 2 m (122679) is now IN, priority 0.**
+> The big finding: the survey is OFFSHORE ONLY — a shelf band ~5–46 m below LAT (approaches,
+> Karewa, the coastal shelf); it never enters the harbour. So the harbour arteries stand on
+> the coastal LiDAR + chart vectors, and the multibeam owns the ocean: real sand ridges off
+> the beach, crisper ebb-delta lobes, and a ~1.2 m depth correction over what NIWA claimed.
 > The new `prep-flow.mjs` needs no change; it reads whatever `depth-composite-raw.f32` says.
 > **Item 1 is also DONE** (same day, follow-up round): wide screens put the panel beside a
 > sticky piece; narrow screens pin the stage and shrink it to ~34vh once you scroll into

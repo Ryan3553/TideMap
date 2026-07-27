@@ -1,0 +1,16 @@
+{
+  "file": "Bay of Plenty Multibeam 2m Depth Model (2024).tif",
+  "source": "LDS layer 122679 - Bay of Plenty Multibeam 2m Depth Model (2024), survey HS79",
+  "publisher": "Toitu Te Whenua Land Information New Zealand / NZ Hydrographic Authority",
+  "obtained_via": "Koordinates export API (LDS key WITH Exports scope, added by Ryan 2026-07-27), export id 4576369, cropped to project bbox, key redacted",
+  "request_used": "POST https://data.linz.govt.nz/services/api/v1.x/exports/ {items:[layer 122679], formats:{grid:'image/tiff;subtype=geotiff'}, crs:'EPSG:32760', extent:bbox-polygon}; poll; GET download_url",
+  "bbox_wgs84": { "west": 175.93, "south": -37.79, "east": 176.37, "north": -37.41 },
+  "native_crs": "EPSG:32760", "resolution_m": 2.0, "dtype": "float32", "nodata": 3.4028235e38,
+  "grid": "19612x21257, bounds 405307..444531 E / 5816945..5859459 N",
+  "values": "elevation relative to chart datum (Approximate LAT), negative down; in-bbox valid range -45.8..-5.4 m",
+  "coverage": "OFFSHORE ONLY: shelf band ~5-46 m below LAT incl. the approaches and Karewa; the survey never enters the harbour (15.8% of bbox valid)",
+  "vertical_accuracy": "+/-0.31 m (95%)", "horizontal_accuracy": "+/-1 m (95%)",
+  "survey_window": "2024-11-05 .. 2025-03-14",
+  "licence": "CC BY 4.0, attribution Toitu Te Whenua Land Information New Zealand",
+  "fetched": "2026-07-27"
+}

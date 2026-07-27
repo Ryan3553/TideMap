@@ -29,8 +29,13 @@ Sources, in priority order where they overlap:
      Already ~MSL, already on this grid (run resample-niwa-depth.py first).
      Open ocean and anywhere neither better source reaches.
 
-The 2 m multibeam (LDS 122679, the real target) drops in above ALL of these
-when the LDS key gains the Exports scope - slot it in as priority 0 here.
+  0. HS79 Multibeam 2m (2024)       sources/bathy/multibeam2m/*.tif
+     LDS layer 122679, exported 2026-07-27 once the key gained the Exports scope.
+     Values are elevation relative to chart datum (approx LAT), negative down,
+     float32, nodata +3.4e38. COVERAGE IS OFFSHORE ONLY: the survey band runs
+     along the shelf from ~5 m to ~46 m below LAT and never enters the harbour -
+     the harbour channels stay with the LiDAR + chart vectors. Highest priority
+     where valid (hydro-survey grade, +-0.31 m). LAT -> MSL via -1.107 m.
 
 Usage: python build-depth-composite.py [P=4096]
 Debug: DEBUG_DUMP=1 writes research/overnight-2026-07-27/bathy/composite-*.png
@@ -189,6 +194,51 @@ if ring.any():
 e = e * (1 - w_lid) + lid_fill * w_lid
 src_id[w_lid > 0.5] = 2
 
+# ------------------------------------------------- 0. HS79 multibeam 2m (highest priority)
+MB_PATH = os.path.join(BATHY, "multibeam2m",
+                       "Bay of Plenty Multibeam 2m Depth Model (2024).tif")
+if os.path.exists(MB_PATH):
+    mb = np.full((P, P), np.nan)
+    mb_cov = np.zeros((P, P))
+    with rasterio.open(MB_PATH) as src:
+        arr = src.read(1)
+        valid = np.abs(arr) < 1e30
+        vals = np.where(valid, arr, 0.0).astype(np.float64)
+        vmask = valid.astype(np.float64)
+        d_val = np.full((P, P), np.nan)
+        d_msk = np.full((P, P), 0.0)
+        reproject(vals, d_val, src_transform=src.transform, src_crs=src.crs,
+                  dst_transform=dst_transform, dst_crs=dst_crs,
+                  resampling=Resampling.average, src_nodata=None, dst_nodata=np.nan)
+        reproject(vmask, d_msk, src_transform=src.transform, src_crs=src.crs,
+                  dst_transform=dst_transform, dst_crs=dst_crs,
+                  resampling=Resampling.average, src_nodata=None, dst_nodata=0.0)
+        got = np.isfinite(d_val) & (d_msk > 0)
+        mb[got] = d_val[got] / np.maximum(d_msk[got], 1e-9)
+        mb_cov[got] = d_msk[got]
+    mb_valid = np.isfinite(mb) & (mb_cov >= LIDAR_MIN_COVER)
+    mb_msl = mb - MSL_ABOVE_CD                      # LAT-referenced elevation -> MSL
+    # datum sanity: multibeam vs what the composite already believes, in the overlap
+    ov = mb_valid & (e < -2)
+    if ov.sum() > 1000:
+        d = (mb_msl - e)[ov]
+        print(f"datum cross-check (multibeam minus composite, {ov.sum()} px): "
+              f"median {np.median(d):+.2f} m, IQR {np.percentile(d,25):+.2f}..{np.percentile(d,75):+.2f}")
+    w_mb = gaussian_filter(mb_valid.astype(np.float64), 4.0)
+    w_mb[~mb_valid & (w_mb < 0.5)] = 0.0
+    mb_fill = np.where(mb_valid, mb_msl, 0.0)
+    ring = (w_mb > 0) & ~mb_valid
+    if ring.any():
+        idx = distance_transform_edt(~mb_valid, return_indices=True, return_distances=False)
+        mb_fill[ring] = mb_msl[idx[0][ring], idx[1][ring]]
+    e = e * (1 - w_mb) + mb_fill * w_mb
+    src_id[w_mb > 0.5] = 3
+    print(f"multibeam: {mb_valid.mean()*100:.1f}% of grid, "
+          f"range {np.nanmin(np.where(mb_valid, mb_msl, np.nan)):.1f}.."
+          f"{np.nanmax(np.where(mb_valid, mb_msl, np.nan)):.1f} m MSL")
+else:
+    print("multibeam: not on disk, skipped")
+
 # ------------------------------------------------------------------ checks
 # datum sanity: LiDAR vs chart vectors where both confident and underwater
 both = lidar_valid & (conf_full > 0.6) & (lidar_msl < -1.5) & (vec_full < -1.5)
@@ -208,8 +258,9 @@ def transect(label, lon0, lat0, lon1, lat1, n=24):
 transect("entrance N-S", 176.171, -37.630, 176.171, -37.660)
 transect("western channel E-W", 176.02, -37.62, 176.08, -37.62)
 
-src_counts = [(src_id == k).mean() * 100 for k in (0, 1, 2)]
-print(f"source map: NIWA {src_counts[0]:.1f}%  chart-vectors {src_counts[1]:.1f}%  LiDAR {src_counts[2]:.1f}%")
+src_counts = [(src_id == k).mean() * 100 for k in (0, 1, 2, 3)]
+print(f"source map: NIWA {src_counts[0]:.1f}%  chart-vectors {src_counts[1]:.1f}%  "
+      f"LiDAR {src_counts[2]:.1f}%  multibeam {src_counts[3]:.1f}%")
 print(f"composite range: {e.min():.1f}..{e.max():.1f} m MSL, underwater fraction {(e < 0).mean():.3f}")
 
 e.astype(np.float32).tofile(os.path.join(DATA, "depth-composite-raw.f32"))
@@ -222,7 +273,7 @@ with open(os.path.join(DATA, "depth-composite.json"), "w") as f:
         "datums": {"msl_above_chart_datum_m": MSL_ABOVE_CD,
                    "msl_above_nzvd2016_m": MSL_ABOVE_NZVD,
                    "note": "MSL_ABOVE_CD computed as the mean of all HW/LW heights in sources/tides/tauranga_*.csv (mean tide level, 2023-2027); LINZ's published MSL-CD for Tauranga is 1.14 m - the 3 cm gap is MTL-vs-MSL and does not matter at channel depths"},
-        "pending": "LDS 122679 multibeam 2m (LAT datum) slots in as priority 0 once the LDS key has the Exports scope",
+        "multibeam": "LDS 122679 HS79 multibeam 2m (LAT datum) integrated as priority 0 where valid - offshore shelf band only (~5..46 m below LAT); the harbour interior is not in the survey",
     }, f, indent=2)
 
 if os.environ.get("DEBUG_DUMP"):

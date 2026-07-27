@@ -1,0 +1,16 @@
+<PAMDataset>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Point</MDI>
+    <MDI key="TIFFTAG_DATETIME">2025:07:17 11:40:45</MDI>
+    <MDI key="TIFFTAG_SOFTWARE">CARIS++, v7.2.23</MDI>
+  </Metadata>
+  <PAMRasterBand band="1">
+    <Description>Depth</Description>
+    <UnitType>m</UnitType>
+    <ColorInterp>Gray</ColorInterp>
+    <Metadata>
+      <MDI key="Band_Direction">Height</MDI>
+      <MDI key="Band_Name">Depth</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>

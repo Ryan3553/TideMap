@@ -59,7 +59,7 @@ const BASEMAPS = [
 for (const [,src,dst] of BASEMAPS) await pageJpeg(src, dst, BM_SIZE, BM_Q);
 await pagePng('data/field-v3.png', 'data/page-field.png');          // no resize — 16-bit precision
 await pagePng('data/flow.png', pfx+'flow.png', ARTIFACT ? 2048 : 2560);
-await pagePng('data/relief.png', pfx+'relief.png', ARTIFACT ? 1024 : 1536);  // gentle low-freq relief
+await pagePng('data/relief.png', pfx+'relief.png', ARTIFACT ? 1024 : 1280);  // gentle low-freq relief
 
 // The basemaps and the field/flow go into the DOCUMENT as <img>, not into the module source.
 // A multi-megabyte data URI inside <script type="module"> silently never executes in some
