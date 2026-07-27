@@ -19,7 +19,7 @@ const S = {
   nightGlow:0.95, nightFall:4.2, cityGain:0.28, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
-  relief:0.4,
+  relief:0.4, flatsWarm:0.75,
   exposure:1.0, gamma:0.92, vignette:0.36,
   shoreGlow:0.50, surfGain:0.12, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85,
   ...JSON.parse(A.set ?? '{}'),
@@ -96,15 +96,27 @@ function sampleField(u, v) {              // manual bilinear across 4 exact texe
 const sunAlt = light*40-6;
 const day = clamp((sunAlt+6)/11,0,1);
 const warm = clamp((12-sunAlt)/18,0,1);
-const inten = 0.30+0.70*clamp((sunAlt+4)/26,0,1);
+const inten = 0.36+0.64*clamp((sunAlt+4)/24,0,1);
 const uDay = day*inten, uNightMix = 1-day, uMoon = +(A.moon ?? 0.7);
-const sunTint = [1+0.30*warm, 1-0.05*warm, 1-0.34*warm];
+const sunTint = [1+0.40*warm, 1-0.04*warm, 1-0.42*warm];
 // relief raking light, matching frame(): az= overrides the slider-mode fixed NE azimuth
 const sunAz = +(A.az ?? 65);
 const rakeWin = clamp((sunAlt+4)/8,0,1)*(1-clamp((sunAlt-12)/18,0,1));
 const reliefAmt = S.relief*rakeWin;
+// Morning/evening haze and golden-hour windows — mirror frame() exactly.
+const hazeAmt = clamp((10-sunAlt)/14,0,1)*clamp((sunAlt+5)/6,0,1);
+const goldAmt = clamp((14-sunAlt)/12,0,1)*clamp((sunAlt+3)/5,0,1);
 const sunDirX = Math.sin(sunAz*Math.PI/180), sunDirY = Math.cos(sunAz*Math.PI/180);
 const uTide = clamp(tide,LO,HI), uTidePast = +(A.past ?? uTide);
+// Tide RATE, 0 at the turns and 1 at mid-tide — mirrors frame(). Drives flow speed/strength.
+const tideRate = Math.sin(Math.PI*clamp((uTide-LO)/(HI-LO),0,1));
+// uFlowPhase is integrated in JS in the page; reproduce its value at animation time t.
+const flowPhaseG = t*tideRate*dir*(1/36);
+
+// Constant water-ramp endpoints — mirrors the shader's wShore/wDeepO/channel colour.
+const W_SHORE = C.shallow.map((c,k)=>c*[1.04,1.20,1.14][k]+[0.0,0.05,0.03][k]);
+const W_DEEPO = C.deep.map((c,k)=>c*[0.40,0.52,0.72][k]);
+const CHAN_COL = mix3(C.mid,C.deep,0.60).map((c,k)=>c*[0.72,0.96,1.30][k]);
 
 const aspect = W/H;
 const halfW = zoom*aspect*1.0866/2, halfH = zoom/2;
@@ -140,17 +152,31 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   Hh += hDither;
   const lum=0.299*b[0]+0.587*b[1]+0.114*b[2];
 
+  // Hoisted to match the shader: the daylight ground grade needs the water/exposed split,
+  // the shimmer noise, the intertidal band and the relief sample before water colour exists.
+  const [u1,v1]=uvOf(px+1,py), [u2,v2]=uvOf(px,py+1);
+  const aa=Math.max(Math.abs(heightAt(u1,v1)-Hh)+Math.abs(heightAt(u2,v2)-Hh),0.0015);
+  const submerged=smoothstep(-aa,aa,uTide-Hh);
+  const sea=1-smoothstep(0.03,0.35,Hh-H_LO);
+  const nux=u*340.0, nuy=v*340.0/1.0866;
+  const shim=noise(nux+t*0.045,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
+  const flatBand=(1-submerged)*smoothstep(2.6,2.2,Hh)*smoothstep(-0.1,0.15,Hh+0.75);
+  const rg=samp(relief,RP,u,v,3);
+  const ocean=rg[2];                 // baked open-coast mask: 1 on the Pacific, 0 in harbour
+
   // ---- flowing channels ----------------------------------------------------------
+  // Two-copy scroll, mirroring the shader exactly: sample the same streamline at two offsets
+  // half a cycle apart and crossfade on the sawtooth. uFlowPhase is signed and integrated in
+  // JS from the tide rate; here it is reproduced as t*tideRate*dir/36.
   const flowSrc = samp(flow, FLP, u, v, 3);
   const flowAngle = flowSrc[2]*Math.PI*2;
   const flowDir = [Math.cos(flowAngle), Math.sin(flowAngle)];
-  const flowU = u + flowDir[0]*0.0020*Math.sin(t*0.11);
-  const flowV = v + flowDir[1]*0.0020*Math.sin(t*0.11);
-  const flowSample = samp(flow, FLP, flowU, flowV, 3);
-  const flowPhase = frac(t*(1/36)*(-dir));
-  const flowTri = Math.abs(flowPhase*2-1);
-  const flowVal = mix(flowSample[0], flowSample[1], flowTri);
-  const flowEffect = mix(-0.15, 0.45, flowVal) * S.flowGain;
+  const FLOW_DIST=0.012;
+  const f1=frac(flowPhaseG), f2=frac(flowPhaseG+0.5);
+  const a1=samp(flow, FLP, u-flowDir[0]*f1*FLOW_DIST, v-flowDir[1]*f1*FLOW_DIST, 3)[0];
+  const a2=samp(flow, FLP, u-flowDir[0]*f2*FLOW_DIST, v-flowDir[1]*f2*FLOW_DIST, 3)[0];
+  const flowVal=mix(a1,a2,Math.abs(f1*2-1));
+  const flowEffect=mix(-0.30,0.75,flowVal)*S.flowGain*(0.20+0.80*tideRate);
 
   const tl = mix(smoothstep(0.02,S.landWhite,lum),clamp(lum,0,1),0.22);
   const palette = mix3(C.landDark,C.landLight,tl);
@@ -160,11 +186,26 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   let ground = stylised.map((s,k)=>mix(s,real[k],S.realism));
   // raking-light land relief — exact mirror of the shader term
   if (reliefAmt > 0.001) {
-    const rg = samp(relief, RP, u, v, 3);
     const gx=(rg[0]*2-1)*1.5, gy=(rg[1]*2-1)*1.5;
     const rake=(-gx*sunDirX-gy*sunDirY)/Math.sqrt(1+gx*gx+gy*gy);
     ground=ground.map(g=>g*(1+reliefAmt*rake));
   }
+
+  // Exposed intertidal by day: sand/silt/shell chroma remap on the aerial's own luminance —
+  // mirrors the shader's sand grade exactly.
+  const sandT=smoothstep(0.06,0.72,lum);
+  let sand=[mix(0.40,0.80,sandT),mix(0.37,0.76,sandT),mix(0.33,0.68,sandT)];
+  const goldT=0.45*smoothstep(0.15,0.50,lum)*(1-smoothstep(0.50,0.80,lum));
+  sand=[mix(sand[0],0.68,goldT),mix(sand[1],0.60,goldT),mix(sand[2],0.44,goldT)];
+  const grain=1+0.05*(noise(nux*2.3,nuy*2.3)-0.5);
+  sand=sand.map((s,k)=>s*(1+0.28*rel[k])*grain);
+  const sandMixA=S.flatsWarm*flatBand*(1-uNightMix)*S.realism;
+  ground=ground.map((g,k)=>mix(g,sand[k],sandMixA));
+  // Wet-edge reflection on the RISING tide — mirrors the shader.
+  const wetEdge=Math.exp(-(((Hh-uTide)/0.045)**2))*(1-submerged)*Math.max(dir,0);
+  ground=ground.map((g,k)=>g+[0.085,0.10,0.105][k]*wetEdge*(1-uNightMix));
+  // Golden-hour sheen on the wet flats — mirrors the shader.
+  ground=ground.map((g,k)=>g+sunTint[k]*[0.18,0.15,0.10][k]*goldAmt*flatBand);
 
   // Damp band: smoothstep, not step() — matches the shader's fix exactly.
   const DAMP_EDGE_M=0.01;
@@ -175,23 +216,30 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const wet=clamp(band*(1-(Hh-uTide)/Math.max(uTidePast-uTide,1e-4))*S.dampGain,0,1);
   ground=ground.map((g,k)=>mix(g,g*0.52+C.dampCol[k]*0.55,wet));
 
-  // fwidth(H) ~ |dH/dx| + |dH/dy| in screen space
-  const [u1,v1]=uvOf(px+1,py), [u2,v2]=uvOf(px,py+1);
-  const aa=Math.max(Math.abs(heightAt(u1,v1)-Hh)+Math.abs(heightAt(u2,v2)-Hh),0.0015);
-  const submerged=smoothstep(-aa,aa,uTide-Hh);
-  const sea=1-smoothstep(0.03,0.35,Hh-H_LO);
+  // ---- water — mirrors the shader's continuous ramp/channel/ocean treatment ------
   const depth=Math.max(clamp((uTide-Hh)/S.depthCurve,0,1),sea*bathy);
-  let wcol=depth<0.5?mix3(C.shallow,C.mid,depth*2):mix3(C.mid,C.deep,(depth-0.5)*2);
-  const clarity=S.clarity*mix(1,0.18,smoothstep(0.05,0.80,depth));
-  wcol=wcol.map(c=>c*mix(1,0.55+0.85*lum,clarity));
+  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,0.16,depth));
+  wcol=mix3(wcol,C.mid,smoothstep(0.14,0.48,depth));
+  wcol=mix3(wcol,C.deep,smoothstep(0.44,0.80,depth));
+  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(0.45,0.85,bathy));
+  const chan=(1-ocean)*sea*smoothstep(0.20,0.34,bathy)*(1-smoothstep(0.55,0.72,bathy));
+  wcol=mix3(wcol,CHAN_COL,chan*0.55);
+  const mvx=(u-0.563)*1.0866, mvy=v-0.592;
+  const mouthLift=1+0.14*Math.exp(-(mvx*mvx+mvy*mvy)/0.0012);
+  wcol=wcol.map(c=>c*mouthLift);
+  const clarity=S.clarity*mix(1,0.18,smoothstep(0.05,0.80,depth))*(1-0.85*ocean);
+  wcol=wcol.map(c=>c*mix(1,0.52+0.68*lum,clarity));
 
-  // Living water: a slow 2-octave shimmer, subtle texture rather than sparkle. Night gets the
-  // full slider amplitude, day a third of it.
-  const nux=u*340.0, nuy=v*340.0/1.0866;
-  const shim=noise(nux+t*0.045,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
   wcol=wcol.map(c=>c*(1+(S.shimmer/3)*(shim-0.5)));
-  // Flowing channels, daylight share: at most a third of the night strength.
-  wcol=wcol.map(c=>c*(1+(flowEffect/3)*submerged));
+  // Caustics in genuinely shallow water by day; a broad slow breath on the open ocean.
+  const ca=noise(nux*1.7+t*0.055,nuy*1.7+t*0.031)*noise(nux*1.1-t*0.043,nuy*1.1);
+  wcol=wcol.map(c=>c*(1+0.22*smoothstep(0.30,0.80,ca)*smoothstep(0.30,0.04,depth)*(1-uNightMix)));
+  const ob=noise(u*26.0+t*0.012,v*26.0+t*0.007);
+  wcol=wcol.map(c=>c*(1+0.04*ocean*(ob-0.5)));
+  // Golden hour: warm sky mirror on the water, shimmer-swept — mirrors the shader's lerp.
+  wcol=wcol.map((c,k)=>mix(c,sunTint[k]*[0.62,0.50,0.38][k],goldAmt*(0.22+0.30*shim)*(1-0.55*smoothstep(0.30,0.80,depth))));
+  // Flowing channels, daylight share — mirrors the shader's 0.45.
+  wcol=wcol.map(c=>c*(1+(flowEffect*0.45)*submerged));
 
   const surface=ground.map((g,k)=>mix(g,wcol[k],submerged));
   const dh=(uTide-Hh)/Math.max(S.edgeWidth,0.004);
@@ -210,13 +258,15 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const tx=1.5/FP;
   const bSoft=(bathyAt(u+tx,v+tx)+bathyAt(u+tx,v-tx)+bathyAt(u-tx,v+tx)+bathyAt(u-tx,v-tx))*0.25;
   const jit=(shim-0.5);
-  let lines = 0.50*Math.pow(0.5+0.5*Math.cos(bSoft*38.0-t*0.30+jit*0.6),4)
-            + 0.30*Math.pow(0.5+0.5*Math.cos(bSoft*61.0-t*0.20-jit*0.9),3)
-            + 0.20*Math.pow(0.5+0.5*Math.cos(bSoft*23.0-t*0.44+jit*1.3),5);
-  lines*=smoothstep(0.58,0.72,bathy)*(1-smoothstep(0.86,0.97,bathy));
+  let lines = 0.50*Math.pow(0.5+0.5*Math.cos(bSoft*110.0+t*0.30+jit*0.6),4)
+            + 0.30*Math.pow(0.5+0.5*Math.cos(bSoft*175.0+t*0.20-jit*0.9),3)
+            + 0.20*Math.pow(0.5+0.5*Math.cos(bSoft*68.0+t*0.44+jit*1.3),5);
+  // Surf in the OPEN-COAST shoaling band (beach to ~9 m), gated by the baked ocean mask so
+  // it can never paint the harbour channels — mirrors the shader.
+  lines*=ocean*smoothstep(0.03,0.10,bathy)*(1-smoothstep(0.26,0.40,bathy));
   // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
   const bw=Math.abs(bathyAt(u1,v1)-bathy)+Math.abs(bathyAt(u2,v2)-bathy);
-  const linesAA=1-smoothstep(0.3,1.0,38.0*bw);
+  const linesAA=1-smoothstep(0.3,1.0,110.0*bw);
   // A small island closes bathy's iso-contours into a ring within a few hundred metres, and the
   // chamfer field facets that ring into an octagon — the "full-map contour lines" the owner
   // rejected, reborn at island scale. Probe the gradient direction a short, fixed, WORLD-space
@@ -227,7 +277,9 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const tang=bGl>1e-4?[-bGy/bGl,bGx/bGl]:[1,0];
   const bTang=bathyAt(u+tang[0]*0.012,v+tang[1]*0.012);
   const straight=1-smoothstep(0.015,0.05,Math.abs(bTang-bathy));
-  lines*=linesAA*straight*(0.15+0.85*uNightMix)*submerged;
+  // Swell is only visible where it feels the bottom — mirrors the shader's shoal gate.
+  const shoal=smoothstep(0.004,0.016,bGl);
+  lines*=linesAA*straight*shoal*(0.45+0.55*uNightMix)*submerged;
 
   const daylight=surface.map((s,k)=>s*sunTint[k]*uDay);
   const landNight=palette.map((p,k)=>p*(1+0.35*S.landChroma*rel[k]));
@@ -252,7 +304,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
   // than flattened to grey — `rel` is the same relative-chroma vector the land already uses. A
   // REPLACEMENT blend, not a max-lift: `pearl` is proportional to `lum`, so dark swirls stay dark.
-  const flatBand=(1-submerged)*smoothstep(2.6,2.2,Hh)*smoothstep(-0.1,0.15,Hh+0.75);
+  // flatBand is hoisted near the top of the loop — the daylight sand grade shares it.
   const pearl=C.pearlCol.map((c,k)=>c*(0.18+0.82*lum)*(1+0.5*rel[k]));
   // Wet-margin sheen on the land side of the waterline — kills the dark rim. Mirrors the shader.
   const wetMargin=Math.exp(-(((Hh-uTide)/Math.max(S.glowM,0.02))**2))*(1-submerged);
@@ -261,13 +313,17 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
 
   const vx=(px+0.5)/W-0.5, vy=(py+0.5)/H-0.5;
   const vig=1-S.vignette*smoothstep(0.42,0.98,Math.hypot(vx,vy));
+  // Daylight waterline is a neutral irregular sheen, night keeps the luminous preset colour;
+  // surf foams white by day; morning haze veils the water — all mirror the shader.
+  const edgeIrr=0.60+0.80*noise(nux*0.9,nuy*0.9+t*0.02);
   for(let k=0;k<3;k++){
     let c=mix(daylight[k],night[k],uNightMix);
     const cityTerm=C.city[k]*(Math.pow(city,1.6)*S.cityGain*1.4)+[1.0,0.95,0.85][k]*Math.pow(city,3)*S.cityGain*0.8;
     c+=cityTerm*uNightMix;
-    c+=C.edgeCol[k]*edge*S.edgeGain*(0.45+0.75*uNightMix);
-    c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.35+0.75*uNightMix);
-    c+=C.edgeCol[k]*lines*S.surfGain;
+    c+=mix(sunTint[k]*0.85,C.edgeCol[k],uNightMix)*edge*edgeIrr*S.edgeGain*(0.30+0.55*hazeAmt+0.90*uNightMix);
+    c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.12+0.95*uNightMix);
+    c+=mix([0.90,0.94,0.93][k],C.edgeCol[k],uNightMix)*lines*S.surfGain;
+    c=mix(c,[0.60,0.68,0.73][k]*Math.max(uDay,0.12),hazeAmt*0.16*submerged);
     c=1-Math.exp(-c*S.exposure);
     c*=vig;
     out[o+k]=Math.round(255*Math.pow(clamp(c,0,1),S.gamma));

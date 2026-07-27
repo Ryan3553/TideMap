@@ -227,7 +227,7 @@ const DEFAULTS={
   tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
-  relief:0.4,
+  relief:0.4, flatsWarm:0.75,
   edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85, ebb:false,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
@@ -289,7 +289,7 @@ uniform vec3 uAbyss,uPearl;
 uniform float uDepthCurve,uClarity,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
 uniform float uRealism,uGroundGain,uGroundSat,uLandChroma,uLandWhite,uExposure,uGamma,uVignette;
 uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM,uNightFall,uFlowGain;
-uniform float uFlowPhase,uTideRate;
+uniform float uFlowPhase,uTideRate,uFlatsWarm,uHaze,uGold;
 
 const float H_LO=-0.75, H_HI=3.25;
 
@@ -366,6 +366,15 @@ void main(){
   H+=hDither;
   float lum=dot(base,vec3(0.299,0.587,0.114));
 
+  // Hoisted from the water block: the daylight ground grade below needs the water/exposed
+  // split, the shimmer noise, and the intertidal band before the water colour is built.
+  float aa=max(fwidth(H),0.0015);
+  float submerged=smoothstep(-aa,aa,uTide-H);          // antialiased per screen pixel
+  float sea=1.0-smoothstep(0.03,0.35,H-H_LO);          // 1 on the always-wet sentinel
+  vec2 nuv=uv*vec2(340.0,340.0/1.0866);
+  float shim=noise(nuv+vec2(uTime*0.045,0.0))*0.6+noise(nuv*2.0)*0.4;
+  float flatBand=(1.0-submerged)*smoothstep(2.6,2.2,H)*smoothstep(-0.1,0.15,H+0.75);
+
   // ---- flowing channels ---------------------------------------------------------
   // flow.png: R=LIC phase A, G=phase B (the same streamline slid seaward), B=seaward angle.
   // Decode the angle to a unit vector via cos/sin — never lerp the raw stored byte, which wraps
@@ -405,9 +414,26 @@ void main(){
   // Slopes whose surface normal leans toward the sun brighten, away darken; uReliefAmt is
   // already windowed to low sun in JS, so noon and night are untouched. Water carries a
   // zero gradient in the texture, so this cannot shade the sea.
-  vec2 relGrad=(texture2D(uRelief,uv).rg*2.0-1.0)*1.5;
+  vec4 reliefS=texture2D(uRelief,uv);
+  vec2 relGrad=(reliefS.rg*2.0-1.0)*1.5;
   float rake=dot(normalize(vec3(-relGrad,1.0)).xy,uSunDir);
   ground*=1.0+uReliefAmt*rake;
+
+  // Exposed intertidal by day: subdued sand, silt and shell-bank tones — pale stone, muted
+  // gold, cool taupe — built on the aerial's own luminance so the real swirl detail stays.
+  // The raw photo reads grey-green here; this remaps the chroma, never the structure.
+  vec3 sand=mix(vec3(0.40,0.37,0.33),vec3(0.80,0.76,0.68),smoothstep(0.06,0.72,lum));
+  sand=mix(sand,vec3(0.68,0.60,0.44),0.45*smoothstep(0.15,0.50,lum)*(1.0-smoothstep(0.50,0.80,lum)));
+  sand*=1.0+0.28*rel;
+  sand*=1.0+0.05*(noise(nuv*2.3)-0.5);
+  ground=mix(ground,sand,uFlatsWarm*flatBand*(1.0-uNightMix)*uRealism);
+  // A narrow wet-edge reflection as the tide RISES: the strip just above the advancing
+  // water holds a sky sheen. On the ebb the damp band owns this ground instead.
+  float wetEdge=exp(-pow((H-uTide)/0.045,2.0))*(1.0-submerged)*max(uTideDir,0.0);
+  ground+=vec3(0.085,0.10,0.105)*wetEdge*(1.0-uNightMix);
+  // Golden-hour sheen on the wet flats themselves — the low sun catches the film of water
+  // the tide left behind.
+  ground+=uSunTint*vec3(0.18,0.15,0.10)*uGold*flatBand;
 
   // Freshly exposed flat is dark and wet and pales as it dries — the piece's one honest cue
   // for which way the tide is going. Ebbing only; a multiply, so the imagery survives it.
@@ -424,23 +450,45 @@ void main(){
   ground=mix(ground,ground*0.52+uDampCol*0.55,wet);
 
   // ---- water ------------------------------------------------------------------
-  float aa=max(fwidth(H),0.0015);
-  float submerged=smoothstep(-aa,aa,uTide-H);          // antialiased per screen pixel
-  float sea=1.0-smoothstep(0.03,0.35,H-H_LO);          // 1 on the always-wet sentinel
   float depth=max(clamp((uTide-H)/uDepthCurve,0.0,1.0),sea*bathy);
-  vec3 wcol=depth<0.5?mix(uShallow,uMid,depth*2.0):mix(uMid,uDeep,(depth-0.5)*2.0);
-  // The shallows let the bed through — that is where the sandbanks and channels read.
-  float clarity=uClarity*mix(1.0,0.18,smoothstep(0.05,0.80,depth));
-  wcol*=mix(1.0,0.55+0.85*lum,clarity);
+  float ocean=reliefS.b;             // baked open-coast mask: 1 on the Pacific, 0 in harbour
+  // Continuous depth ramp, no branch and no band: luminous at the shore, turquoise across
+  // the shallows, blue-green mid, the preset deep in the channels — then, on the open coast
+  // only, on down to a calm navy that acts as negative space rather than imagery.
+  vec3 wShore=uShallow*vec3(1.04,1.20,1.14)+vec3(0.0,0.05,0.03);
+  vec3 wDeepO=uDeep*vec3(0.40,0.52,0.72);
+  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,0.16,depth));
+  wcol=mix(wcol,uMid,smoothstep(0.14,0.48,depth));
+  wcol=mix(wcol,uDeep,smoothstep(0.44,0.80,depth));
+  wcol=mix(wcol,wDeepO,ocean*smoothstep(0.45,0.85,bathy));
+  // The harbour's veins: the mid-depth channels get the richest, clearest blue, and keep it
+  // at every tide level. Gated off the open coast so the Pacific stays quiet.
+  float chan=(1.0-ocean)*sea*smoothstep(0.20,0.34,bathy)*(1.0-smoothstep(0.55,0.72,bathy));
+  wcol=mix(wcol,mix(uMid,uDeep,0.60)*vec3(0.72,0.96,1.30),chan*0.55);
+  // Slightly brighter water toward the harbour entrance — the mouth is where the light is.
+  vec2 mv=(uv-vec2(0.563,0.592))*vec2(1.0866,1.0);
+  wcol*=1.0+0.14*exp(-dot(mv,mv)/0.0012);
+  // The shallows let the bed through — that is where the sandbanks read. The open ocean
+  // does not: the Pacific is a tone, not a photograph.
+  float clarity=uClarity*mix(1.0,0.18,smoothstep(0.05,0.80,depth))*(1.0-0.85*ocean);
+  wcol*=mix(1.0,0.52+0.68*lum,clarity);
 
   // Living water: a slow 2-octave shimmer, subtle texture rather than sparkle. Night gets the
   // full slider amplitude, day a third of it, so the daylight imagery is barely touched.
-  vec2 nuv=uv*vec2(340.0,340.0/1.0866);
-  float shim=noise(nuv+vec2(uTime*0.045,0.0))*0.6+noise(nuv*2.0)*0.4;
   wcol*=1.0+(uShimmer/3.0)*(shim-0.5);
-  // Flowing channels, daylight share: at most a third of the night strength, so the daylight
-  // imagery stays essentially calm and this reads as texture, not a special effect.
-  wcol*=1.0+(flowEffect/3.0)*submerged;
+  // Caustic light drifting through genuinely shallow water by day — the kind of movement a
+  // viewer notices after several seconds, never a special effect.
+  float ca=noise(nuv*1.7+vec2(uTime*0.055,uTime*0.031))*noise(nuv*1.1-vec2(uTime*0.043,0.0));
+  wcol*=1.0+0.22*smoothstep(0.30,0.80,ca)*smoothstep(0.30,0.04,depth)*(1.0-uNightMix);
+  // The ocean breathes at a longer wavelength: a broad, very slow luminance drift.
+  wcol*=1.0+0.04*ocean*(noise(uv*26.0+vec2(uTime*0.012,uTime*0.007))-0.5);
+  // Golden hour: low sun turns the water into a warm mirror of the sky. A LERP toward amber,
+  // not a multiply — teal water is too green for a tint to ever read as gold — and weighted
+  // by the drifting shimmer so the reflections sweep slowly across the water. Zero at noon
+  // and at night.
+  wcol=mix(wcol,uSunTint*vec3(0.62,0.50,0.38),uGold*(0.22+0.30*shim)*(1.0-0.55*smoothstep(0.30,0.80,depth)));
+  // Flowing channels, daylight share: restrained, so it reads as light moving in the water.
+  wcol*=1.0+(flowEffect*0.45)*submerged;
 
   vec3 surface=mix(ground,wcol,submerged);
 
@@ -472,17 +520,17 @@ void main(){
   float jit=(shim-0.5);
   // Crests sit where (bSoft*k + t) is constant, so they migrate toward DECREASING bathy —
   // shallower, i.e. shoreward. The sign here was negative, which marched the swell out to sea.
-  float lines=0.50*pow(0.5+0.5*cos(bSoft*38.0+uTime*0.30+jit*0.6),4.0)
-             +0.30*pow(0.5+0.5*cos(bSoft*61.0+uTime*0.20-jit*0.9),3.0)
-             +0.20*pow(0.5+0.5*cos(bSoft*23.0+uTime*0.44+jit*1.3),5.0);
-  // G is now real depth (field-v3): shipping channel/near-shore water sits mid-range (~0.5),
-  // true open ocean only reaches ~0.9+. The old window (0.30-0.50 .. 0.70-0.95) was tuned to the
-  // old chamfer proxy and would have painted swell straight through the harbour channel under
-  // the new semantics — re-derived by rendering so the band sits clear beyond the channel depth,
-  // fading out again before the flattest open sea.
-  lines*=smoothstep(0.50,0.63,bathy)*(1.0-smoothstep(0.74,0.88,bathy));
+  float lines=0.50*pow(0.5+0.5*cos(bSoft*110.0+uTime*0.30+jit*0.6),4.0)
+             +0.30*pow(0.5+0.5*cos(bSoft*175.0+uTime*0.20-jit*0.9),3.0)
+             +0.20*pow(0.5+0.5*cos(bSoft*68.0+uTime*0.44+jit*1.3),5.0);
+  // Surf lives where swell feels the bottom on the OPEN COAST: the shoaling band from the
+  // beach out to ~9 m of real depth, gated by the baked open-ocean mask (relief.png B) so it
+  // can never paint the harbour channels, which share exactly these depths. The old window
+  // sat at 15-35 m of depth — surf out by Karewa — because without the mask that was the only
+  // band clear of the channels. Crest frequency retuned to the shallow band's bathy span.
+  lines*=ocean*smoothstep(0.03,0.10,bathy)*(1.0-smoothstep(0.26,0.40,bathy));
   // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
-  float linesAA=1.0-smoothstep(0.3,1.0,38.0*fwidth(bathy));
+  float linesAA=1.0-smoothstep(0.3,1.0,110.0*fwidth(bathy));
   // A small island closes bathy's iso-contours into a ring within a few hundred metres, and the
   // chamfer field facets that ring into an octagon — the "full-map contour lines" the owner
   // rejected, reborn at island scale. Probe the gradient direction a short, fixed, WORLD-space
@@ -502,7 +550,7 @@ void main(){
   // Swell is only visible where it feels the bottom. bGl is the bathy gradient over ~155 m;
   // in flat open ocean it is ~0, which is exactly where the old 'straight' test degenerated to 1.
   float shoal=smoothstep(0.004,0.016,bGl);
-  lines*=linesAA*straight*shoal*(0.15+0.85*uNightMix)*submerged;
+  lines*=linesAA*straight*shoal*(0.45+0.55*uNightMix)*submerged;
 
   // ---- light -------------------------------------------------------------------
   vec3 daylight=surface*uSunTint*uDay;
@@ -545,7 +593,7 @@ void main(){
   // REPLACEMENT blend, not a max-lift: 'pearl' is proportional to 'lum', so dark swirls in the
   // aerial stay dark instead of every flat being lifted to one pale floor — dark silvery flats,
   // midtone at their brightest, with the aerial's own detail giving the internal contrast.
-  float flatBand=(1.0-submerged)*smoothstep(2.6,2.2,H)*smoothstep(-0.1,0.15,H+0.75);
+  // flatBand is hoisted near the top of main() — the daylight sand grade shares it.
   // Floor the luminance: the aerial is near-BLACK along wet creek margins (photographed at some
   // real tide), and a pearl strictly proportional to lum paints black rims around every pool at
   // night. The floor keeps a wet-sand sheen there; 0.82*lum keeps the swirl contrast.
@@ -561,11 +609,18 @@ void main(){
   vec3 col=mix(daylight,night,uNightMix);
   vec3 cityTerm=uCity*(pow(city,1.6)*uCityGain*1.4)+vec3(1.0,0.95,0.85)*pow(city,3.0)*uCityGain*0.8;
   col+=cityTerm*uNightMix;
-  col+=uEdgeCol*edge*uEdgeGain*(0.45+0.75*uNightMix);
+  // Daylight waterline: a neutral wet sheen that follows the hour (warm at golden hour via
+  // uSunTint), feathered irregularly along the shore — never the uniform pale-cyan edging
+  // that read as a composited digital overlay. Night keeps the preset's luminous colour.
+  float edgeIrr=0.60+0.80*noise(nuv*0.9+vec2(0.0,uTime*0.02));
+  col+=mix(uSunTint*0.85,uEdgeCol,uNightMix)*edge*edgeIrr*uEdgeGain*(0.30+0.55*uHaze+0.90*uNightMix);
   // The wide shore glow takes the water's own night colour as darkness falls — stacked white
-  // here turned the whole intertidal margin frosty instead of luminous.
-  col+=mix(uEdgeCol,uNightDeep,0.6*uNightMix)*shore*uShoreGlow*(0.35+0.75*uNightMix);
-  col+=uEdgeCol*lines*uSurfGain;
+  // here turned the whole intertidal margin frosty instead of luminous. By day it all but
+  // disappears: the water meets the shore directly, no glow.
+  col+=mix(uEdgeCol,uNightDeep,0.6*uNightMix)*shore*uShoreGlow*(0.12+0.95*uNightMix);
+  col+=mix(vec3(0.90,0.94,0.93),uEdgeCol,uNightMix)*lines*uSurfGain;
+  // Cool morning and evening haze over the water, burning off as the sun climbs.
+  col=mix(col,vec3(0.60,0.68,0.73)*max(uDay,0.12),uHaze*0.16*submerged);
   col=1.0-exp(-col*uExposure);
   col*=1.0-uVignette*smoothstep(0.42,0.98,distance(vUv,vec2(0.5)));
   gl_FragColor=vec4(pow(clamp(col,0.0,1.0),vec3(uGamma)),1.0);
@@ -623,6 +678,7 @@ const GROUPS=[
             ['shoreGlow','Shore glow',0,1.5,0.01],['glowM','Shore glow reach (m)',0.1,1.5,0.01]]],
   ['Ground',[['realism','Daylight realism',0,1,0.01],['groundGain','Daylight brightness',0.4,1.8,0.01],
              ['groundSat','Daylight colour',0,2,0.01],['relief','Land relief',0,1,0.01],
+             ['flatsWarm','Flats sand tone',0,1,0.01],
              ['landDark','Night land dark','c'],['landLight','Night land light','c'],
              ['landChroma','Land colour kept',0,1.4,0.01],['landWhite','Land white point',0.20,0.95,0.01],
              ['dampCol','Damp tint','c'],['dampGain','Damp strength',0,2,0.02]]],
@@ -816,7 +872,7 @@ function frame(now){
   }
   const day=clamp((sunAlt+6)/11,0,1);
   const warm=clamp((12-sunAlt)/18,0,1);
-  const inten=0.30+0.70*clamp((sunAlt+4)/26,0,1);
+  const inten=0.36+0.64*clamp((sunAlt+4)/24,0,1);
   const moonUp=clamp((moon.alt+2)/16,0,1);
   const moonLight=Math.min(1,moon.frac*moonUp*S.moonGain);
 
@@ -839,12 +895,17 @@ function frame(now){
   gl.uniform1f(U('uTideDir'),rising?1:-1);   // +1 flood / -1 ebb — the flow texture's animation sign
   gl.uniform1f(U('uFlowPhase'),flowPhase);
   gl.uniform1f(U('uTideRate'),tideRate);
-  gl.uniform3f(U('uSunTint'),1+0.30*warm,1-0.05*warm,1-0.34*warm);
+  gl.uniform3f(U('uSunTint'),1+0.40*warm,1-0.04*warm,1-0.42*warm);
   // Relief is a LOW-sun effect: fades in as the sun clears -4deg, gone again by ~30deg —
   // noon stays flat (artwork, not terrain map) and night keeps the stylised quiet land.
   const rakeWin=clamp((sunAlt+4)/8,0,1)*(1-clamp((sunAlt-12)/18,0,1));
   gl.uniform2f(U('uSunDir'),Math.sin(sunAz*RAD),Math.cos(sunAz*RAD));
   gl.uniform1f(U('uReliefAmt'),S.relief*rakeWin);
+  // Morning/evening haze window: peaks with the sun just above the horizon, gone by ~10 deg
+  // and gone again below ~-5 (night is not hazy, it is dark).
+  gl.uniform1f(U('uHaze'),clamp((10-sunAlt)/14,0,1)*clamp((sunAlt+5)/6,0,1));
+  // Golden-hour window: daylight with the sun low (peaks ~2-10 deg), gone by mid-morning.
+  gl.uniform1f(U('uGold'),clamp((14-sunAlt)/12,0,1)*clamp((sunAlt+3)/5,0,1));
   for(const [k,n] of [['shallow','uShallow'],['mid','uMid'],['deep','uDeep'],['nightDeep','uNightDeep'],
       ['landDark','uLandDark'],['landLight','uLandLight'],['city','uCity'],
       ['edgeCol','uEdgeCol'],['dampCol','uDampCol'],['abyss','uAbyss'],['pearlCol','uPearl']]){
@@ -855,7 +916,7 @@ function frame(now){
       ['landChroma','uLandChroma'],['landWhite','uLandWhite'],
       ['exposure','uExposure'],['gamma','uGamma'],['vignette','uVignette'],
       ['shoreGlow','uShoreGlow'],['surfGain','uSurfGain'],['flatsGlow','uFlatsGlow'],['shimmer','uShimmer'],
-      ['glowM','uGlowM'],['nightFall','uNightFall'],['flowGain','uFlowGain']])
+      ['glowM','uGlowM'],['nightFall','uNightFall'],['flowGain','uFlowGain'],['flatsWarm','uFlatsWarm']])
     gl.uniform1f(U(n),S[k]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 
