@@ -74,7 +74,7 @@ const SEED_TRIES = 900000;                           // dart throws
 const SEED_AMP_MIN = 0.06;                           // no seeds below this amplitude
 const SPLAT_SIGMA_WORK = 1.5;                        // post-splat blur (streak width — arteries
                                                      // are bold strokes, not hairlines)
-const ACC_K = 2.4;                                   // soft-clamp: v = 1-exp(-k*acc)
+const ACC_K = 3.5;                                   // soft-clamp: v = 1-exp(-k*acc)
 const ISLET_MAX_DIM_OUT = 50;                        // vessel-islet erase (round-2 values)
 const ISLET_HN_THRESH = 0.85;
 const VORTEX_DISC_OUT = 170;                         // critical-point damp disc radius (must

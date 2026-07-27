@@ -20,7 +20,7 @@ const S = {
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
   exposure:1.0, gamma:0.92, vignette:0.36,
-  shoreGlow:0.50, surfGain:0.12, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.45,
+  shoreGlow:0.50, surfGain:0.12, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85,
   ...JSON.parse(A.set ?? '{}'),
 };
 const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255);
