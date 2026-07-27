@@ -8,12 +8,21 @@ sentinel-climb band, painting every permanent pool full-deep with a hard edge; t
 luminous shore stop + day shore-glow + wet-edge sheen then rimmed those false-black pools
 in electric aqua. Fix (template + look.mjs, verified live):
 
-- `depth = mix(tideTerm, bathySmooth(uv), 1-smoothstep(0.10,0.40,H))` — pools now colour
-  by their TRUE depth; bathySmooth also irons chart-contour terracing in the harbour deep.
+- **Final form (after Ryan's follow-up "some soft areas, some hard"): day water is on ONE
+  physical scale — metres of water.** A first cut blended the tide term with the 0..1
+  bathy code directly, but those two normalizations disagree by a large constant, so the
+  seam was soft on gentle slopes and hard on steep ones. Now the fitted side gives
+  uTide-H metres and the sentinel side inverts the G-channel encode to real metres
+  (b<0.5 → 15*(2b)^(1/0.6); above, the 15..40 smoothstep segment inverted with the
+  cubic-root trig identity) plus tide stage over MSL (1.107 m CD) — the two MEET at the
+  seam by construction. Colour stops are metres (shore→1 m→3.5 m→10 m; open-ocean navy
+  8-25 m); the Depth-falloff slider scales dm so it keeps its meaning; clarity/caustic/
+  gold gates run on depth01 = 1-exp(-dm/5). bathySmooth feeds the inversion, ironing the
+  chart-contour terracing in the harbour deep.
 - Ramp overlaps widened (chained smoothsteps plateaued at each stop = banding); shore stop
   de-electrified (it clipped G pre-tonemap); day shore-glow cut to 0.04; wet-edge calmed.
-- Honest depths made the veins lighter, so the hierarchy was re-weighted through the
-  honest path: deep knee 0.38-0.75, channel boost 0.70. Night formulas untouched.
+- The channel vein boost fades out past ~8 m (gate on dm), so it cannot lighten the
+  dredged reach — down there uDeep by ramp IS the vein. Night formulas untouched.
 - The `sea` sentinel-proximity gate is GONE from the day path (channel gate rides the same
   H-blend). If you reintroduce a `sea`-gated day term, you are re-adding the bug class.
 

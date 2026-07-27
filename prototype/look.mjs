@@ -219,15 +219,23 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // ---- water — mirrors the shader's continuous ramp/channel/ocean treatment ------
   // Day-depth blend on H into smoothed real bathy (same class as the night-glow fix) —
   // mirrors the shader exactly, including the widened ramp overlaps.
-  const tideTerm=clamp((uTide-Hh)/S.depthCurve,0,1);
+  // ONE physical depth scale in metres — mirrors the shader exactly, including the exact
+  // inversion of the G-channel depth encode and the tide stage over the MSL bed.
   const bathyN=bathySmooth(u,v);
+  const dFit=uTide-Hh;
+  let dReal;
+  if(bathyN<0.5) dReal=15.0*Math.pow(Math.max(2*bathyN,0),1.66667);
+  else { const s2=clamp((bathyN-0.5)*2,0,1);
+         dReal=15.0+25.0*(0.5-Math.sin(Math.asin(1-2*s2)/3)); }
+  dReal+=uTide-1.107;
   const deepMixT=1-smoothstep(0.10,0.40,Hh);
-  const depth=mix(tideTerm,bathyN,deepMixT);
-  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,0.24,depth));
-  wcol=mix3(wcol,C.mid,smoothstep(0.18,0.55,depth));
-  wcol=mix3(wcol,C.deep,smoothstep(0.38,0.75,depth));
-  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(0.45,0.85,bathyN));
-  const chan=(1-ocean)*deepMixT*smoothstep(0.16,0.36,bathyN)*(1-smoothstep(0.52,0.75,bathyN));
+  const dm=Math.max(mix(dFit,dReal,deepMixT),0)*(1.15/S.depthCurve);
+  const depth=1-Math.exp(-dm/5.0);
+  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,1.0,dm));
+  wcol=mix3(wcol,C.mid,smoothstep(0.7,3.5,dm));
+  wcol=mix3(wcol,C.deep,smoothstep(3.0,10.0,dm));
+  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(8.0,25.0,dm));
+  const chan=(1-ocean)*deepMixT*smoothstep(0.16,0.36,bathyN)*(1-smoothstep(8.0,14.0,dm));
   wcol=mix3(wcol,CHAN_COL,chan*0.70);
   const mvx=(u-0.563)*1.0866, mvy=v-0.592;
   const mouthLift=1+0.14*Math.exp(-(mvx*mvx+mvy*mvy)/0.0012);

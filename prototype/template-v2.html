@@ -459,10 +459,25 @@ void main(){
   // 2026-07-28). Blend on H itself into SMOOTHED real bathymetry instead: bathySmooth also
   // irons out the chart-contour terracing the harbour-deep G channel carries at texel
   // scale. Pools now colour by their true depth and their edges grade continuously.
-  float tideTerm=clamp((uTide-H)/uDepthCurve,0.0,1.0);
+  // ONE physical depth scale — metres of water — for the whole scene. The previous fix
+  // blended two INCOMPATIBLE normalizations (tide-term over depthCurve vs the 0..40 m bathy
+  // curve); they disagree by a large constant at the handoff, so wherever the H 0.10-0.40
+  // seam is spatially narrow the whole disagreement compressed into a few texels — 'some
+  // soft areas, some hard' (Ryan 2026-07-28). In metres, both sides describe the same bed
+  // and MEET at the seam to within fit noise: fitted side gives uTide-H, bathy side gives
+  // real bed depth + tide stage. Colour stops become metres as well.
   float bathyN=bathySmooth(uv);
+  float dFit=uTide-H;
+  // Invert the G-channel encode (field-v3.json): b<0.5 -> d=15*(2b)^(1/0.6); above, the
+  // 15..40 m smoothstep segment inverted exactly with the cubic-root trig identity.
+  float dReal;
+  if(bathyN<0.5) dReal=15.0*pow(max(2.0*bathyN,0.0),1.66667);
+  else { float s=clamp((bathyN-0.5)*2.0,0.0,1.0);
+         dReal=15.0+25.0*(0.5-sin(asin(1.0-2.0*s)/3.0)); }
+  dReal+=uTide-1.107;                // tide stage over the MSL-referenced bed (MSL=1.107 CD)
   float deepMix=1.0-smoothstep(0.10,0.40,H);
-  float depth=mix(tideTerm,bathyN,deepMix);
+  float dm=max(mix(dFit,dReal,deepMix),0.0)*(1.15/uDepthCurve);   // slider keeps its meaning
+  float depth=1.0-exp(-dm/5.0);      // perceptual 0..1 for the clarity/caustic/gold gates
   float ocean=reliefS.b;             // baked open-coast mask: 1 on the Pacific, 0 in harbour
   // Continuous depth ramp, no branch and no band: luminous at the shore, turquoise across
   // the shallows, blue-green mid, the preset deep in the channels — then, on the open coast
@@ -472,14 +487,16 @@ void main(){
   // once — a zero-derivative plateau at each stop is exactly what banding looks like.
   vec3 wShore=uShallow*vec3(1.02,1.10,1.06)+vec3(0.0,0.02,0.01);
   vec3 wDeepO=uDeep*vec3(0.40,0.52,0.72);
-  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,0.24,depth));
-  wcol=mix(wcol,uMid,smoothstep(0.18,0.55,depth));
-  wcol=mix(wcol,uDeep,smoothstep(0.38,0.75,depth));
-  wcol=mix(wcol,wDeepO,ocean*smoothstep(0.45,0.85,bathyN));
+  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,1.0,dm));
+  wcol=mix(wcol,uMid,smoothstep(0.7,3.5,dm));
+  wcol=mix(wcol,uDeep,smoothstep(3.0,10.0,dm));
+  wcol=mix(wcol,wDeepO,ocean*smoothstep(8.0,25.0,dm));
   // The harbour's veins: the mid-depth channels get the richest, clearest blue, and keep it
   // at every tide level. Gated off the open coast so the Pacific stays quiet. Rides the
   // same H-blend as depth (the old 'sea' gate flipped abruptly across the sentinel climb).
-  float chan=(1.0-ocean)*deepMix*smoothstep(0.16,0.36,bathyN)*(1.0-smoothstep(0.52,0.75,bathyN));
+  // Fades out past ~8 m: down there the base ramp already owns uDeep, and a boost toward
+  // the lighter vein blue would UNDARKEN the dredged reach.
+  float chan=(1.0-ocean)*deepMix*smoothstep(0.16,0.36,bathyN)*(1.0-smoothstep(8.0,14.0,dm));
   wcol=mix(wcol,mix(uMid,uDeep,0.60)*vec3(0.72,0.96,1.30),chan*0.70);
   // Slightly brighter water toward the harbour entrance — the mouth is where the light is.
   vec2 mv=(uv-vec2(0.563,0.592))*vec2(1.0866,1.0);
