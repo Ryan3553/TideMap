@@ -141,6 +141,7 @@
     <button data-speed="2400" aria-pressed="true">40 min / s</button>
     <button data-speed="10800">3 hr / s</button>
     <button id="now">Set to now</button>
+    <button id="ebb" title="Which way the water is running while paused">Ebb</button>
     <span class="hint">Paused — the tide and daylight sliders below are driving.</span>
   </div>
 
@@ -227,7 +228,7 @@ const DEFAULTS={
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
   relief:0.4,
-  edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85,
+  edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85, ebb:false,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -288,6 +289,7 @@ uniform vec3 uAbyss,uPearl;
 uniform float uDepthCurve,uClarity,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
 uniform float uRealism,uGroundGain,uGroundSat,uLandChroma,uLandWhite,uExposure,uGamma,uVignette;
 uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM,uNightFall,uFlowGain;
+uniform float uFlowPhase,uTideRate;
 
 const float H_LO=-0.75, H_HI=3.25;
 
@@ -372,19 +374,23 @@ void main(){
   vec4 flowSrc=texture2D(uFlow,uv);
   float flowAngle=flowSrc.b*6.28318530718;
   vec2 flowDir=vec2(cos(flowAngle),sin(flowAngle));
-  // A small continuous drift along the local seaward tangent, on top of the two-phase crossfade,
-  // so the pattern reads as sliding along the channel rather than only fading between two static
-  // frames. Oscillatory (sin), so it never wraps/pops.
-  vec2 flowUv=uv+flowDir*0.0020*sin(uTime*0.11);
-  vec4 flowSample=texture2D(uFlow,flowUv);
-  // Ping-ponged, not wrapped: a straight fract() reset (B back to A every cycle) is a one-frame
-  // pop, exactly the kind of artifact this whole round exists to remove. uTideDir flips the
-  // apparent direction: ebb (-1) runs the natural A-to-B (seaward) sense, flood (+1) reverses it
-  // so the motion reads landward. Very slow — a full breathing cycle is 60 seconds.
-  float flowPhase=fract(uTime*(1.0/36.0)*(-uTideDir));
-  float flowTri=abs(flowPhase*2.0-1.0);
-  float flowVal=mix(flowSample.r,flowSample.g,flowTri);
-  float flowEffect=mix(-0.15,0.45,flowVal)*uFlowGain;
+  // A flow map has to TRANSLATE. Both mechanisms here were round trips: a sin() drift that
+  // returns to zero (+/-78 m and back) and a ping-pong A<->B crossfade. Net displacement was
+  // exactly zero, so the channels shimmered between two static frames while going nowhere —
+  // which is precisely why the water never read as running in or out.
+  //
+  // Standard two-copy scroll instead. Sample the same streamline at two offsets half a cycle
+  // apart and crossfade on the sawtooth, so whichever copy is mid-travel is the one showing and
+  // the wrap is never visible. uFlowPhase is signed and integrated in JS, so the direction
+  // reverses with the tide and the SPEED follows the tide rate.
+  const float FLOW_DIST=0.012;             // ~470 m of travel per cycle
+  float f1=fract(uFlowPhase), f2=fract(uFlowPhase+0.5);
+  float a1=texture2D(uFlow,uv-flowDir*f1*FLOW_DIST).r;
+  float a2=texture2D(uFlow,uv-flowDir*f2*FLOW_DIST).r;
+  float flowVal=mix(a1,a2,abs(f1*2.0-1.0));
+  // Amplitude raised: the old range put the whole effect inside ~1 grey level of 255, measurably
+  // below the threshold of noticing.
+  float flowEffect=mix(-0.30,0.75,flowVal)*uFlowGain*(0.20+0.80*uTideRate);
 
   // ---- ground -----------------------------------------------------------------
   // Daylight shows the imagery: this is a real place and the aerial is 0.1 m at source.
@@ -464,15 +470,17 @@ void main(){
               +sampleField(uv+vec2(-texel.x, texel.y)).y
               +sampleField(uv+vec2(-texel.x,-texel.y)).y)*0.25;
   float jit=(shim-0.5);
-  float lines=0.50*pow(0.5+0.5*cos(bSoft*38.0-uTime*0.30+jit*0.6),4.0)
-             +0.30*pow(0.5+0.5*cos(bSoft*61.0-uTime*0.20-jit*0.9),3.0)
-             +0.20*pow(0.5+0.5*cos(bSoft*23.0-uTime*0.44+jit*1.3),5.0);
+  // Crests sit where (bSoft*k + t) is constant, so they migrate toward DECREASING bathy —
+  // shallower, i.e. shoreward. The sign here was negative, which marched the swell out to sea.
+  float lines=0.50*pow(0.5+0.5*cos(bSoft*38.0+uTime*0.30+jit*0.6),4.0)
+             +0.30*pow(0.5+0.5*cos(bSoft*61.0+uTime*0.20-jit*0.9),3.0)
+             +0.20*pow(0.5+0.5*cos(bSoft*23.0+uTime*0.44+jit*1.3),5.0);
   // G is now real depth (field-v3): shipping channel/near-shore water sits mid-range (~0.5),
   // true open ocean only reaches ~0.9+. The old window (0.30-0.50 .. 0.70-0.95) was tuned to the
   // old chamfer proxy and would have painted swell straight through the harbour channel under
   // the new semantics — re-derived by rendering so the band sits clear beyond the channel depth,
   // fading out again before the flattest open sea.
-  lines*=smoothstep(0.58,0.72,bathy)*(1.0-smoothstep(0.86,0.97,bathy));
+  lines*=smoothstep(0.50,0.63,bathy)*(1.0-smoothstep(0.74,0.88,bathy));
   // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
   float linesAA=1.0-smoothstep(0.3,1.0,38.0*fwidth(bathy));
   // A small island closes bathy's iso-contours into a ring within a few hundred metres, and the
@@ -491,7 +499,10 @@ void main(){
   // far side, reading "straight" and letting a faint crescent of swell leak around them.
   float bTang=sampleField(uv+tang*0.012).y;
   float straight=1.0-smoothstep(0.015,0.05,abs(bTang-bathy));
-  lines*=linesAA*straight*(0.15+0.85*uNightMix)*submerged;
+  // Swell is only visible where it feels the bottom. bGl is the bathy gradient over ~155 m;
+  // in flat open ocean it is ~0, which is exactly where the old 'straight' test degenerated to 1.
+  float shoal=smoothstep(0.004,0.016,bGl);
+  lines*=linesAA*straight*shoal*(0.15+0.85*uNightMix)*submerged;
 
   // ---- light -------------------------------------------------------------------
   vec3 daylight=surface*uSunTint*uDay;
@@ -732,6 +743,9 @@ function setPlaying(v){
 }
 function pause(){ if(playing) setPlaying(false); }
 playBtn.addEventListener('click',()=>setPlaying(!playing));
+(()=>{const b=document.getElementById('ebb');
+  const paint=()=>{b.setAttribute('aria-pressed',String(!!S.ebb));b.textContent=S.ebb?'Ebb':'Flood';};
+  b.addEventListener('click',()=>{S.ebb=!S.ebb;paint();});paint();})();
 document.getElementById('now').addEventListener('click',()=>{virtual=new Date();});
 
 document.getElementById('reset').addEventListener('click',()=>{S=JSON.parse(JSON.stringify(DEFAULTS));setPlaying(false);syncInputs();});
@@ -770,7 +784,7 @@ let virtual=new Date(),speed=2400,last=performance.now();
 // The water's animation clock. In real time (kiosk) it IS wall time, but under Play the tide
 // runs at hundreds-to-thousands x and wall-clock water reads as frozen texture — so the clock
 // follows playback, gently capped: full speed/240 would strobe at 3 hr/s.
-let animT=0;
+let animT=0, flowPhase=0;
 const tF=new Intl.DateTimeFormat('en-NZ',{timeZone:'Pacific/Auckland',hour:'numeric',minute:'2-digit',hour12:true});
 const dF=new Intl.DateTimeFormat('en-NZ',{timeZone:'Pacific/Auckland',weekday:'short',day:'numeric',month:'short'});
 function stateWord(h,rising){const fr=(h-LO)/(HI-LO);
@@ -779,7 +793,8 @@ function stateWord(h,rising){const fr=(h-LO)/(HI-LO);
 
 function frame(now){
   const dt=(now-last)/1000;last=now;
-  animT=(animT+Math.min(dt,0.25)*(playing?Math.min(30,Math.max(1,speed/240)):1))%3600;
+  const timeScale=playing?Math.min(30,Math.max(1,speed/240)):1;
+  animT=(animT+Math.min(dt,0.25)*timeScale)%3600;
   if(playing) virtual=new Date(virtual.getTime()+dt*speed*1000);
 
   const moon=moonPos(virtual);
@@ -796,7 +811,7 @@ function frame(now){
   }else{
     h=clamp(S.tide,LO,HI);
     hPast=h;                       // held: no damp band, because nothing has just drained
-    rising=true;
+    rising=!S.ebb;                 // paused: no clock to infer direction from, so it is a choice
     sunAlt=S.light*40-6;           // the slider IS the sun, so the warmth follows it
   }
   const day=clamp((sunAlt+6)/11,0,1);
@@ -804,6 +819,12 @@ function frame(now){
   const inten=0.30+0.70*clamp((sunAlt+4)/26,0,1);
   const moonUp=clamp((moon.alt+2)/16,0,1);
   const moonLight=Math.min(1,moon.frac*moonUp*S.moonGain);
+
+  // Tide RATE, 0 at the turns and 1 at mid-tide — this is what makes the water read as
+  // surging rather than sliding at a constant crawl. For a sinusoid dh/dt is maximal at
+  // mid-height and zero at both extremes, so the height alone gives the shape.
+  const tideRate=Math.sin(Math.PI*clamp((h-LO)/(HI-LO),0,1));
+  flowPhase+=Math.min(dt,0.25)*timeScale*tideRate*(rising?1:-1)*(1/36);
 
   const a=frameAspect();
   if(S.zoom>zoomCap())clampZoom();
@@ -816,6 +837,8 @@ function frame(now){
   // and speeds up under Play so the water visibly lives at time-lapse rates.
   gl.uniform1f(U('uTime'),animT);
   gl.uniform1f(U('uTideDir'),rising?1:-1);   // +1 flood / -1 ebb — the flow texture's animation sign
+  gl.uniform1f(U('uFlowPhase'),flowPhase);
+  gl.uniform1f(U('uTideRate'),tideRate);
   gl.uniform3f(U('uSunTint'),1+0.30*warm,1-0.05*warm,1-0.34*warm);
   // Relief is a LOW-sun effect: fades in as the sun clears -4deg, gone again by ~30deg —
   // noon stays flat (artwork, not terrain map) and night keeps the stylised quiet land.
@@ -836,7 +859,7 @@ function frame(now){
     gl.uniform1f(U(n),S[k]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 
-  document.getElementById('state').textContent=playing?(rising?'RISING':'FALLING'):'HELD';
+  document.getElementById('state').textContent=playing?(rising?'RISING':'FALLING'):(rising?'FLOOD':'EBB');
   document.getElementById('phase').textContent=stateWord(h,rising);
   document.getElementById('dot').style.left=((h-LO)/(HI-LO)*100)+'%';
   document.getElementById('meta').textContent=
