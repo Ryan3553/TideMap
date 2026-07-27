@@ -23,6 +23,14 @@ ocean near-zero. What changed:
   filter); center-vs-saddle winding must be computed mod pi and only centers damped —
   damping saddles kills the mouth confluence, the strongest artery of all.
 
+Same-day follow-ups, also in this pass: **the panel no longer scrolls the piece away**
+(two-column sticky layout wide, sticky-shrink `.tune` narrow — see NEXT-SESSION), and
+**land answers the raking light**: `fetch-relief.mjs` + a fourth texture (`uRelief`,
+gradient map from the Basemaps elevation terrain-rgb) drive a gentle azimuth-aware
+hillshade windowed to low sun. `sunPos` now returns real azimuth (verified: winter noon
+due north). Sliders: *Land relief* (0.4), *Channel flow* (0.85). Page 21.87 MB — only
+~130 kB of budget headroom left; the next texture must earn its bytes.
+
 ---
 
 # Earlier: fifth pass, 2026-07-27 (the overnight beauty round)
