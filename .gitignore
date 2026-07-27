@@ -19,6 +19,8 @@ prototype/ipad/
 # Overnight-round research images are regenerable from the scripts beside them
 research/overnight-*/**/*.png
 research/overnight-*/**/*.jpg
+# ...except Ryan's markups — they are source intent, not derived output
+!research/overnight-*/**/[Rr]yan-markup*.png
 
 # API keys live here — never commit
 .env

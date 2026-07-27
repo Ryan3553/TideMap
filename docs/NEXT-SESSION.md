@@ -28,7 +28,9 @@
       Float32 throughout.
    Acceptance = Ryan's principle verbatim: each major channel shows one continuous bright
    spine traceable end-to-end; brightness ranked dredged channel > secondary > creeks >
-   flats ≈ 0; no dabs, rings, or woolly texture.
+   flats ≈ 0; no dabs, rings, or woolly texture. His marked-up screenshot is committed at
+   `research/overnight-2026-07-27/flow/Ryan-markup.png` — the arrows illustrate the
+   principle; the real artery paths come from the bathymetry, not from tracing the arrows.
 
 1. **Keep the map visible while driving the controls.** The control panel has grown, and
    tuning means scrolling the piece off screen. Make the canvas stay put — e.g. a sticky
