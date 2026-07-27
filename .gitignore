@@ -19,3 +19,6 @@ prototype/ipad/
 # Overnight-round research images are regenerable from the scripts beside them
 research/overnight-*/**/*.png
 research/overnight-*/**/*.jpg
+
+# API keys live here — never commit
+.env
