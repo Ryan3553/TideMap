@@ -172,13 +172,15 @@ for (let i = 0; i < P * P; i++) {
 // ============================================================================================
 // 2. Bathymetric depth proxy, G channel: hybrid of NIWA real depth + old field-v2 chamfer proxy
 // ============================================================================================
-const NIWA_PATH = 'data/niwa-elevation-raw.f32';
-if (!fs.existsSync(NIWA_PATH)) {
-  throw new Error(`missing ${NIWA_PATH} -- run: python resample-niwa-depth.py ${P}  (from prototype/)`);
+// Composite real bathymetry (2 m coastal LiDAR > chart contours+soundings > NIWA 25 m),
+// same contract as the old niwa-elevation-raw.f32: float32 metres vs MSL, negative under.
+const ELEV_PATH = 'data/depth-composite-raw.f32';
+if (!fs.existsSync(ELEV_PATH)) {
+  throw new Error(`missing ${ELEV_PATH} -- run: python resample-niwa-depth.py ${P} && python build-depth-composite.py ${P}  (from prototype/)`);
 }
-const elevBuf = fs.readFileSync(NIWA_PATH);
+const elevBuf = fs.readFileSync(ELEV_PATH);
 const elev = new Float32Array(elevBuf.buffer, elevBuf.byteOffset, P * P);
-if (elev.length !== P * P) throw new Error(`niwa-elevation-raw.f32 is ${elev.length} samples, expected ${P * P}`);
+if (elev.length !== P * P) throw new Error(`${ELEV_PATH} is ${elev.length} samples, expected ${P * P}`);
 
 const gOld = await sharp('data/field-v2.png').extractChannel(1).raw().toBuffer(); // G = index 1 (R,G,B)
 if (gOld.length !== P * P) throw new Error(`field-v2 G channel is ${gOld.length}px, expected ${P * P}`);
@@ -280,11 +282,11 @@ fs.writeFileSync('data/field-v3.json', JSON.stringify({
   waterSentinel: H_LO, landSentinel: H_HI,
   smoothing: { resampleKernel: 'mitchell (own impl, B=C=1/3)', heightBlurSigmaPx: 1.1, pipeline: 'float32 throughout: median3x3 -> resize -> blur -> quantize once' },
   depthProxy: {
-    method: 'hybrid: real NIWA Bay of Plenty 25m DTM depth where confidently underwater (elevation < -0.05m), falls back to field-v2.png\'s chamfer-distance proxy elsewhere (land, and the seam between the two sources), feathered over ~8px',
+    method: 'hybrid: composite real bathymetry where confidently underwater (elevation < -0.05m), falls back to field-v2.png\'s chamfer-distance proxy elsewhere (land, and the seam between the two sources), feathered over ~8px',
     curve: 'two-segment ease vs depth(m): depth<15 -> 0.5*(depth/15)^0.6 ; depth>=15 -> 0.5 + 0.5*smoothstep(15,40,depth)',
-    niwaSource: 'sources/bathy/niwa/bop25m_dtm_tauranga_bbox.tif, reprojected to the field grid by resample-niwa-depth.py',
-    niwaDatum: 'approximately MSL, NOT chart datum/LAT -- treated as a shape/relief source, not blended with tide-referenced height',
-    measured: 'partially -- real bathymetry where NIWA is confidently underwater, proxy (not measured) elsewhere',
+    compositeSource: 'data/depth-composite-raw.f32 built by build-depth-composite.py: coastal LiDAR 2m DEM 2025 (nz-coastal, NZVD2016->MSL) > chart depth contours 50672 + soundings 50858 (WFS, CD->MSL via mean tide level 1.107m from sources/tides) > NIWA BoP 25m DTM (resample-niwa-depth.py). The LDS 122679 multibeam 2m slots in on top once the LDS key has the Exports scope.',
+    datum: 'all sources reconciled to local MSL; see data/depth-composite.json',
+    measured: 'mostly -- real 2m LiDAR over flats/shallows and much of the channels, chart-survey interpolation in the deep channels, NIWA elsewhere; proxy only on land/seams',
   },
   cityLights: { source: 'prototype/data/citylights.png, verbatim (OSM roads/buildings/landuse, see research/overnight-2026-07-27/lights/README.md)' },
 }, null, 2));
