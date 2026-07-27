@@ -231,7 +231,7 @@ const DEFAULTS={
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
   relief:0.4, flatsWarm:0.90,
-  edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85, ebb:false,
+  edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85, sparks:0.35, ebb:false,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
 let S=JSON.parse(JSON.stringify(DEFAULTS));
@@ -292,7 +292,7 @@ uniform vec3 uAbyss,uPearl;
 uniform float uDepthCurve,uClarity,uNightGlow,uCityGain,uEdgeGain,uEdgeWidth,uDampGain;
 uniform float uRealism,uGroundGain,uGroundSat,uLandChroma,uLandWhite,uExposure,uGamma,uVignette;
 uniform float uShoreGlow,uSurfGain,uFlatsGlow,uShimmer,uGlowM,uNightFall,uFlowGain;
-uniform float uFlowPhase,uTideRate,uFlatsWarm,uHaze,uGold;
+uniform float uFlowPhase,uTideRate,uFlatsWarm,uHaze,uGold,uSparks;
 
 const float H_LO=-0.75, H_HI=3.25;
 
@@ -408,6 +408,16 @@ void main(){
   // Amplitude raised: the old range put the whole effect inside ~1 grey level of 255, measurably
   // below the threshold of noticing.
   float flowEffect=mix(-0.30,0.75,flowVal)*uFlowGain*(0.20+0.80*uTideRate);
+  // Tide sparks — the brief's 'tiny particles moving inward on a rising tide and outward
+  // on a falling'. Sparse glints advected along the flow direction by the same signed
+  // integrated phase that drives the arteries, so direction, speed, the slack-water
+  // stillness and the stronger run near the entrance are all inherited for free. Same
+  // two-copy crossfade that hides the wrap in the flow itself. flowVal confines them to
+  // water that is already moving — moving light in water, never confetti.
+  vec2 puv=uv*vec2(1400.0,1400.0/1.0866);
+  float sp1=fract(uFlowPhase*1.7), sp2=fract(uFlowPhase*1.7+0.5);
+  float spark=mix(pow(noise(puv-flowDir*sp1*10.0),18.0),
+                  pow(noise(puv-flowDir*sp2*10.0),18.0),abs(sp1*2.0-1.0))*flowVal*uSparks;
 
   // ---- ground -----------------------------------------------------------------
   // Daylight shows the imagery: this is a real place and the aerial is 0.1 m at source.
@@ -528,6 +538,7 @@ void main(){
   wcol=mix(wcol,uSunTint*vec3(0.62,0.50,0.38),uGold*(0.22+0.30*shim)*(1.0-0.55*smoothstep(0.30,0.80,depth)));
   // Flowing channels, daylight share: restrained, so it reads as light moving in the water.
   wcol*=1.0+(flowEffect*0.45)*submerged;
+  wcol*=1.0+spark*0.6;
 
   vec3 surface=mix(ground,wcol,submerged);
 
@@ -628,6 +639,7 @@ void main(){
   // that drives the glow itself, so bright filaments only ever appear where the water is already
   // luminous — never as a stray sparkle out in the dark abyss.
   nightWater*=1.0+flowEffect*dGlow;
+  nightWater*=1.0+spark*1.6;
   vec3 night=mix(landNight*(0.08+0.28*uMoon),nightWater,submerged);
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather
@@ -721,7 +733,7 @@ const GROUPS=[
   ['Framing',[['zoom','Zoom',0.18,1.0,0.005],['cx','Centre ←→',0,1,0.005],['cy','Centre ↑↓',0,1,0.005]]],
   ['Water',[['shallow','Shallow','c'],['mid','Mid','c'],['deep','Deep','c'],
             ['depthCurve','Depth falloff',0.4,2.5,0.01],['clarity','Shallows show the bed',0,1,0.01],
-            ['flowGain','Channel flow',0,1,0.01]]],
+            ['flowGain','Channel flow',0,1,0.01],['sparks','Tide sparks',0,1,0.01]]],
   ['Night',[['nightDeep','Deep-water glow','c'],['abyss','Abyss colour','c'],['pearlCol','Pearl colour','c'],
             ['nightGlow','Glow strength',0,1.6,0.01],
             ['nightFall','Glow falloff',1.0,8.0,0.05],['moonGain','Moon influence',0,1.5,0.01],
@@ -938,9 +950,22 @@ function frame(now){
 
   const a=frameAspect();
   if(S.zoom>zoomCap())clampZoom();
-  const halfW=S.zoom*a*1.0866/2,halfH=S.zoom/2;
-  gl.uniform2f(U('uCenter'),clamp(S.cx,halfW,1-halfW),clamp(S.cy,halfH,1-halfH));
-  gl.uniform1f(U('uZoom'),S.zoom);gl.uniform1f(U('uFrameAspect'),a);
+  // Glacial frame drift — kiosk only, while running. OLED burn-in protection that is also
+  // the correct aesthetic choice (CONCEPT: a slowly travelling frame). Incommensurate
+  // periods (9-78 min) so the path never visibly repeats; amplitude ~600 m of world, about
+  // one screen pixel every 15 s at the default zoom — below the threshold of visible
+  // motion, far above the threshold of pixel wear. Computed on top of S, never written
+  // back, so the user's framing survives and the sliders stay honest.
+  let vcx=S.cx,vcy=S.cy,vzoom=S.zoom;
+  if(KIOSK&&playing){
+    const tw=Date.now()/1000;
+    vcx+=0.012*Math.sin(tw*2*Math.PI/2900)+0.005*Math.sin(tw*2*Math.PI/700);
+    vcy+=0.009*Math.sin(tw*2*Math.PI/2300+1.7)+0.004*Math.sin(tw*2*Math.PI/530+0.6);
+    vzoom=Math.min(vzoom*(1+0.025*Math.sin(tw*2*Math.PI/4700+3.1)),zoomCap());
+  }
+  const halfW=vzoom*a*1.0866/2,halfH=vzoom/2;
+  gl.uniform2f(U('uCenter'),clamp(vcx,halfW,1-halfW),clamp(vcy,halfH,1-halfH));
+  gl.uniform1f(U('uZoom'),vzoom);gl.uniform1f(U('uFrameAspect'),a);
   gl.uniform1f(U('uTide'),h);gl.uniform1f(U('uTidePast'),hPast);
   gl.uniform1f(U('uDay'),day*inten);gl.uniform1f(U('uMoon'),moonLight);gl.uniform1f(U('uNightMix'),1-day);
   // animT, not wall time: advances from the frame timestamps (so __tick(t) stays deterministic)
@@ -970,7 +995,8 @@ function frame(now){
       ['landChroma','uLandChroma'],['landWhite','uLandWhite'],
       ['exposure','uExposure'],['gamma','uGamma'],['vignette','uVignette'],
       ['shoreGlow','uShoreGlow'],['surfGain','uSurfGain'],['flatsGlow','uFlatsGlow'],['shimmer','uShimmer'],
-      ['glowM','uGlowM'],['nightFall','uNightFall'],['flowGain','uFlowGain'],['flatsWarm','uFlatsWarm']])
+      ['glowM','uGlowM'],['nightFall','uNightFall'],['flowGain','uFlowGain'],['flatsWarm','uFlatsWarm'],
+      ['sparks','uSparks']])
     gl.uniform1f(U(n),S[k]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 

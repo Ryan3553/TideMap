@@ -21,7 +21,7 @@ const S = {
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
   relief:0.4, flatsWarm:0.90,
   exposure:1.0, gamma:0.92, vignette:0.36,
-  shoreGlow:0.50, surfGain:0.16, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85,
+  shoreGlow:0.50, surfGain:0.16, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85, sparks:0.35,
   ...JSON.parse(A.set ?? '{}'),
 };
 const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255);
@@ -178,6 +178,13 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const a2=samp(flow, FLP, u-flowDir[0]*f2*FLOW_DIST, v-flowDir[1]*f2*FLOW_DIST, 3)[0];
   const flowVal=mix(a1,a2,Math.abs(f1*2-1));
   const flowEffect=mix(-0.30,0.75,flowVal)*S.flowGain*(0.20+0.80*tideRate);
+  // Tide sparks — mirrors the shader: sparse glints advected along flowDir by the signed
+  // flow phase, two-copy crossfade, confined to moving water by flowVal.
+  const spx=u*1400.0, spy=v*1400.0/1.0866;
+  const sp1=frac(flowPhaseG*1.7), sp2=frac(flowPhaseG*1.7+0.5);
+  const spark=mix(Math.pow(noise(spx-flowDir[0]*sp1*10.0,spy-flowDir[1]*sp1*10.0),18),
+                  Math.pow(noise(spx-flowDir[0]*sp2*10.0,spy-flowDir[1]*sp2*10.0),18),
+                  Math.abs(sp1*2-1))*flowVal*S.sparks;
 
   const tl = mix(smoothstep(0.02,S.landWhite,lum),clamp(lum,0,1),0.22);
   const palette = mix3(C.landDark,C.landLight,tl);
@@ -254,6 +261,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   wcol=wcol.map((c,k)=>mix(c,sunTint[k]*[0.62,0.50,0.38][k],goldAmt*(0.22+0.30*shim)*(1-0.55*smoothstep(0.30,0.80,depth))));
   // Flowing channels, daylight share — mirrors the shader's 0.45.
   wcol=wcol.map(c=>c*(1+(flowEffect*0.45)*submerged));
+  wcol=wcol.map(c=>c*(1+spark*0.6));
 
   const surface=ground.map((g,k)=>mix(g,wcol[k],submerged));
   const dh=(uTide-Hh)/Math.max(S.edgeWidth,0.004);
@@ -316,6 +324,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   nightWater=nightWater.map(c=>c*(1+S.shimmer*(shim-0.5)));
   // Flowing channels, night share: full strength, tied to the same depth decay as the glow.
   nightWater=nightWater.map(c=>c*(1+flowEffect*dGlow));
+  nightWater=nightWater.map(c=>c*(1+spark*1.6));
   let night=landNight.map((l,k)=>mix(l*(0.08+0.28*uMoon),nightWater[k],submerged));
 
   // Pearlescent flats: exposed intertidal ground, lit by the aerial's own swirl detail rather

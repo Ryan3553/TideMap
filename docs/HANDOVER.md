@@ -25,6 +25,20 @@ in electric aqua. Fix (template + look.mjs, verified live):
   dredged reach — down there uDeep by ramp IS the vein. Night formulas untouched.
 - The `sea` sentinel-proximity gate is GONE from the day path (channel gate rides the same
   H-blend). If you reintroduce a `sea`-gated day term, you are re-adding the bug class.
+- **Backlog cleared the same day**: (1) **Tide sparks** — the brief's 'tiny particles
+  moving inward on a rising tide / outward on a falling': sparse pow-18 noise glints
+  advected along flowDir by the signed uFlowPhase (x1.7), two-copy crossfade, confined by
+  flowVal to moving water. Slider Water → Tide sparks (default 0.35, zeroable). Direction,
+  speed, slack-water stillness and entrance emphasis are all inherited from the flow
+  phase — do not give sparks their own clock. (2) **Glacial kiosk frame drift** —
+  CONCEPT's burn-in mitigation: incommensurate 9-78 min sines on cx/cy/zoom, ~1 px per
+  15 s, kiosk+playing only, computed ON TOP of S (never written back, sliders stay
+  honest). (3) **The four non-default presets were sheet-reviewed under the new water
+  model** (data/review/presets/): all functional; flags are taste-level (deepwater's day
+  look sits near bioluminescent's; monochrome has inherently low wet/dry contrast).
+  Declined with reasons: higher-zoom city aerial (below the embedded page's resolution
+  ceiling — see the v2 resolution note), Planet/seasonal-S2 imagery exploration
+  (diminishing returns after the intertidal flatten).
 - **Spring-low honesty (same day, after Ryan's low-tide night screenshot)**: three fixes.
   (1) compose-base.mjs's tone-flatten now ALSO runs on intertidal (cls==128) with
   class-pure neighbourhood statistics — the capture-block patches/seams over the flats are

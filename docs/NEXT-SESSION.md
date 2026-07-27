@@ -11,8 +11,10 @@
 >    only after a dedicated verification pass at night across tide levels.
 > 2. **relief.png B now carries the open-coast mask** — regenerating relief
 >    (fetch-relief.mjs) REQUIRES re-running `bake-oceanmask.mjs` afterwards.
-> 3. The four non-default colour presets were not retuned against the brief — flagged, not
->    urgent (Harbour water is the default and the only one Ryan sees).
+> 3. DONE 2026-07-28: the four non-default presets were sheet-reviewed under the new
+>    metres-scale water (data/review/presets/) — all render correctly; remaining notes are
+>    taste-level only (deepwater day ≈ bioluminescent day; monochrome's wet/dry contrast
+>    is inherently low). No rework performed or needed.
 
 > **2026-07-26 late:** an overnight "make it beautiful" round ran — see `docs/ROADMAP.md`
 > for the jobs and `docs/REPORT-2026-07-27.md` for how it ended. The sections below predate
