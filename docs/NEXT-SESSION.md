@@ -36,6 +36,11 @@
    **seasonal best-pixel composite** (more scenes, per-pixel quality ranking) rather than
    a 3-scene median. Judge on the same three crops as before
    (`research/overnight-2026-07-27/imagery/`).
+   **Google Maps/Earth (and Bing/Esri) are ruled out — settled 2026-07-27.** Their ToS
+   forbid tile extraction, offline use and redistribution, all of which a self-contained
+   page requires. Google's Tauranga base is aerial imagery of the same lineage as our
+   LINZ 0.1 m layer anyway — their edge is COLOUR PROCESSING, not pixels — so the way to
+   "Google quality" is better grading/fusion of what we legally hold, not other tiles.
 4. **Animation**: the water's clock now scales with playback speed (capped 30x) and the
    base pace was raised after Ryan couldn't see it at all (flow cycle 36 s, swell drift
    ~2x, shimmer drift 0.045). He has not yet confirmed the new pace feels right on the
