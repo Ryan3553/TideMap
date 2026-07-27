@@ -77,6 +77,27 @@
     bottom:max(12px,env(safe-area-inset-bottom));opacity:.28;}
   #uiToggle:hover,#uiToggle:focus-visible{opacity:1;}
   html.kiosk #uiToggle{display:block;}
+
+  /* Keep the piece visible while driving the panel (queue item 1).
+     Wide: the panel moves BESIDE the piece and the piece pins (sticky) — nothing ever
+     scrolls it away. Narrow (and kiosk with Controls shown): the stage pins to the top
+     and, once you are down in the sliders, .tune (set by a scroll listener with
+     hysteresis) shrinks the piece so most of the height belongs to the panel.
+     Kiosk WITHOUT controls never scrolls, so none of this can touch it. */
+  @media (min-width:1080px){
+    html:not(.kiosk) .wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;
+      gap:0 26px;align-items:start;}
+    html:not(.kiosk) .eyebrow,html:not(.kiosk) h1,html:not(.kiosk) .sub{grid-column:1/-1;}
+    html:not(.kiosk) .stage{grid-column:1;position:sticky;top:14px;z-index:5;}
+    html:not(.kiosk) .controls,html:not(.kiosk) #settingsOut,
+    html:not(.kiosk) .panel,html:not(.kiosk) .note{grid-column:2;}
+    html:not(.kiosk) .panel{grid-template-columns:1fr;}
+  }
+  @media (max-width:1079.98px){
+    html:not(.kiosk) .stage{position:sticky;top:0;z-index:5;}
+  }
+  html.kiosk.show-ui .stage{position:sticky;top:0;z-index:5;}
+  html.tune .stage{box-shadow:0 12px 28px rgba(0,0,0,.6);}
 </style>
 
 <div class="wrap">
@@ -638,7 +659,9 @@ function applyFrame(){
   // module down silently. Fall back to a sensible size and let the observer below correct it.
   const avail=piece.parentElement.clientWidth||0;
   const maxW=Math.max(320,Math.min(avail?avail-28:1180,1180));
-  const maxH=Math.max(240,Math.round((window.innerHeight||820)*0.78));
+  // .tune = the user is down in the sliders on a narrow layout; give the height to the panel
+  const hFrac=document.documentElement.classList.contains('tune')?0.34:0.78;
+  const maxH=Math.max(240,Math.round((window.innerHeight||820)*hFrac));
   let w=maxW,h=w/a; if(h>maxH){h=maxH;w=h*a;}
   if(KIOSK&&!document.documentElement.classList.contains('show-ui')){
     w=Math.max(2,window.innerWidth||w); h=Math.max(2,window.innerHeight||h);   // fill the slab
@@ -656,6 +679,20 @@ window.addEventListener('resize',applyFrame);
 // The container often gets its real width after this module runs (iframe, hidden tab, late
 // layout). Without this the piece would stay at the fallback size until the window resized.
 if(window.ResizeObserver) new ResizeObserver(()=>applyFrame()).observe(piece.parentElement);
+
+// Sticky-shrink for narrow layouts (see the .tune CSS): engage once the user has scrolled
+// down to the sliders, release near the top. Hysteresis, because shrinking the piece
+// shortens the page and an equal threshold would oscillate. Wide layouts pin via CSS grid
+// instead and never set the class; kiosk without controls has no scrolling at all.
+let tuned=false;
+function tuneCheck(){
+  const allowed=(window.innerWidth||0)<1080&&(!KIOSK||document.documentElement.classList.contains('show-ui'));
+  const y=window.scrollY||0;
+  const on=allowed&&(tuned?y>60:y>180);
+  if(on!==tuned){tuned=on;document.documentElement.classList.toggle('tune',on);applyFrame();}
+}
+window.addEventListener('scroll',tuneCheck,{passive:true});
+window.addEventListener('resize',tuneCheck);
 
 let drag=null;
 piece.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,cx:S.cx,cy:S.cy};piece.setPointerCapture(e.pointerId);});

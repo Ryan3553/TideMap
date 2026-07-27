@@ -14,7 +14,10 @@
 > API access) on the key** — then next round runs `fetch` for 122679 and slots the true
 > multibeam in as priority 0 of `build-depth-composite.py` (the hook is documented there).
 > The new `prep-flow.mjs` needs no change; it reads whatever `depth-composite-raw.f32` says.
-> Item 1 (map visible while scrolling) was NOT done this round. Items 3-4 untouched.
+> **Item 1 is also DONE** (same day, follow-up round): wide screens put the panel beside a
+> sticky piece; narrow screens pin the stage and shrink it to ~34vh once you scroll into
+> the sliders (`.tune`, hysteresis 180/60 px). Kiosk untouched; kiosk+Controls gets the
+> narrow behaviour. Items 3-4 untouched.
 
 0. **THE FLOW REBUILD — do this on the 2 m data, in this order.** Ryan rejected the current
    channel flow ("overlapping brush strokes, like a badly painted picture") and marked up
