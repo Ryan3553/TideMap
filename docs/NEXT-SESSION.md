@@ -1,9 +1,46 @@
 # Next session — kickoff
 
-> **2026-07-26 late:** an overnight "make it beautiful" round is running — see
-> `docs/ROADMAP.md` for the jobs (imagery fusion, real night lights, smooth tide, LIC flow
-> channels, artistic swell/motion, bathymetry hunt) and `docs/REPORT-2026-07-27.md` for how
-> it ended. The sections below predate that round; the traps all still stand.
+> **2026-07-26 late:** an overnight "make it beautiful" round ran — see `docs/ROADMAP.md`
+> for the jobs and `docs/REPORT-2026-07-27.md` for how it ended. The sections below predate
+> that round; the traps all still stand.
+
+## Ryan's queue for the next round (2026-07-27 morning)
+
+1. **Keep the map visible while driving the controls.** The control panel has grown, and
+   tuning means scrolling the piece off screen. Make the canvas stay put — e.g. a sticky
+   (position:sticky) or docked mini-preview while the panel scrolls, or pin the piece and
+   scroll only the panel. Kiosk mode must be untouched. This is UI work in
+   `template-v2.html` CSS/layout only; do not touch the shader.
+2. **The LINZ keys now exist** — in `.env` at the repo root (gitignored; NEVER commit or
+   embed them — `build-v2.mjs` asserts no key reaches the page). Two different keys for two
+   different services (the old trap): the **LDS key** (32 hex) is for data.linz.govt.nz,
+   the **Basemaps key** (ULID) for basemaps.linz.govt.nz. What to spend them on, in value
+   order:
+   - **LDS layer 122679 — Bay of Plenty Multibeam 2 m Depth Model (2024)**: replaces the
+     25 m NIWA grid in field-v3's G channel. Chart datum (LAT), 12x finer. The fetch recipe
+     and datum notes are in `research/overnight-2026-07-27/bathy/README.md`.
+   - **LDS 50672 (hydro depth contours) + 50858 (soundings)** — vector truth for the
+     channels; also the NZ 5411 raster charts (51402/51322/51323) if a chart-styled
+     basemap variant is ever wanted.
+   - **Higher-zoom LINZ aerial** (layer 123991 at z15/z16 for the city end) — sharper
+     fusion basemap where the eye lingers. z15 ≈ 1,900 tiles; sub-region only.
+   - **LDS 120366 — BoP LiDAR 1 m DEM (2024)**: land topography. Use for a subtle
+     hillshade under the raking dawn/dusk light (the sun's azimuth is already computed) —
+     land currently has no relief response. Could be a fourth texture or baked into a
+     spare channel; keep it gentle, artwork not terrain map.
+3. **Imagery can still get better.** Current default is LINZ-detail x Sentinel-2-colour
+   fusion. Worth trying with keys/registration: Maxar/Airbus one-off scenes are paid
+   (probably not), but **Planet's visual basemaps** have free research tiers;
+   **LINZ Basemaps aerial WMTS** (with the Basemaps key) may serve newer/better-toned
+   composites than the LDS tiles; and the Sentinel-2 fusion donor could move to a
+   **seasonal best-pixel composite** (more scenes, per-pixel quality ranking) rather than
+   a 3-scene median. Judge on the same three crops as before
+   (`research/overnight-2026-07-27/imagery/`).
+4. **Animation**: the water's clock now scales with playback speed (capped 30x) and the
+   base pace was raised after Ryan couldn't see it at all (flow cycle 36 s, swell drift
+   ~2x, shimmer drift 0.045). He has not yet confirmed the new pace feels right on the
+   iPad — expect a tuning note. If it needs to be user-adjustable, expose a "Water pace"
+   slider driving a single multiplier on `animT` accumulation.
 
 The three jobs this file used to specify — urban misclassification, land rendering, zoom
 clamp — are **done**, and so is the round after it: the look, the continuous waterline, and

@@ -345,13 +345,13 @@ void main(){
   // A small continuous drift along the local seaward tangent, on top of the two-phase crossfade,
   // so the pattern reads as sliding along the channel rather than only fading between two static
   // frames. Oscillatory (sin), so it never wraps/pops.
-  vec2 flowUv=uv+flowDir*0.0020*sin(uTime*0.06);
+  vec2 flowUv=uv+flowDir*0.0020*sin(uTime*0.11);
   vec4 flowSample=texture2D(uFlow,flowUv);
   // Ping-ponged, not wrapped: a straight fract() reset (B back to A every cycle) is a one-frame
   // pop, exactly the kind of artifact this whole round exists to remove. uTideDir flips the
   // apparent direction: ebb (-1) runs the natural A-to-B (seaward) sense, flood (+1) reverses it
   // so the motion reads landward. Very slow — a full breathing cycle is 60 seconds.
-  float flowPhase=fract(uTime*(1.0/60.0)*(-uTideDir));
+  float flowPhase=fract(uTime*(1.0/36.0)*(-uTideDir));
   float flowTri=abs(flowPhase*2.0-1.0);
   float flowVal=mix(flowSample.r,flowSample.g,flowTri);
   float flowEffect=mix(-0.15,0.45,flowVal)*uFlowGain;
@@ -393,7 +393,7 @@ void main(){
   // Living water: a slow 2-octave shimmer, subtle texture rather than sparkle. Night gets the
   // full slider amplitude, day a third of it, so the daylight imagery is barely touched.
   vec2 nuv=uv*vec2(340.0,340.0/1.0866);
-  float shim=noise(nuv+vec2(uTime*0.008,0.0))*0.6+noise(nuv*2.0)*0.4;
+  float shim=noise(nuv+vec2(uTime*0.045,0.0))*0.6+noise(nuv*2.0)*0.4;
   wcol*=1.0+(uShimmer/3.0)*(shim-0.5);
   // Flowing channels, daylight share: at most a third of the night strength, so the daylight
   // imagery stays essentially calm and this reads as texture, not a special effect.
@@ -427,9 +427,9 @@ void main(){
               +sampleField(uv+vec2(-texel.x, texel.y)).y
               +sampleField(uv+vec2(-texel.x,-texel.y)).y)*0.25;
   float jit=(shim-0.5);
-  float lines=0.50*pow(0.5+0.5*cos(bSoft*38.0-uTime*0.150+jit*0.6),4.0)
-             +0.30*pow(0.5+0.5*cos(bSoft*61.0-uTime*0.100-jit*0.9),3.0)
-             +0.20*pow(0.5+0.5*cos(bSoft*23.0-uTime*0.220+jit*1.3),5.0);
+  float lines=0.50*pow(0.5+0.5*cos(bSoft*38.0-uTime*0.30+jit*0.6),4.0)
+             +0.30*pow(0.5+0.5*cos(bSoft*61.0-uTime*0.20-jit*0.9),3.0)
+             +0.20*pow(0.5+0.5*cos(bSoft*23.0-uTime*0.44+jit*1.3),5.0);
   // G is now real depth (field-v3): shipping channel/near-shore water sits mid-range (~0.5),
   // true open ocean only reaches ~0.9+. The old window (0.30-0.50 .. 0.70-0.95) was tuned to the
   // old chamfer proxy and would have painted swell straight through the harbour channel under
@@ -714,6 +714,10 @@ document.getElementById('copy').addEventListener('click',async e=>{
 // ---------------- loop ----------------
 const DAMP_MIN=110;
 let virtual=new Date(),speed=2400,last=performance.now();
+// The water's animation clock. In real time (kiosk) it IS wall time, but under Play the tide
+// runs at hundreds-to-thousands x and wall-clock water reads as frozen texture — so the clock
+// follows playback, gently capped: full speed/240 would strobe at 3 hr/s.
+let animT=0;
 const tF=new Intl.DateTimeFormat('en-NZ',{timeZone:'Pacific/Auckland',hour:'numeric',minute:'2-digit',hour12:true});
 const dF=new Intl.DateTimeFormat('en-NZ',{timeZone:'Pacific/Auckland',weekday:'short',day:'numeric',month:'short'});
 function stateWord(h,rising){const fr=(h-LO)/(HI-LO);
@@ -722,6 +726,7 @@ function stateWord(h,rising){const fr=(h-LO)/(HI-LO);
 
 function frame(now){
   const dt=(now-last)/1000;last=now;
+  animT=(animT+Math.min(dt,0.25)*(playing?Math.min(30,Math.max(1,speed/240)):1))%3600;
   if(playing) virtual=new Date(virtual.getTime()+dt*speed*1000);
 
   const moon=moonPos(virtual);
@@ -753,9 +758,9 @@ function frame(now){
   gl.uniform1f(U('uZoom'),S.zoom);gl.uniform1f(U('uFrameAspect'),a);
   gl.uniform1f(U('uTide'),h);gl.uniform1f(U('uTidePast'),hPast);
   gl.uniform1f(U('uDay'),day*inten);gl.uniform1f(U('uMoon'),moonLight);gl.uniform1f(U('uNightMix'),1-day);
-  // The frame's own timestamp, not performance.now(): identical in playback (rAF passes the same
-  // clock) but it makes __tick(t) deterministic, which is how animation gets verified headless.
-  gl.uniform1f(U('uTime'),(now/1000)%3600);
+  // animT, not wall time: advances from the frame timestamps (so __tick(t) stays deterministic)
+  // and speeds up under Play so the water visibly lives at time-lapse rates.
+  gl.uniform1f(U('uTime'),animT);
   gl.uniform1f(U('uTideDir'),rising?1:-1);   // +1 flood / -1 ebb — the flow texture's animation sign
   gl.uniform3f(U('uSunTint'),1+0.30*warm,1-0.05*warm,1-0.34*warm);
   for(const [k,n] of [['shallow','uShallow'],['mid','uMid'],['deep','uDeep'],['nightDeep','uNightDeep'],

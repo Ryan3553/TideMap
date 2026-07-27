@@ -136,10 +136,10 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const flowSrc = samp(flow, FLP, u, v, 3);
   const flowAngle = flowSrc[2]*Math.PI*2;
   const flowDir = [Math.cos(flowAngle), Math.sin(flowAngle)];
-  const flowU = u + flowDir[0]*0.0020*Math.sin(t*0.06);
-  const flowV = v + flowDir[1]*0.0020*Math.sin(t*0.06);
+  const flowU = u + flowDir[0]*0.0020*Math.sin(t*0.11);
+  const flowV = v + flowDir[1]*0.0020*Math.sin(t*0.11);
   const flowSample = samp(flow, FLP, flowU, flowV, 3);
-  const flowPhase = frac(t*(1/60)*(-dir));
+  const flowPhase = frac(t*(1/36)*(-dir));
   const flowTri = Math.abs(flowPhase*2-1);
   const flowVal = mix(flowSample[0], flowSample[1], flowTri);
   const flowEffect = mix(-0.15, 0.45, flowVal) * S.flowGain;
@@ -173,7 +173,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // Living water: a slow 2-octave shimmer, subtle texture rather than sparkle. Night gets the
   // full slider amplitude, day a third of it.
   const nux=u*340.0, nuy=v*340.0/1.0866;
-  const shim=noise(nux+t*0.008,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
+  const shim=noise(nux+t*0.045,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
   wcol=wcol.map(c=>c*(1+(S.shimmer/3)*(shim-0.5)));
   // Flowing channels, daylight share: at most a third of the night strength.
   wcol=wcol.map(c=>c*(1+(flowEffect/3)*submerged));
@@ -195,9 +195,9 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const tx=1.5/FP;
   const bSoft=(bathyAt(u+tx,v+tx)+bathyAt(u+tx,v-tx)+bathyAt(u-tx,v+tx)+bathyAt(u-tx,v-tx))*0.25;
   const jit=(shim-0.5);
-  let lines = 0.50*Math.pow(0.5+0.5*Math.cos(bSoft*38.0-t*0.150+jit*0.6),4)
-            + 0.30*Math.pow(0.5+0.5*Math.cos(bSoft*61.0-t*0.100-jit*0.9),3)
-            + 0.20*Math.pow(0.5+0.5*Math.cos(bSoft*23.0-t*0.220+jit*1.3),5);
+  let lines = 0.50*Math.pow(0.5+0.5*Math.cos(bSoft*38.0-t*0.30+jit*0.6),4)
+            + 0.30*Math.pow(0.5+0.5*Math.cos(bSoft*61.0-t*0.20-jit*0.9),3)
+            + 0.20*Math.pow(0.5+0.5*Math.cos(bSoft*23.0-t*0.44+jit*1.3),5);
   lines*=smoothstep(0.58,0.72,bathy)*(1-smoothstep(0.86,0.97,bathy));
   // fwidth(bathy) guards genuine screen-space aliasing (e.g. zoomed far out).
   const bw=Math.abs(bathyAt(u1,v1)-bathy)+Math.abs(bathyAt(u2,v2)-bathy);
