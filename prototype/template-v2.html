@@ -165,6 +165,7 @@ const assetEls=[...document.querySelectorAll('#assets img')];
 const IMAGES=Object.fromEntries(assetEls.filter(e=>e.dataset.name).map(e=>[e.dataset.name,e]));
 const FIELD_EL=document.getElementById('img_field');
 const FLOW_EL=document.getElementById('img_flow');
+const RELIEF_EL=document.getElementById('img_relief');
 const LATd=-37.65, LONd=176.17, RAD=Math.PI/180;
 const LO=0.332, HI=2.127;               // the fitted drying-height range; outside it the raster is silent
 const H_LO=-0.75, H_HI=3.25;            // the field's height encoding — see prep-field.mjs
@@ -225,6 +226,7 @@ const DEFAULTS={
   tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
   depthCurve:1.15, clarity:0.70, moonGain:0.8, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55,
+  relief:0.4,
   edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
@@ -251,7 +253,13 @@ function sunPos(d){const n=julian(d)-2451545.0;
   const lam=L+1.915*RAD*Math.sin(g)+0.020*RAD*Math.sin(2*g),eps=23.439*RAD;
   const dec=Math.asin(Math.sin(eps)*Math.sin(lam));
   const ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam));
-  return {alt:altitude(ra,dec,n),lam};}
+  // azimuth for the relief's raking light: degrees clockwise from NORTH (verified for this
+  // hemisphere: winter noon ~358 (sun due north), sunrise NE, sunset WNW)
+  const lst=((((18.697374558+24.06570982441908*n)%24+24)%24)+LONd/15)%24*15*RAD;
+  const H=lst-ra, lat=LATd*RAD;
+  let az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(lat)-Math.tan(dec)*Math.cos(lat))/RAD+180;
+  az=((az%360)+360)%360;
+  return {alt:altitude(ra,dec,n),az,lam};}
 function moonPos(d){const n=julian(d)-2451545.0;
   const L=(218.316+13.176396*n)*RAD,M=(134.963+13.064993*n)*RAD,F=(93.272+13.229350*n)*RAD;
   const lam=L+6.289*RAD*Math.sin(M),beta=5.128*RAD*Math.sin(F),eps=23.439*RAD;
@@ -271,7 +279,8 @@ void main(){ vUv=vec2(p.x*0.5+0.5,0.5-p.y*0.5); gl_Position=vec4(p,0.0,1.0); }`;
 const FS=`#extension GL_OES_standard_derivatives : enable
 precision highp float;
 varying vec2 vUv;
-uniform sampler2D uBase,uField,uFlow;
+uniform sampler2D uBase,uField,uFlow,uRelief;
+uniform vec2 uSunDir; uniform float uReliefAmt;
 uniform vec2 uCenter,uFieldSize; uniform float uZoom,uFrameAspect;
 uniform float uTide,uTidePast,uDay,uMoon,uNightMix,uTime,uTideDir;
 uniform vec3 uSunTint,uShallow,uMid,uDeep,uNightDeep,uLandDark,uLandLight,uCity,uEdgeCol,uDampCol;
@@ -386,6 +395,13 @@ void main(){
   vec3 stylised=palette*(1.0+uLandChroma*rel);
   vec3 real=mix(vec3(lum),base,uGroundSat)*uGroundGain;
   vec3 ground=mix(stylised,real,uRealism);
+  // Raking-light land relief (LiDAR, relief.png: R=dz/dE, G=dz/dN, grad/1.5 byte-coded).
+  // Slopes whose surface normal leans toward the sun brighten, away darken; uReliefAmt is
+  // already windowed to low sun in JS, so noon and night are untouched. Water carries a
+  // zero gradient in the texture, so this cannot shade the sea.
+  vec2 relGrad=(texture2D(uRelief,uv).rg*2.0-1.0)*1.5;
+  float rake=dot(normalize(vec3(-relGrad,1.0)).xy,uSunDir);
+  ground*=1.0+uReliefAmt*rake;
 
   // Freshly exposed flat is dark and wet and pales as it dries — the piece's one honest cue
   // for which way the tide is going. Ebbing only; a multiply, so the imagery survives it.
@@ -595,7 +611,7 @@ const GROUPS=[
   ['Waterline',[['edgeCol','Colour','c'],['edgeGain','Sheen',0,0.6,0.005],['edgeWidth','Softness (m)',0.005,0.15,0.001],
             ['shoreGlow','Shore glow',0,1.5,0.01],['glowM','Shore glow reach (m)',0.1,1.5,0.01]]],
   ['Ground',[['realism','Daylight realism',0,1,0.01],['groundGain','Daylight brightness',0.4,1.8,0.01],
-             ['groundSat','Daylight colour',0,2,0.01],
+             ['groundSat','Daylight colour',0,2,0.01],['relief','Land relief',0,1,0.01],
              ['landDark','Night land dark','c'],['landLight','Night land light','c'],
              ['landChroma','Land colour kept',0,1.4,0.01],['landWhite','Land white point',0.20,0.95,0.01],
              ['dampCol','Damp tint','c'],['dampGain','Damp strength',0,2,0.02]]],
@@ -767,13 +783,14 @@ function frame(now){
   if(playing) virtual=new Date(virtual.getTime()+dt*speed*1000);
 
   const moon=moonPos(virtual);
-  let h,hPast,rising,sunAlt;
+  let h,hPast,rising,sunAlt,sunAz=65;   // slider mode: fixed NE morning light (no time-of-day exists there)
   if(playing){
     const hTrue=predict(virtual);
     h=clamp(hTrue,LO,HI);
     hPast=clamp(predict(new Date(virtual.getTime()-DAMP_MIN*60000)),LO,HI);
     rising=hTrue>predict(new Date(virtual.getTime()-600000));
-    sunAlt=sunPos(virtual).alt;
+    const sp=sunPos(virtual);
+    sunAlt=sp.alt; sunAz=sp.az;
     S.tide=h; S.light=clamp((sunAlt+6)/40,0,1);
     syncOne('tide'); syncOne('light');      // only the two that move; syncInputs() every frame is 20 DOM writes
   }else{
@@ -800,6 +817,11 @@ function frame(now){
   gl.uniform1f(U('uTime'),animT);
   gl.uniform1f(U('uTideDir'),rising?1:-1);   // +1 flood / -1 ebb — the flow texture's animation sign
   gl.uniform3f(U('uSunTint'),1+0.30*warm,1-0.05*warm,1-0.34*warm);
+  // Relief is a LOW-sun effect: fades in as the sun clears -4deg, gone again by ~30deg —
+  // noon stays flat (artwork, not terrain map) and night keeps the stylised quiet land.
+  const rakeWin=clamp((sunAlt+4)/8,0,1)*(1-clamp((sunAlt-12)/18,0,1));
+  gl.uniform2f(U('uSunDir'),Math.sin(sunAz*RAD),Math.cos(sunAz*RAD));
+  gl.uniform1f(U('uReliefAmt'),S.relief*rakeWin);
   for(const [k,n] of [['shallow','uShallow'],['mid','uMid'],['deep','uDeep'],['nightDeep','uNightDeep'],
       ['landDark','uLandDark'],['landLight','uLandLight'],['city','uCity'],
       ['edgeCol','uEdgeCol'],['dampCol','uDampCol'],['abyss','uAbyss'],['pearlCol','uPearl']]){
@@ -833,7 +855,8 @@ mkTex(imgs[basemapName],0);
 const fieldImg=await ready(FIELD_EL);
 mkTex(fieldImg,1,{format:gl.RGBA,filter:gl.NEAREST});
 mkTex(await ready(FLOW_EL),2,{format:gl.RGB,filter:gl.LINEAR});
-gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);gl.uniform1i(U('uFlow'),2);
+mkTex(await ready(RELIEF_EL),3,{format:gl.RGB,filter:gl.LINEAR});
+gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);gl.uniform1i(U('uFlow'),2);gl.uniform1i(U('uRelief'),3);
 gl.uniform2f(U('uFieldSize'),fieldImg.naturalWidth,fieldImg.naturalHeight);
 baseSel.addEventListener('change',()=>{basemapName=baseSel.value;mkTex(imgs[basemapName],0);updateNote();});
 function updateNote(){

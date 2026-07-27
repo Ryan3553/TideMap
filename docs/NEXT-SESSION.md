@@ -17,7 +17,12 @@
 > **Item 1 is also DONE** (same day, follow-up round): wide screens put the panel beside a
 > sticky piece; narrow screens pin the stage and shrink it to ~34vh once you scroll into
 > the sliders (`.tune`, hysteresis 180/60 px). Kiosk untouched; kiosk+Controls gets the
-> narrow behaviour. Items 3-4 untouched.
+> narrow behaviour. **Item 2's LiDAR-hillshade bullet is DONE too**: `fetch-relief.mjs`
+> bakes `data/relief.png` (gradient map, Basemaps elevation terrain-rgb z13, Basemaps
+> key) and the shader applies an azimuth-aware raking-light term on land, windowed to
+> low sun (real azimuth under Play — `sunPos` now returns `az`, verified for this
+> hemisphere; fixed NE in slider mode). Slider: Ground → **Land relief** (default 0.4).
+> Items 3-4 untouched.
 
 0. **THE FLOW REBUILD — do this on the 2 m data, in this order.** Ryan rejected the current
    channel flow ("overlapping brush strokes, like a badly painted picture") and marked up

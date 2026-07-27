@@ -19,6 +19,7 @@ const S = {
   nightGlow:0.95, nightFall:4.2, cityGain:0.28, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
+  relief:0.4,
   exposure:1.0, gamma:0.92, vignette:0.36,
   shoreGlow:0.50, surfGain:0.12, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85,
   ...JSON.parse(A.set ?? '{}'),
@@ -52,6 +53,8 @@ const FP = fldObj.info.width, fld = fldObj.data;
 if (fldObj.info.channels !== 4) throw new Error(`field-v3.png expected 4 channels, got ${fldObj.info.channels}`);
 const flowObj = await sharp('data/flow.png').removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
 const FLP = flowObj.info.width, flow = flowObj.data;
+const relObj = await sharp('data/relief.png').removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
+const RP = relObj.info.width, relief = relObj.data;
 
 function samp(buf, P, u, v, channels) {   // bilinear, matching GL_LINEAR — base imagery and flow
   const x = clamp(u*P-0.5, 0, P-1), y = clamp(v*P-0.5, 0, P-1);
@@ -96,6 +99,11 @@ const warm = clamp((12-sunAlt)/18,0,1);
 const inten = 0.30+0.70*clamp((sunAlt+4)/26,0,1);
 const uDay = day*inten, uNightMix = 1-day, uMoon = +(A.moon ?? 0.7);
 const sunTint = [1+0.30*warm, 1-0.05*warm, 1-0.34*warm];
+// relief raking light, matching frame(): az= overrides the slider-mode fixed NE azimuth
+const sunAz = +(A.az ?? 65);
+const rakeWin = clamp((sunAlt+4)/8,0,1)*(1-clamp((sunAlt-12)/18,0,1));
+const reliefAmt = S.relief*rakeWin;
+const sunDirX = Math.sin(sunAz*Math.PI/180), sunDirY = Math.cos(sunAz*Math.PI/180);
 const uTide = clamp(tide,LO,HI), uTidePast = +(A.past ?? uTide);
 
 const aspect = W/H;
@@ -150,6 +158,13 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const stylised = palette.map((p,k)=>p*(1+S.landChroma*rel[k]));
   const real = b.map(c=>mix(lum,c,S.groundSat)*S.groundGain);
   let ground = stylised.map((s,k)=>mix(s,real[k],S.realism));
+  // raking-light land relief — exact mirror of the shader term
+  if (reliefAmt > 0.001) {
+    const rg = samp(relief, RP, u, v, 3);
+    const gx=(rg[0]*2-1)*1.5, gy=(rg[1]*2-1)*1.5;
+    const rake=(-gx*sunDirX-gy*sunDirY)/Math.sqrt(1+gx*gx+gy*gy);
+    ground=ground.map(g=>g*(1+reliefAmt*rake));
+  }
 
   // Damp band: smoothstep, not step() — matches the shader's fix exactly.
   const DAMP_EDGE_M=0.01;
