@@ -36,6 +36,12 @@ in electric aqua. Fix (template + look.mjs, verified live):
   there, and a soft ambiguous waterline is both truthful (saturated flats) and artifact-
   free. Do NOT "fix" the soft spring-low waterline back to crisp — the crisp version
   renders the fit polygons.
+- **The night waterline edge is GATED by the rendered waterline transition** (Ryan: the
+  cyan outline made low-tide night look hard): the edge term is multiplied by
+  4*submerged*(1-submerged) at night, so it dissolves wherever the waterline blend is wide
+  (spring low) or fractional (potholes), and survives only on genuinely crisp shores. Its
+  night colour is pulled 45% toward uNightDeep and its night gain trimmed 0.90->0.65 —
+  light in water, not an outline. Day path untouched (the gate is mixed in by uNightMix).
 - **Night joined the metres scale the same day** (Ryan: "still some weird stuff at night"
   — dark blobs inside pale glow; the night nd was still the clamped-tide-term x cubed-bathy
   blend). Now `nd = 0.18*(1-exp(-dm/1.5)) + 0.82*smoothstep(10,38,dm)`: a thin dimming

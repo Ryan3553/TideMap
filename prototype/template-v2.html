@@ -657,9 +657,17 @@ void main(){
   col+=cityTerm*uNightMix;
   // Daylight waterline: a neutral wet sheen that follows the hour (warm at golden hour via
   // uSunTint), feathered irregularly along the shore — never the uniform pale-cyan edging
-  // that read as a composited digital overlay. Night keeps the preset's luminous colour.
+  // that read as a composited digital overlay.
+  // Night: the edge is gated by the RENDERED waterline transition (4*s*(1-s) of the
+  // submerged blend), so it follows the soft-floor waterline automatically — where the
+  // blend is wide (spring low) or fractional (potholes) the rim dissolves instead of
+  // drawing a hard cyan ring around every pool (Ryan 2026-07-28 night); where the shore
+  // is genuinely crisp it stays a clean luminous line. Its colour leans toward the
+  // water's own night glow rather than near-white: light in water, not an outline.
   float edgeIrr=0.60+0.80*noise(nuv*0.9+vec2(0.0,uTime*0.02));
-  col+=mix(uSunTint*0.85,uEdgeCol,uNightMix)*edge*edgeIrr*uEdgeGain*(0.30+0.55*uHaze+0.90*uNightMix);
+  float wlGate=clamp(4.0*submerged*(1.0-submerged),0.0,1.0);
+  col+=mix(uSunTint*0.85,mix(uEdgeCol,uNightDeep,0.45),uNightMix)
+      *edge*edgeIrr*uEdgeGain*(0.30+0.55*uHaze+0.65*uNightMix)*mix(1.0,wlGate,uNightMix);
   // The wide shore glow takes the water's own night colour as darkness falls — stacked white
   // here turned the whole intertidal margin frosty instead of luminous. By day it all but
   // disappears: the water meets the shore directly, no glow.

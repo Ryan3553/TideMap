@@ -333,11 +333,13 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // Daylight waterline is a neutral irregular sheen, night keeps the luminous preset colour;
   // surf foams white by day; morning haze veils the water — all mirror the shader.
   const edgeIrr=0.60+0.80*noise(nux*0.9,nuy*0.9+t*0.02);
+  const wlGate=clamp(4*submerged*(1-submerged),0,1);
   for(let k=0;k<3;k++){
     let c=mix(daylight[k],night[k],uNightMix);
     const cityTerm=C.city[k]*(Math.pow(city,1.6)*S.cityGain*1.4)+[1.0,0.95,0.85][k]*Math.pow(city,3)*S.cityGain*0.8;
     c+=cityTerm*uNightMix;
-    c+=mix(sunTint[k]*0.85,C.edgeCol[k],uNightMix)*edge*edgeIrr*S.edgeGain*(0.30+0.55*hazeAmt+0.90*uNightMix);
+    c+=mix(sunTint[k]*0.85,mix(C.edgeCol[k],C.nightDeep[k],0.45),uNightMix)
+      *edge*edgeIrr*S.edgeGain*(0.30+0.55*hazeAmt+0.65*uNightMix)*mix(1,wlGate,uNightMix);
     c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.04+1.0*uNightMix);
     c+=mix([0.90,0.94,0.93][k],C.edgeCol[k],uNightMix)*lines*S.surfGain;
     c=mix(c,[0.60,0.68,0.73][k]*Math.max(uDay,0.12),hazeAmt*0.16*submerged);
