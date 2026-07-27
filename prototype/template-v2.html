@@ -606,19 +606,13 @@ void main(){
            +texture2D(uBase,uv-lt).rgb+texture2D(uBase,uv+vec2(-lt.x,lt.y)).rgb)*0.25;
   float lumSoft=mix(dot(bSm,vec3(0.299,0.587,0.114)),lum,0.35);
   vec3 landNight=palette*(1.0+0.35*uLandChroma*rel);
-  // G changed meaning in field-v3: it is now a real-depth hybrid, not a shore-distance chamfer.
-  // Shipping channel and 1km offshore both read ~0.5 (their true ~16m NIWA depth) instead of the
-  // old proxy's ~0.01-0.1, and 5km offshore ~0.96 instead of ~1.0 — a plain exp(-bathy*nightFall)
-  // would have crushed the channel to near-black. Cubing bathy before the decay keeps the
-  // mid-depth channel/near-shore water compressed toward the bright end (visible ribbon) while
-  // still reaching the abyss by the time real depth approaches open-ocean values.
-  float ndBathy=bathyN*bathyN*bathyN;   // bathyN hoisted to the water block
-  // Blend on H itself, NOT the sentinel-proximity ramp 'sea': in the band where H climbs from
-  // the sentinel toward fitted values, 'sea' is fractional while the tide-depth term is clamped
-  // near 1 (those heights are unfitted noise, not real depths) — the old mix passed through that
-  // bogus plateau and drew a dark navy ring around every permanent creek and pool. Below the
-  // fitted range the height says nothing about depth, so the glow consults real bathy only.
-  float nd=mix(clamp((uTide-H)/uDepthCurve,0.0,1.0),ndBathy,1.0-smoothstep(0.10,0.40,H));
+  // Night glow on the SAME metres scale as the day ramp (the cure applied to day earlier
+  // today; night still ran the old clamped-tide-term x cubed-bathy blend, which flips
+  // between bright and abyss across the sentinel seam — Ryan's night blobs, 2026-07-28).
+  // Shape preserves the night signature: a thin dimming skin over the first metre or so
+  // of water, luminous through channel depths, and the abyss only where the water is
+  // genuinely deep (open ocean). Continuous in dm by construction, so it cannot blob.
+  float nd=0.18*(1.0-exp(-dm/1.5))+0.82*smoothstep(10.0,38.0,dm);
   float dGlow=exp(-nd*uNightFall);
   vec3 nightWater=mix(uAbyss,uNightDeep,dGlow)
                  *(0.30+0.70*uMoon)*uNightGlow

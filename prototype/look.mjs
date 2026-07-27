@@ -308,10 +308,8 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // G is now real depth: channel/1km-offshore both read ~0.5 (their true ~16m), 5km offshore
   // ~0.96 — a plain exp(-bathy*nightFall) would have crushed the channel. Cubing keeps the
   // mid-depth water bright while still reaching the abyss offshore.
-  const ndBathy = bathyN*bathyN*bathyN;   // bathyN hoisted to the water block
-  // Blend on H itself, not 'sea' — see the shader comment: the sentinel transition band passed
-  // through a clamped bogus tide-depth and ringed every permanent creek/pool dark.
-  const nd=mix(clamp((uTide-Hh)/S.depthCurve,0,1),ndBathy,1-smoothstep(0.10,0.40,Hh));
+  // Night glow on the same metres scale as the day ramp — mirrors the shader exactly.
+  const nd=0.18*(1-Math.exp(-dm/1.5))+0.82*smoothstep(10.0,38.0,dm);
   const dGlow=Math.exp(-nd*S.nightFall);
   let nightWater=mix3(C.abyss,C.nightDeep,dGlow).map(c=>c*(0.30+0.70*uMoon)*S.nightGlow*mix(1,0.78+0.55*lumSoft,0.35));
   nightWater=nightWater.map(c=>c*(1+S.shimmer*(shim-0.5)));

@@ -25,6 +25,12 @@ in electric aqua. Fix (template + look.mjs, verified live):
   dredged reach — down there uDeep by ramp IS the vein. Night formulas untouched.
 - The `sea` sentinel-proximity gate is GONE from the day path (channel gate rides the same
   H-blend). If you reintroduce a `sea`-gated day term, you are re-adding the bug class.
+- **Night joined the metres scale the same day** (Ryan: "still some weird stuff at night"
+  — dark blobs inside pale glow; the night nd was still the clamped-tide-term x cubed-bathy
+  blend). Now `nd = 0.18*(1-exp(-dm/1.5)) + 0.82*smoothstep(10,38,dm)`: a thin dimming
+  skin over the first metre, luminous through channel depths, abyss only in genuinely deep
+  ocean. Continuous in dm, cannot blob. The cubed-ndBathy formulation is fully retired —
+  do not resurrect it from old commits; it and the day max() were the same disease.
 
 ---
 
