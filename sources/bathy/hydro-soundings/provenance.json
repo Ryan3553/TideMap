@@ -1,0 +1,16 @@
+{
+  "file": "layer-50858.geojson",
+  "source": "LINZ Data Service layer 50858",
+  "obtained_via": "WFS GetFeature, LDS key (wxs scope), key redacted",
+  "request_used": "https://data.linz.govt.nz/services;key=<LINZ_KEY>/wfs/layer-50858?service=WFS&version=2.0.0&request=GetFeature&typeNames=layer-50858&outputFormat=json&count=250000&bbox=-37.79,175.93,-37.41,176.37,urn:ogc:def:crs:EPSG:4326",
+  "bbox_wgs84": {
+    "west": 175.93,
+    "south": -37.79,
+    "east": 176.37,
+    "north": -37.41
+  },
+  "depth_attribute": "depth: sounding depth, metres below chart datum",
+  "vertical_datum": "chart datum (approximately LAT), metres, positive DOWN",
+  "licence": "CC BY 4.0, attribution Toitu Te Whenua Land Information New Zealand",
+  "fetched": "2026-07-27"
+}

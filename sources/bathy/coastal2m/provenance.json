@@ -1,0 +1,24 @@
+{
+  "files": [
+    "BC36_clip.tif",
+    "BD36_clip.tif",
+    "BD37_clip.tif"
+  ],
+  "source": "Bay of Plenty - Waihi Beach and Tauranga Coastal LiDAR 2m DEM (2025)",
+  "publisher": "Toitu Te Whenua Land Information New Zealand, nz-coastal open S3 bucket",
+  "obtained_via": "keyless /vsicurl/ windowed read of the public COGs, clipped to project bbox",
+  "stac_collection": "https://nz-coastal.s3.ap-southeast-2.amazonaws.com/bay-of-plenty/waihi-beach-and-tauranga_2025/dem_2m/2193/collection.json",
+  "capture_window": "2025-01-27 .. 2025-03-25 (same campaign window as hydro survey HS79)",
+  "bbox_wgs84": {
+    "west": 175.93,
+    "south": -37.79,
+    "east": 176.37,
+    "north": -37.41
+  },
+  "native_crs": "EPSG:2193",
+  "resolution_m": 2.0,
+  "nodata": -9999.0,
+  "vertical_datum": "NZVD2016, metres, positive UP (topo-bathy LiDAR; deep channels are nodata)",
+  "licence": "CC BY 4.0, attribution Toitu Te Whenua Land Information New Zealand",
+  "fetched": "2026-07-27"
+}
