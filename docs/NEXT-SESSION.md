@@ -6,6 +6,30 @@
 
 ## Ryan's queue for the next round (2026-07-27 morning)
 
+0. **THE FLOW REBUILD — do this on the 2 m data, in this order.** Ryan rejected the current
+   channel flow ("overlapping brush strokes, like a badly painted picture") and marked up
+   what he wants: **long, sparse, artery-like streamlines along each channel's DEEPEST
+   line** — one continuous spine per channel, the mouth artery branching into the arms like
+   the drainage tree it is, strong in the thalweg, fading at channel edges, near-zero on
+   flats and open ocean. NOT dense braided texture. A round-3 rebuild against the 25 m NIWA
+   data was started and deliberately stopped on Ryan's instruction: better bathymetry first.
+   Sequence:
+   a. Fetch **LDS layer 122679 (BoP Multibeam 2 m, 2024)** with the key in `.env`
+      (recipe: `research/overnight-2026-07-27/bathy/README.md`).
+   b. Re-run the depth resample (watch the round-2 lesson in `resample-niwa-depth.py`:
+      smooth-then-cubic, no order-1 bilinear) and regenerate field-v3's G channel via
+      `prep-field3.mjs`.
+   c. THEN rebuild `prep-flow.mjs` as artery streamlines: direction = channel axis from the
+      smoothed real depth (seaward-signed), amplitude ∝ depth relative to the local
+      cross-channel maximum (`rel = depth/localMax(~40px)`, pow-shaped), sparse seeds
+      (~10-18%) integrated LONG (L 100-200px, RK2), same flow.png channel contract
+      (A-phase / B-phase / seaward angle) so the shader needs no change. Keep the
+      vessel-islet heal and critical-point ring damping; no sharp blur (block seams);
+      Float32 throughout.
+   Acceptance = Ryan's principle verbatim: each major channel shows one continuous bright
+   spine traceable end-to-end; brightness ranked dredged channel > secondary > creeks >
+   flats ≈ 0; no dabs, rings, or woolly texture.
+
 1. **Keep the map visible while driving the controls.** The control panel has grown, and
    tuning means scrolling the piece off screen. Make the canvas stay put — e.g. a sticky
    (position:sticky) or docked mini-preview while the panel scrolls, or pin the piece and
