@@ -6,6 +6,16 @@
 
 ## Ryan's queue for the next round (2026-07-27 morning)
 
+> **2026-07-27 evening: item 0 is DONE** — arteries built and live in the page, on a
+> composite of real bathymetry (2 m coastal LiDAR + chart contours/soundings + NIWA 25 m,
+> `build-depth-composite.py`), because **the LDS key cannot export layer 122679: it lacks
+> the Exports scope** ("Invalid API key scope" on every export/datasources call; WFS/WMTS
+> work fine). **Ryan: on data.linz.govt.nz go to your API keys and tick "Exports" (or full
+> API access) on the key** — then next round runs `fetch` for 122679 and slots the true
+> multibeam in as priority 0 of `build-depth-composite.py` (the hook is documented there).
+> The new `prep-flow.mjs` needs no change; it reads whatever `depth-composite-raw.f32` says.
+> Item 1 (map visible while scrolling) was NOT done this round. Items 3-4 untouched.
+
 0. **THE FLOW REBUILD — do this on the 2 m data, in this order.** Ryan rejected the current
    channel flow ("overlapping brush strokes, like a badly painted picture") and marked up
    what he wants: **long, sparse, artery-like streamlines along each channel's DEEPEST

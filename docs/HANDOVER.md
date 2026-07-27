@@ -1,4 +1,31 @@
-# TideMap — handover, 2026-07-27 (fifth pass: the overnight beauty round)
+# TideMap — handover, 2026-07-27 evening (sixth pass: the artery flow)
+
+The channel flow is no longer LIC braid — it is **artery streamlines on real bathymetry**,
+per Ryan's markup (`research/overnight-2026-07-27/flow/Ryan-markup.png`): one continuous
+spine per channel, mouth artery branching into the arms, thalweg bright, flats and open
+ocean near-zero. What changed:
+
+- **Real depth**: `prototype/build-depth-composite.py` merges 2 m coastal LiDAR (nz-coastal
+  open S3 bucket, keyless, same HS79 campaign window), chart depth contours 50672 +
+  soundings 50858 (WFS), and the NIWA 25 m DTM — datums reconciled to local MSL via the
+  repo's own tide tables (MTL 1.107 m above CD). field-v3's G channel now comes from it.
+- **The 2 m multibeam (LDS 122679) is still the endgame** and is blocked ONLY on the LDS
+  key lacking the Exports scope — one checkbox on data.linz.govt.nz fixes it (see
+  NEXT-SESSION.md). It slots in as priority 0 of the composite; nothing downstream changes.
+- **`prototype/prep-flow.mjs` is a rewrite** (streamlines, not per-pixel LIC) but the
+  flow.png CONTRACT is unchanged (R=A, G=B slid seaward, B=angle) — template-v2.html and
+  look.mjs shader maths untouched. Default `flowGain` 0.45 → 0.85 (texture is sparse now;
+  at 0.45 the arteries were a ~10 % modulation, invisible).
+- Traps paid for in this rebuild, recorded in prep-flow.mjs comments: the ridge test needs
+  THREE scales (a dredged channel's floor is flat — fine scale sees no ridge); harbour
+  membership = proximity to size-filtered flats (harbour-mask.png is the intertidal FIT
+  mask and excludes Town Reach; an island's beach ring fakes flats without the size
+  filter); center-vs-saddle winding must be computed mod pi and only centers damped —
+  damping saddles kills the mouth confluence, the strongest artery of all.
+
+---
+
+# Earlier: fifth pass, 2026-07-27 (the overnight beauty round)
 
 **Read `docs/REPORT-2026-07-27.md` first** — it is the authoritative record of the
 overnight round: real NIWA bathymetry in the G channel, OSM×VIIRS city lights, 16-bit
