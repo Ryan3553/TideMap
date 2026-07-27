@@ -156,7 +156,8 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // Hoisted to match the shader: the daylight ground grade needs the water/exposed split,
   // the shimmer noise, the intertidal band and the relief sample before water colour exists.
   const [u1,v1]=uvOf(px+1,py), [u2,v2]=uvOf(px,py+1);
-  const aa=Math.max(Math.abs(heightAt(u1,v1)-Hh)+Math.abs(heightAt(u2,v2)-Hh),0.0015);
+  const aa=Math.max(Math.abs(heightAt(u1,v1)-Hh)+Math.abs(heightAt(u2,v2)-Hh),0.0015)
+          +0.10*(1-smoothstep(0.38,0.55,uTide));   // soft waterline near the fitted floor
   const submerged=smoothstep(-aa,aa,uTide-Hh);
   const nux=u*340.0, nuy=v*340.0/1.0866;
   const shim=noise(nux+t*0.045,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
@@ -321,9 +322,9 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // than flattened to grey — `rel` is the same relative-chroma vector the land already uses. A
   // REPLACEMENT blend, not a max-lift: `pearl` is proportional to `lum`, so dark swirls stay dark.
   // flatBand is hoisted near the top of the loop — the daylight sand grade shares it.
-  const pearl=C.pearlCol.map((c,k)=>c*(0.18+0.82*lumSoft)*(1+0.5*rel[k]));
+  const pearl=C.pearlCol.map((c,k)=>c*(0.30+0.70*lumSoft)*(1+0.5*rel[k]));
   // Wet-margin sheen on the land side of the waterline — kills the dark rim. Mirrors the shader.
-  const wetMargin=Math.exp(-(((Hh-uTide)/Math.max(S.glowM,0.02))**2))*(1-submerged);
+  const wetMargin=Math.exp(-(((Hh-uTide)/0.13)**2))*(1-submerged);
   const pearlMix=clamp(flatBand*S.flatsGlow*(0.35+0.65*uMoon)+wetMargin*0.75,0,1);
   night=night.map((n,k)=>mix(n,pearl[k],pearlMix)+C.nightDeep[k]*wetMargin*0.10*(0.30+0.70*uMoon));
 

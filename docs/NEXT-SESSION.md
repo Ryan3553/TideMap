@@ -3,11 +3,12 @@
 > **2026-07-27 night: Ryan's visual-hierarchy brief is implemented** — see HANDOVER.md's
 > seventh-pass section first. New queue items from that round:
 >
-> 1. **Root-fix the aerial capture blocks over the flats**: extend `compose-base.mjs`'s
->    land-only tone-flatten to intertidal classes (cls>=64, restricted to non-open-water
->    neighbourhoods the way land is), re-run compose-base → fuse-base → build. The shipped
->    `lumSoft` shader workaround then becomes removable. Evidence and blur-sigma
->    calibration: `data/review/nightflats/`.
+> 1. **DONE 2026-07-28: intertidal tone-flatten shipped** — compose-base.mjs now runs a
+>    second flatten pass gated cls==128 with intertidal-only neighbourhood statistics
+>    (raw-buffer verified: zero leakage outside the class, no coastline halo, texture
+>    preserved). Backups of the pre-fix basemaps: data/backup-pre-intertidal-flatten/.
+>    The lumSoft shader term is KEPT (it also guards residual sub-clamp steps) — remove
+>    only after a dedicated verification pass at night across tide levels.
 > 2. **relief.png B now carries the open-coast mask** — regenerating relief
 >    (fetch-relief.mjs) REQUIRES re-running `bake-oceanmask.mjs` afterwards.
 > 3. The four non-default colour presets were not retuned against the brief — flagged, not

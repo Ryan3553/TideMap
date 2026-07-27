@@ -60,6 +60,41 @@ for (let i=0;i<P*P;i++){
   }
   console.log(`tone-flattened ${(100*touched/(P*P)).toFixed(1)}% of the frame (land), mean land luminance ${mean.toFixed(1)}`);
 }
+// ---- even out the capture blocks over the tidal flats ----------------------------------------
+// Same problem, same fix, extended to intertidal (classes.png === 128): the LINZ capture-block
+// tone steps are just as present over the flats as over land, and at night the renderer
+// multiplies flat luminance onto near-flat colour there, so an untreated step reads as a
+// hard-edged pale blob (worst at spring low tide). This is a SEPARATE pass with its OWN
+// neighbourhood statistics restricted to intertidal pixels only (blur(V*m)/blur(m) over the
+// intertidal mask, exactly like the land pass restricts to land) — land and open-water pixels are
+// excluded from both the numerator and denominator, so intertidal is never normalized against
+// land or water statistics. That per-class restriction is what keeps a bright/dark halo from
+// forming at either the land/flat or flat/water boundary; open-water pixels (cls===0) are never
+// touched by this pass.
+{
+  const STRENGTH=0.75, LO=0.72, HI=1.45, SIGMA=34*P/4096;
+  const lumB=Buffer.alloc(P*P), mB=Buffer.alloc(P*P);
+  let sum=0,n=0;
+  for(let i=0;i<P*P;i++){
+    const l=0.299*out[i*3]+0.587*out[i*3+1]+0.114*out[i*3+2];
+    const isInter=cls[i]===128;
+    lumB[i]=isInter?Math.round(l):0; mB[i]=isInter?255:0;
+    if(isInter){sum+=l;n++;}
+  }
+  const mean=sum/Math.max(1,n);
+  const blur=b=>sharp(b,{raw:{width:P,height:P,channels:1}}).blur(SIGMA).extractChannel(0).raw().toBuffer();
+  const [lb,mb]=await Promise.all([blur(lumB),blur(mB)]);
+  let touched=0;
+  for(let i=0;i<P*P;i++){
+    if(cls[i]!==128) continue;
+    const ref=mb[i]>4?(lb[i]*255/mb[i]):mean;
+    if(ref<6) continue;
+    const g=Math.min(HI,Math.max(LO,Math.pow(mean/ref,STRENGTH)));
+    for(let k=0;k<3;k++) out[i*3+k]=Math.min(255,Math.round(out[i*3+k]*g));
+    touched++;
+  }
+  console.log(`tone-flattened ${(100*touched/(P*P)).toFixed(1)}% of the frame (intertidal), mean intertidal luminance ${mean.toFixed(1)}`);
+}
 
 await sharp(out,{raw:{width:P,height:P,channels:3}}).jpeg({quality:82,mozjpeg:true}).toFile('data/base-aerial.jpg');
 console.log(`aerial coverage ${(have/(P*P)*100).toFixed(1)}%, used on ${(coastal/(P*P)*100).toFixed(1)}% (land+harbour); rest Sentinel`);

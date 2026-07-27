@@ -25,6 +25,17 @@ in electric aqua. Fix (template + look.mjs, verified live):
   dredged reach — down there uDeep by ramp IS the vein. Night formulas untouched.
 - The `sea` sentinel-proximity gate is GONE from the day path (channel gate rides the same
   H-blend). If you reintroduce a `sea`-gated day term, you are re-adding the bug class.
+- **Spring-low honesty (same day, after Ryan's low-tide night screenshot)**: three fixes.
+  (1) compose-base.mjs's tone-flatten now ALSO runs on intertidal (cls==128) with
+  class-pure neighbourhood statistics — the capture-block patches/seams over the flats are
+  corrected at source (agent-verified: zero out-of-class leakage, no coastline halo).
+  (2) The night wet-margin's reach is its own 0.13 m constant, not uGlowM — the 0.5 m
+  shore-glow reach painted a pale apron hundreds of metres wide over near-flat mud.
+  (3) Near the raster's fitted floor (tide < ~0.55 m, floor 0.332) the waterline blend
+  widens (aa += up to 0.10 m): the fit's polygon-edged region boundaries surface exactly
+  there, and a soft ambiguous waterline is both truthful (saturated flats) and artifact-
+  free. Do NOT "fix" the soft spring-low waterline back to crisp — the crisp version
+  renders the fit polygons.
 - **Night joined the metres scale the same day** (Ryan: "still some weird stuff at night"
   — dark blobs inside pale glow; the night nd was still the clamped-tide-term x cubed-bathy
   blend). Now `nd = 0.18*(1-exp(-dm/1.5)) + 0.82*smoothstep(10,38,dm)`: a thin dimming

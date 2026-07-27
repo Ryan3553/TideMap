@@ -372,6 +372,12 @@ void main(){
   // Hoisted from the water block: the daylight ground grade below needs the water/exposed
   // split, the shimmer noise, and the intertidal band before the water colour is built.
   float aa=max(fwidth(H),0.0015);
+  // Near the raster's fitted floor (LO=0.332 m) the drying-height fit is at its noisiest
+  // and its region boundaries surface as straight-edged polygons in the waterline (Ryan's
+  // spring-low night screenshot, 2026-07-28). Widen the water/exposed blend as the tide
+  // approaches the floor: at spring low the flats are saturated and a soft, ambiguous
+  // waterline is both truthful and kind to the data. Zero effect above 0.55 m.
+  aa+=0.10*(1.0-smoothstep(0.38,0.55,uTide));
   float submerged=smoothstep(-aa,aa,uTide-H);          // antialiased per screen pixel
   vec2 nuv=uv*vec2(340.0,340.0/1.0866);
   float shim=noise(nuv+vec2(uTime*0.045,0.0))*0.6+noise(nuv*2.0)*0.4;
@@ -634,11 +640,14 @@ void main(){
   // Floor the luminance: the aerial is near-BLACK along wet creek margins (photographed at some
   // real tide), and a pearl strictly proportional to lum paints black rims around every pool at
   // night. The floor keeps a wet-sand sheen there; 0.82*lum keeps the swirl contrast.
-  vec3 pearl=uPearl*(0.18+0.82*lumSoft)*(1.0+0.5*rel);
+  vec3 pearl=uPearl*(0.30+0.70*lumSoft)*(1.0+0.5*rel);
   // The just-exposed margin is WET sand — it holds the water's shine on the land side of the
   // waterline. Without this the blend dips through near-black landNight right at the boundary
   // and draws a dark rim around every pool, which reads as an outline. Mirror of 'shore'.
-  float wetMargin=exp(-pow((H-uTide)/max(uGlowM,0.02),2.0))*(1.0-submerged);
+  // Reach is its own small constant, NOT uGlowM: this term exists only to kill the dark
+  // rim right at the pool boundary. Riding the 0.5 m shore-glow reach painted a pale apron
+  // hundreds of metres wide across near-flat mud at spring low (Ryan 2026-07-28 night).
+  float wetMargin=exp(-pow((H-uTide)/0.13,2.0))*(1.0-submerged);
   float pearlMix=clamp(flatBand*uFlatsGlow*(0.35+0.65*uMoon)+wetMargin*0.75,0.0,1.0);
   night=mix(night,pearl,pearlMix);
   night+=uNightDeep*wetMargin*0.10*(0.30+0.70*uMoon);
