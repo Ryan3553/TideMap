@@ -1,4 +1,53 @@
-# TideMap — handover, 2026-07-27 evening (sixth pass: the artery flow)
+# TideMap — handover, 2026-07-27 night (seventh pass: Ryan's visual-hierarchy brief)
+
+Ryan sent a written brief ("still too flat and boring") with explicit colour/behaviour
+direction. This pass implements it end to end; the artifact is republished at the same URL
+and the iPad bundle is rebuilt. What changed, and the reasoning that must not be re-litigated:
+
+- **The surf placement complaint decoded**: the old swell window sat at bathy 0.50-0.88 =
+  **15-35 m of real depth** — surf out by Karewa — because depth alone cannot separate the
+  beach shoaling band from the harbour channels (both live at the same depths). The fix is a
+  **baked open-coast mask in relief.png's B channel** (`bake-oceanmask.mjs`: seal-radius-20
+  land dilation to close both entrance throats, edge-seeded flood fill, 24-step grow-back,
+  sigma-2.5 feather). Surf now lives at bathy 0.03-0.40 (~0.5-9 m) × that mask, crest
+  frequencies retuned (110/175/68 vs bathy), white foam by day, luminous by night.
+  **relief.png is generated and gitignored — after any fetch-relief.mjs re-run you MUST
+  re-run bake-oceanmask.mjs or the ocean goes flat and surf vanishes** (the shader reads
+  reliefS.b everywhere: ocean-calm, channel gate, swell).
+- **Day water is a continuous 4-stop ramp** (wShore luminous aqua → shallow → mid → deep),
+  plus, gated to the open coast, a darker navy (wDeepO) — the Pacific reads as negative
+  space (clarity ×0.15 there). Channels get a vein boost `chan` (harbour × bathy 0.20-0.72
+  window) and a gaussian brightness lift at the entrance (MOUTH uv 0.563,0.592).
+- **Exposed flats are graded to stone/gold/taupe** on the aerial's own luminance (sand ramp
+  + 0.28·rel chroma + grain whisper), slider **Ground → Flats sand tone** (`flatsWarm`,
+  default 0.90). Wet-edge sky reflection appears ONLY on the rising tide (uTideDir gate);
+  the ebb keeps the damp band. Day waterline is a neutral sunTint sheen with noise-feathered
+  gain — the cyan edging survives only into night.
+- **Breathing**: caustic product-noise in genuinely shallow water (day), broad slow ocean
+  luminance drift, dawn/dusk haze veil (uHaze window, peaks sunAlt 0-5°), golden-hour
+  amber sky-mirror LERP on water (uGold window ~2-10°, shimmer-swept, faded over deep
+  water so the channels stay blue — a warm MULTIPLY was tried first and cannot beat the
+  water's green dominance; the lerp is the one that reads).
+- **Night blockiness root-caused** (agent-diagnosed, evidence in data/review/nightflats/):
+  LINZ capture-block tone steps in the aerial ride through raw `lum` into night pearl and
+  nightWater brightness — compose-base's flattening pass is LAND-ONLY by design. Shader-side
+  fix shipped: `lumSoft` (4-tap ±0.0023 uv average, 35% raw mixed back) feeds those two
+  terms only; day path untouched. **Root fix queued in NEXT-SESSION: extend
+  compose-base.mjs tone-flatten to intertidal classes and rebuild the basemaps.**
+- **Defaults retuned to the brief** (Harbour water preset): shallow #8fd6ca, mid #2c8ca2,
+  deep #0d4066, surfGain 0.16; judged from a 9-variant × 3-state sweep
+  (data/review/sweep/, `sweep.mjs`). Night palette untouched — night formulas read none of
+  shallow/mid/deep/clarity/flatsWarm (verified in the sweep: zero night pixel diff).
+- **Tools**: `review.mjs` renders labeled contact sheets (states / crops) through look.mjs —
+  use it before claiming anything about the look. look.mjs was found DRIFTED at session
+  start (old ping-pong flow, old swell window) and re-synced; a formula-by-formula parity
+  audit then found two more slips (bathySmooth round-vs-floor; dither y-flip) — both fixed.
+  When you touch the shader, change look.mjs in the same commit or it lies.
+- Page 21.92 MB (budget 22); artifact build 14.7 MB (cap 16); iPad bundle rebuilt.
+
+---
+
+# Earlier: sixth pass, 2026-07-27 evening (the artery flow)
 
 The channel flow is no longer LIC braid — it is **artery streamlines on real bathymetry**,
 per Ryan's markup (`research/overnight-2026-07-27/flow/Ryan-markup.png`): one continuous

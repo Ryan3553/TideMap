@@ -1,5 +1,18 @@
 # Next session — kickoff
 
+> **2026-07-27 night: Ryan's visual-hierarchy brief is implemented** — see HANDOVER.md's
+> seventh-pass section first. New queue items from that round:
+>
+> 1. **Root-fix the aerial capture blocks over the flats**: extend `compose-base.mjs`'s
+>    land-only tone-flatten to intertidal classes (cls>=64, restricted to non-open-water
+>    neighbourhoods the way land is), re-run compose-base → fuse-base → build. The shipped
+>    `lumSoft` shader workaround then becomes removable. Evidence and blur-sigma
+>    calibration: `data/review/nightflats/`.
+> 2. **relief.png B now carries the open-coast mask** — regenerating relief
+>    (fetch-relief.mjs) REQUIRES re-running `bake-oceanmask.mjs` afterwards.
+> 3. The four non-default colour presets were not retuned against the brief — flagged, not
+>    urgent (Harbour water is the default and the only one Ryan sees).
+
 > **2026-07-26 late:** an overnight "make it beautiful" round ran — see `docs/ROADMAP.md`
 > for the jobs and `docs/REPORT-2026-07-27.md` for how it ended. The sections below predate
 > that round; the traps all still stand.

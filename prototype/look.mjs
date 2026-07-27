@@ -13,15 +13,15 @@ const OUT = A.out ?? '_look.png';
 const BASE_FILE = A.base ?? 'data/base-fused.jpg';   // the shipped default basemap
 
 const S = {
-  shallow:'#86ccc2', mid:'#2f8fa0', deep:'#124f70', nightDeep:'#3fc8de',
+  shallow:'#8fd6ca', mid:'#2c8ca2', deep:'#0d4066', nightDeep:'#3fc8de',
   landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#e3fbff',
   abyss:'#08131f', pearlCol:'#74858f',
   nightGlow:0.95, nightFall:4.2, cityGain:0.28, edgeGain:0.10,
   depthCurve:1.15, clarity:0.70, dampGain:1.0,
   realism:0.85, groundGain:1.02, groundSat:1.18, landChroma:0.60, landWhite:0.55, edgeWidth:0.035,
-  relief:0.4, flatsWarm:0.75,
+  relief:0.4, flatsWarm:0.90,
   exposure:1.0, gamma:0.92, vignette:0.36,
-  shoreGlow:0.50, surfGain:0.12, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85,
+  shoreGlow:0.50, surfGain:0.16, flatsGlow:0.50, shimmer:0.25, glowM:0.5, flowGain:0.85,
   ...JSON.parse(A.set ?? '{}'),
 };
 const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255);
@@ -134,7 +134,7 @@ const bathyAt=(u,v)=>sampleField(u,v)[1];
 // need for bilinear precision here) removes it cleanly — mirrors bathySmooth() in the shader.
 function bathySmooth(u,v){
   const tx=u*FP-0.5, ty=v*FP-0.5;
-  const ix=Math.round(tx), iy=Math.round(ty);
+  const ix=Math.floor(tx), iy=Math.floor(ty);   // floor, matching the shader's base texel exactly
   let sum=0;
   for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) sum+=fieldTexel(ix+dx,iy+dy)[1];
   return sum/9;
@@ -148,7 +148,8 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const fld3=sampleField(u,v);
   let Hh=fld3[0], bathy=fld3[1], city=fld3[2];
   // Dither, applied once right after decode — matches the shader's placement exactly.
-  const hDither=(ditherIGN(px+0.5+t*0.7, py+0.5)-0.5)*0.0006;
+  // gl_FragCoord.y is bottom-origin in GL — flip the row so the hash argument matches.
+  const hDither=(ditherIGN(px+0.5+t*0.7, H-py-0.5)-0.5)*0.0006;
   Hh += hDither;
   const lum=0.299*b[0]+0.587*b[1]+0.114*b[2];
 
@@ -282,6 +283,12 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   lines*=linesAA*straight*shoal*(0.45+0.55*uNightMix)*submerged;
 
   const daylight=surface.map((s,k)=>s*sunTint[k]*uDay);
+  // Wide-softened aerial luminance for the night terms — kills the LINZ capture-block tone
+  // steps that pearl/nightWater otherwise reprint as blocky patches. Mirrors the shader.
+  const LT=0.0023;
+  const bSm=[0,1,2].map(k=>(samp(base,BP,u+LT,v+LT,3)[k]+samp(base,BP,u+LT,v-LT,3)[k]
+                           +samp(base,BP,u-LT,v-LT,3)[k]+samp(base,BP,u-LT,v+LT,3)[k])*0.25);
+  const lumSoft=mix(0.299*bSm[0]+0.587*bSm[1]+0.114*bSm[2],lum,0.35);
   const landNight=palette.map((p,k)=>p*(1+0.35*S.landChroma*rel[k]));
   // Night glow is a MONOTONIC decay of a night depth `nd`. `depth` itself cannot be used: on
   // always-wet sentinel water its tide-height term clamps to 1, painting every permanent channel
@@ -295,7 +302,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // through a clamped bogus tide-depth and ringed every permanent creek/pool dark.
   const nd=mix(clamp((uTide-Hh)/S.depthCurve,0,1),ndBathy,1-smoothstep(0.10,0.40,Hh));
   const dGlow=Math.exp(-nd*S.nightFall);
-  let nightWater=mix3(C.abyss,C.nightDeep,dGlow).map(c=>c*(0.30+0.70*uMoon)*S.nightGlow*mix(1,0.78+0.55*lum,0.35));
+  let nightWater=mix3(C.abyss,C.nightDeep,dGlow).map(c=>c*(0.30+0.70*uMoon)*S.nightGlow*mix(1,0.78+0.55*lumSoft,0.35));
   nightWater=nightWater.map(c=>c*(1+S.shimmer*(shim-0.5)));
   // Flowing channels, night share: full strength, tied to the same depth decay as the glow.
   nightWater=nightWater.map(c=>c*(1+flowEffect*dGlow));
@@ -305,7 +312,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // than flattened to grey — `rel` is the same relative-chroma vector the land already uses. A
   // REPLACEMENT blend, not a max-lift: `pearl` is proportional to `lum`, so dark swirls stay dark.
   // flatBand is hoisted near the top of the loop — the daylight sand grade shares it.
-  const pearl=C.pearlCol.map((c,k)=>c*(0.18+0.82*lum)*(1+0.5*rel[k]));
+  const pearl=C.pearlCol.map((c,k)=>c*(0.18+0.82*lumSoft)*(1+0.5*rel[k]));
   // Wet-margin sheen on the land side of the waterline — kills the dark rim. Mirrors the shader.
   const wetMargin=Math.exp(-(((Hh-uTide)/Math.max(S.glowM,0.02))**2))*(1-submerged);
   const pearlMix=clamp(flatBand*S.flatsGlow*(0.35+0.65*uMoon)+wetMargin*0.75,0,1);
