@@ -1,4 +1,25 @@
-# TideMap — handover, 2026-07-27 night (seventh pass: Ryan's visual-hierarchy brief)
+# TideMap — handover, 2026-07-28 (eighth pass: depth-honest day water)
+
+Ryan flagged two defects in the seventh pass by screenshot: sharp colour bands between
+depths, and a cyan line drawn around low-tide pools. Both were one root defect: **the day
+depth formula still contained the clamped-tide-term trap the night glow was cured of a
+round earlier** — `max(clamp((uTide-H)/depthCurve),(sea*bathy))` clamps to 1 across the
+sentinel-climb band, painting every permanent pool full-deep with a hard edge; the
+luminous shore stop + day shore-glow + wet-edge sheen then rimmed those false-black pools
+in electric aqua. Fix (template + look.mjs, verified live):
+
+- `depth = mix(tideTerm, bathySmooth(uv), 1-smoothstep(0.10,0.40,H))` — pools now colour
+  by their TRUE depth; bathySmooth also irons chart-contour terracing in the harbour deep.
+- Ramp overlaps widened (chained smoothsteps plateaued at each stop = banding); shore stop
+  de-electrified (it clipped G pre-tonemap); day shore-glow cut to 0.04; wet-edge calmed.
+- Honest depths made the veins lighter, so the hierarchy was re-weighted through the
+  honest path: deep knee 0.38-0.75, channel boost 0.70. Night formulas untouched.
+- The `sea` sentinel-proximity gate is GONE from the day path (channel gate rides the same
+  H-blend). If you reintroduce a `sea`-gated day term, you are re-adding the bug class.
+
+---
+
+# Earlier: seventh pass, 2026-07-27 night (Ryan's visual-hierarchy brief)
 
 Ryan sent a written brief ("still too flat and boring") with explicit colour/behaviour
 direction. This pass implements it end to end; the artifact is republished at the same URL

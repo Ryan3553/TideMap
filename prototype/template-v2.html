@@ -373,7 +373,6 @@ void main(){
   // split, the shimmer noise, and the intertidal band before the water colour is built.
   float aa=max(fwidth(H),0.0015);
   float submerged=smoothstep(-aa,aa,uTide-H);          // antialiased per screen pixel
-  float sea=1.0-smoothstep(0.03,0.35,H-H_LO);          // 1 on the always-wet sentinel
   vec2 nuv=uv*vec2(340.0,340.0/1.0866);
   float shim=noise(nuv+vec2(uTime*0.045,0.0))*0.6+noise(nuv*2.0)*0.4;
   float flatBand=(1.0-submerged)*smoothstep(2.6,2.2,H)*smoothstep(-0.1,0.15,H+0.75);
@@ -433,7 +432,7 @@ void main(){
   // A narrow wet-edge reflection as the tide RISES: the strip just above the advancing
   // water holds a sky sheen. On the ebb the damp band owns this ground instead.
   float wetEdge=exp(-pow((H-uTide)/0.045,2.0))*(1.0-submerged)*max(uTideDir,0.0);
-  ground+=vec3(0.085,0.10,0.105)*wetEdge*(1.0-uNightMix);
+  ground+=vec3(0.055,0.062,0.066)*wetEdge*(1.0-uNightMix);
   // Golden-hour sheen on the wet flats themselves — the low sun catches the film of water
   // the tide left behind.
   ground+=uSunTint*vec3(0.18,0.15,0.10)*uGold*flatBand;
@@ -453,21 +452,35 @@ void main(){
   ground=mix(ground,ground*0.52+uDampCol*0.55,wet);
 
   // ---- water ------------------------------------------------------------------
-  float depth=max(clamp((uTide-H)/uDepthCurve,0.0,1.0),sea*bathy);
+  // The day-depth trap, same class the night glow already fixed: in the band where H climbs
+  // off the always-wet sentinel, the tide term is clamped and meaningless, and the old
+  // max() painted full deep around every permanent pool — hard navy blobs, ringed by the
+  // luminous shore stop ('sharp colour bands', 'cyan line around the water', Ryan
+  // 2026-07-28). Blend on H itself into SMOOTHED real bathymetry instead: bathySmooth also
+  // irons out the chart-contour terracing the harbour-deep G channel carries at texel
+  // scale. Pools now colour by their true depth and their edges grade continuously.
+  float tideTerm=clamp((uTide-H)/uDepthCurve,0.0,1.0);
+  float bathyN=bathySmooth(uv);
+  float deepMix=1.0-smoothstep(0.10,0.40,H);
+  float depth=mix(tideTerm,bathyN,deepMix);
   float ocean=reliefS.b;             // baked open-coast mask: 1 on the Pacific, 0 in harbour
   // Continuous depth ramp, no branch and no band: luminous at the shore, turquoise across
   // the shallows, blue-green mid, the preset deep in the channels — then, on the open coast
   // only, on down to a calm navy that acts as negative space rather than imagery.
-  vec3 wShore=uShallow*vec3(1.04,1.20,1.14)+vec3(0.0,0.05,0.03);
+  // Shore stop calmed (it was double-brightened and clipped G pre-tonemap — the 'drawn
+  // outline' read); ramp overlaps widened so the chained smoothsteps never all flatten at
+  // once — a zero-derivative plateau at each stop is exactly what banding looks like.
+  vec3 wShore=uShallow*vec3(1.02,1.10,1.06)+vec3(0.0,0.02,0.01);
   vec3 wDeepO=uDeep*vec3(0.40,0.52,0.72);
-  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,0.16,depth));
-  wcol=mix(wcol,uMid,smoothstep(0.14,0.48,depth));
-  wcol=mix(wcol,uDeep,smoothstep(0.44,0.80,depth));
-  wcol=mix(wcol,wDeepO,ocean*smoothstep(0.45,0.85,bathy));
+  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,0.24,depth));
+  wcol=mix(wcol,uMid,smoothstep(0.18,0.55,depth));
+  wcol=mix(wcol,uDeep,smoothstep(0.38,0.75,depth));
+  wcol=mix(wcol,wDeepO,ocean*smoothstep(0.45,0.85,bathyN));
   // The harbour's veins: the mid-depth channels get the richest, clearest blue, and keep it
-  // at every tide level. Gated off the open coast so the Pacific stays quiet.
-  float chan=(1.0-ocean)*sea*smoothstep(0.20,0.34,bathy)*(1.0-smoothstep(0.55,0.72,bathy));
-  wcol=mix(wcol,mix(uMid,uDeep,0.60)*vec3(0.72,0.96,1.30),chan*0.55);
+  // at every tide level. Gated off the open coast so the Pacific stays quiet. Rides the
+  // same H-blend as depth (the old 'sea' gate flipped abruptly across the sentinel climb).
+  float chan=(1.0-ocean)*deepMix*smoothstep(0.16,0.36,bathyN)*(1.0-smoothstep(0.52,0.75,bathyN));
+  wcol=mix(wcol,mix(uMid,uDeep,0.60)*vec3(0.72,0.96,1.30),chan*0.70);
   // Slightly brighter water toward the harbour entrance — the mouth is where the light is.
   vec2 mv=(uv-vec2(0.563,0.592))*vec2(1.0866,1.0);
   wcol*=1.0+0.14*exp(-dot(mv,mv)/0.0012);
@@ -582,8 +595,7 @@ void main(){
   // would have crushed the channel to near-black. Cubing bathy before the decay keeps the
   // mid-depth channel/near-shore water compressed toward the bright end (visible ribbon) while
   // still reaching the abyss by the time real depth approaches open-ocean values.
-  float bathyN=bathySmooth(uv);
-  float ndBathy=bathyN*bathyN*bathyN;
+  float ndBathy=bathyN*bathyN*bathyN;   // bathyN hoisted to the water block
   // Blend on H itself, NOT the sentinel-proximity ramp 'sea': in the band where H climbs from
   // the sentinel toward fitted values, 'sea' is fractional while the tide-depth term is clamped
   // near 1 (those heights are unfitted noise, not real depths) — the old mix passed through that
@@ -631,7 +643,7 @@ void main(){
   // The wide shore glow takes the water's own night colour as darkness falls — stacked white
   // here turned the whole intertidal margin frosty instead of luminous. By day it all but
   // disappears: the water meets the shore directly, no glow.
-  col+=mix(uEdgeCol,uNightDeep,0.6*uNightMix)*shore*uShoreGlow*(0.12+0.95*uNightMix);
+  col+=mix(uEdgeCol,uNightDeep,0.6*uNightMix)*shore*uShoreGlow*(0.04+1.0*uNightMix);
   col+=mix(vec3(0.90,0.94,0.93),uEdgeCol,uNightMix)*lines*uSurfGain;
   // Cool morning and evening haze over the water, burning off as the sun climbs.
   col=mix(col,vec3(0.60,0.68,0.73)*max(uDay,0.12),uHaze*0.16*submerged);

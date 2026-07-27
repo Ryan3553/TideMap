@@ -114,7 +114,7 @@ const tideRate = Math.sin(Math.PI*clamp((uTide-LO)/(HI-LO),0,1));
 const flowPhaseG = t*tideRate*dir*(1/36);
 
 // Constant water-ramp endpoints — mirrors the shader's wShore/wDeepO/channel colour.
-const W_SHORE = C.shallow.map((c,k)=>c*[1.04,1.20,1.14][k]+[0.0,0.05,0.03][k]);
+const W_SHORE = C.shallow.map((c,k)=>c*[1.02,1.10,1.06][k]+[0.0,0.02,0.01][k]);
 const W_DEEPO = C.deep.map((c,k)=>c*[0.40,0.52,0.72][k]);
 const CHAN_COL = mix3(C.mid,C.deep,0.60).map((c,k)=>c*[0.72,0.96,1.30][k]);
 
@@ -158,7 +158,6 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const [u1,v1]=uvOf(px+1,py), [u2,v2]=uvOf(px,py+1);
   const aa=Math.max(Math.abs(heightAt(u1,v1)-Hh)+Math.abs(heightAt(u2,v2)-Hh),0.0015);
   const submerged=smoothstep(-aa,aa,uTide-Hh);
-  const sea=1-smoothstep(0.03,0.35,Hh-H_LO);
   const nux=u*340.0, nuy=v*340.0/1.0866;
   const shim=noise(nux+t*0.045,nuy)*0.6+noise(nux*2.0,nuy*2.0)*0.4;
   const flatBand=(1-submerged)*smoothstep(2.6,2.2,Hh)*smoothstep(-0.1,0.15,Hh+0.75);
@@ -204,7 +203,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   ground=ground.map((g,k)=>mix(g,sand[k],sandMixA));
   // Wet-edge reflection on the RISING tide — mirrors the shader.
   const wetEdge=Math.exp(-(((Hh-uTide)/0.045)**2))*(1-submerged)*Math.max(dir,0);
-  ground=ground.map((g,k)=>g+[0.085,0.10,0.105][k]*wetEdge*(1-uNightMix));
+  ground=ground.map((g,k)=>g+[0.055,0.062,0.066][k]*wetEdge*(1-uNightMix));
   // Golden-hour sheen on the wet flats — mirrors the shader.
   ground=ground.map((g,k)=>g+sunTint[k]*[0.18,0.15,0.10][k]*goldAmt*flatBand);
 
@@ -218,13 +217,18 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   ground=ground.map((g,k)=>mix(g,g*0.52+C.dampCol[k]*0.55,wet));
 
   // ---- water — mirrors the shader's continuous ramp/channel/ocean treatment ------
-  const depth=Math.max(clamp((uTide-Hh)/S.depthCurve,0,1),sea*bathy);
-  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,0.16,depth));
-  wcol=mix3(wcol,C.mid,smoothstep(0.14,0.48,depth));
-  wcol=mix3(wcol,C.deep,smoothstep(0.44,0.80,depth));
-  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(0.45,0.85,bathy));
-  const chan=(1-ocean)*sea*smoothstep(0.20,0.34,bathy)*(1-smoothstep(0.55,0.72,bathy));
-  wcol=mix3(wcol,CHAN_COL,chan*0.55);
+  // Day-depth blend on H into smoothed real bathy (same class as the night-glow fix) —
+  // mirrors the shader exactly, including the widened ramp overlaps.
+  const tideTerm=clamp((uTide-Hh)/S.depthCurve,0,1);
+  const bathyN=bathySmooth(u,v);
+  const deepMixT=1-smoothstep(0.10,0.40,Hh);
+  const depth=mix(tideTerm,bathyN,deepMixT);
+  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,0.24,depth));
+  wcol=mix3(wcol,C.mid,smoothstep(0.18,0.55,depth));
+  wcol=mix3(wcol,C.deep,smoothstep(0.38,0.75,depth));
+  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(0.45,0.85,bathyN));
+  const chan=(1-ocean)*deepMixT*smoothstep(0.16,0.36,bathyN)*(1-smoothstep(0.52,0.75,bathyN));
+  wcol=mix3(wcol,CHAN_COL,chan*0.70);
   const mvx=(u-0.563)*1.0866, mvy=v-0.592;
   const mouthLift=1+0.14*Math.exp(-(mvx*mvx+mvy*mvy)/0.0012);
   wcol=wcol.map(c=>c*mouthLift);
@@ -296,8 +300,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // G is now real depth: channel/1km-offshore both read ~0.5 (their true ~16m), 5km offshore
   // ~0.96 — a plain exp(-bathy*nightFall) would have crushed the channel. Cubing keeps the
   // mid-depth water bright while still reaching the abyss offshore.
-  const bathyN = bathySmooth(u,v);
-  const ndBathy = bathyN*bathyN*bathyN;
+  const ndBathy = bathyN*bathyN*bathyN;   // bathyN hoisted to the water block
   // Blend on H itself, not 'sea' — see the shader comment: the sentinel transition band passed
   // through a clamped bogus tide-depth and ringed every permanent creek/pool dark.
   const nd=mix(clamp((uTide-Hh)/S.depthCurve,0,1),ndBathy,1-smoothstep(0.10,0.40,Hh));
@@ -328,7 +331,7 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
     const cityTerm=C.city[k]*(Math.pow(city,1.6)*S.cityGain*1.4)+[1.0,0.95,0.85][k]*Math.pow(city,3)*S.cityGain*0.8;
     c+=cityTerm*uNightMix;
     c+=mix(sunTint[k]*0.85,C.edgeCol[k],uNightMix)*edge*edgeIrr*S.edgeGain*(0.30+0.55*hazeAmt+0.90*uNightMix);
-    c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.12+0.95*uNightMix);
+    c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.04+1.0*uNightMix);
     c+=mix([0.90,0.94,0.93][k],C.edgeCol[k],uNightMix)*lines*S.surfGain;
     c=mix(c,[0.60,0.68,0.73][k]*Math.max(uDay,0.12),hazeAmt*0.16*submerged);
     c=1-Math.exp(-c*S.exposure);
