@@ -11,10 +11,17 @@
 > 2. **RYAN: first run of the reinstalled iPad app on wifi** — the 402 MB tile warm-up
 >    must complete once (watch console 'tile warm-up complete'); after that it is fully
 >    offline. Serve from prototype/: node serve.mjs → http://<machine>:5179/ipad/.
-> 3. base-8k.jpg (archive-only stitched z15 mosaic) was never produced — derive it any
+> 3. **Archive the native 1 m land DEM** (LDS 120366, ~2-3 GB for the bbox via the
+>    Koordinates export, same mechanism as fetch-122642.py). The relief texture does NOT
+>    need it — its 4096 bake grid (9.5 m/px) is the binding constraint and the current
+>    z15 source (3.8 m/px, proven the tileset's native max by byte-identical z16/z17
+>    probes) already oversamples it 2.5x. This is an acquire-high-distill-later archive
+>    item, and the enabler for a future HI-RES RELIEF OVERLAY at house zoom (same detail-
+>    layer trick as the aerial): at zoom 0.04 the 9.5 m relief lighting is coarse.
+> 4. base-8k.jpg (archive-only stitched z15 mosaic) was never produced — derive it any
 >    time from data/hires-tiles/15 with the reprojection recipe in fetch-linz.mjs /
 >    reproject-linz.mjs. Do NOT embed it in the page (canvas res ceiling — see HANDOVER).
-> 4. The artifact build ships no tiles (16 MB host cap) — deep zoom is local/iPad only.
+> 5. The artifact build ships no tiles (16 MB host cap) — deep zoom is local/iPad only.
 >    If Ryan wants deep zoom in the shared artifact, that needs a different host, not a
 >    bigger page.
 
