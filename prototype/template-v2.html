@@ -170,6 +170,7 @@ const IMAGES=Object.fromEntries(assetEls.filter(e=>e.dataset.name).map(e=>[e.dat
 const FIELD_EL=document.getElementById('img_field');
 const FLOW_EL=document.getElementById('img_flow');
 const RELIEF_EL=document.getElementById('img_relief');
+const LIGHTS_EL=document.getElementById('img_lights');
 const LATd=-37.65, LONd=176.17, RAD=Math.PI/180;
 const LO=0.332, HI=2.127;               // the fitted drying-height range; outside it the raster is silent
 const H_LO=-0.75, H_HI=3.25;            // the field's height encoding — see prep-field.mjs
@@ -305,7 +306,7 @@ void main(){ vUv=vec2(p.x*0.5+0.5,0.5-p.y*0.5); gl_Position=vec4(p,0.0,1.0); }`;
 const FS=`#extension GL_OES_standard_derivatives : enable
 precision highp float;
 varying vec2 vUv;
-uniform sampler2D uBase,uField,uFlow,uRelief,uHires;
+uniform sampler2D uBase,uField,uFlow,uRelief,uHires,uLights;
 uniform vec4 uHiresRect; uniform float uHiresAmt;
 uniform vec2 uSunDir; uniform float uReliefAmt;
 uniform vec2 uCenter,uFieldSize; uniform float uZoom,uFrameAspect;
@@ -338,8 +339,10 @@ float ditherIGN(vec2 fragCoord){
 // (R=hi byte, A=lo byte) cannot be safely bilinear-filtered by the GPU — it blends the raw
 // bytes independently and paints a bright sawtooth seam at every high-byte carry (e.g. 0x01FF
 // next to 0x0200). So the bilinear happens HERE, by hand, on the DECODED floats, never on the
-// raw bytes. G (bathy) and B (city) ride along in the same four taps for free.
-vec3 fieldTexel(vec2 uv){                        // exact texel, decoded: (height metres, bathy, city)
+// raw bytes. G (bathy) rides along in the same four taps for free. B is retired (always 0 —
+// city lights moved to their own texture, uLights; see the cityTerm block below) but the
+// function still returns 3 components since nothing downstream needs to know that changed.
+vec3 fieldTexel(vec2 uv){                        // exact texel, decoded: (height metres, bathy, retired)
   vec4 t=texture2D(uField,uv);
   float code16=t.r*255.0*256.0+t.a*255.0;        // 0..65535, exact for 8-bit inputs
   float Hh=H_LO+(code16/65535.0)*(H_HI-H_LO);
@@ -403,7 +406,7 @@ void main(){
   float H=fld.x;
   float bathy=fld.y;               // real-depth-hybrid proxy now (see field-v3.json), not a
                                     // measurement, but no longer just "distance from shore"
-  float city=fld.z;
+                                    // fld.z (old city-lights channel) is retired -- see uLights.
   // Dither, applied once, right after decode, so every downstream reader (submerged, edge,
   // shore, damp band, night glow) sees the same jittered value — insurance against residual
   // micro-plateaus on the flattest mud even at 16-bit precision (see field-v3.json). Amplitude
@@ -720,7 +723,21 @@ void main(){
   night+=uNightDeep*wetMargin*0.10*(0.30+0.70*uMoon);
 
   vec3 col=mix(daylight,night,uNightMix);
-  vec3 cityTerm=uCity*(pow(city,1.6)*uCityGain*1.4)+vec3(1.0,0.95,0.85)*pow(city,3.0)*uCityGain*0.8;
+  // City lights: dedicated point-sprite texture (uLights, same map uv/grid as uField), R=tight
+  // pinprick core, G=soft corona (a real gaussian blur of the core buffer, not a per-point
+  // splat -- see build-citylights-points.mjs), B=coolness (0 warm sodium .. 1 white-gold). The
+  // old field-v3 B channel this used to read is retired -- see fld.z above. Twinkle groups
+  // texels into ~6px cells (roughly one lamp per cell at the texture's native 4096 size) and
+  // phases each cell's flicker off a per-cell hash so nearby lamps don't blink in lockstep.
+  vec3 lightsTex=texture2D(uLights,uv).rgb;
+  float lCore=lightsTex.r, lCorona=lightsTex.g, lCool=lightsTex.b;
+  vec2 lcell=floor(uv*4096.0/6.0);
+  float ltw=hash(lcell);
+  float twinkle=0.82+0.18*sin(uTime*(0.5+ltw*0.9)+ltw*6.2831853);
+  vec3 lightCol=mix(uCity,vec3(1.0,0.93,0.80),lCool);
+  vec3 cityTerm=lightCol*pow(lCorona,1.3)*uCityGain*1.1
+               +lightCol*pow(lCore,1.5)*twinkle*uCityGain*2.6
+               +vec3(1.0,0.97,0.90)*pow(lCore,4.0)*uCityGain*1.3;
   col+=cityTerm*uNightMix;
   // Daylight waterline: a neutral wet sheen that follows the hour (warm at golden hour via
   // uSunTint), feathered irregularly along the shore — never the uniform pale-cyan edging
@@ -1127,7 +1144,11 @@ const fieldImg=await ready(FIELD_EL);
 mkTex(fieldImg,1,{format:gl.RGBA,filter:gl.NEAREST});
 mkTex(await ready(FLOW_EL),2,{format:gl.RGB,filter:gl.LINEAR});
 mkTex(await ready(RELIEF_EL),3,{format:gl.RGB,filter:gl.LINEAR});
+// City lights: R=core, G=corona, B=coolness (see build-citylights-points.mjs). Plain 8-bit RGB,
+// ordinary LINEAR — texture unit 5 (uHires, the runtime tile atlas, owns unit 4).
+mkTex(await ready(LIGHTS_EL),5,{format:gl.RGB,filter:gl.LINEAR});
 gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);gl.uniform1i(U('uFlow'),2);gl.uniform1i(U('uRelief'),3);
+gl.uniform1i(U('uLights'),5);
 gl.uniform2f(U('uFieldSize'),fieldImg.naturalWidth,fieldImg.naturalHeight);
 
 // ---------------- high-res detail layer ----------------

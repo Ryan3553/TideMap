@@ -3,7 +3,7 @@
 // field-v2 packed height as a single 8-bit R channel (256 codes / 15.7mm over a 4m range) --
 // see research/overnight-2026-07-27/smoothness/README.md for the full diagnosis: that
 // quantization is what made the tide pop in sudden zones. field-v3 keeps the SAME channel
-// layout intent (R=height, G=bathy proxy, B=city lights) but:
+// layout intent (R=height, G=bathy proxy, B=city lights, RETIRED -- see section 3 below) but:
 //
 //   R + A  16-bit drying height, split hi/lo byte (65,536 codes / 0.061mm step). Processed as
 //          Float32 end-to-end -- median, resize, blur are all done on the float array with a
@@ -14,7 +14,9 @@
 //          (where it has confident underwater data) and the old chamfer-distance proxy from
 //          field-v2.png's G channel (everywhere else -- land, and a feathered seam at the
 //          water/land disagreement between the two sources).
-//   B      city lights -- prototype/data/citylights.png, verbatim.
+//   B      RETIRED (2026-07-28) -- always 0. City lights moved to their own dedicated texture,
+//          prototype/data/citylights-points.png (see build-citylights-points.mjs), which frees
+//          this channel and ~2.7MB off the shipped page-field.png.
 //
 // The NIWA GeoTIFF is reprojected/resampled onto the field's equirectangular grid by
 // resample-niwa-depth.py (rasterio + scipy; sharp/JS cannot read GeoTIFF reliably) -- run that
@@ -219,16 +221,22 @@ for (let i = 0; i < P * P; i++) {
 console.log(`G channel: ${(validMask.reduce((s, v) => s + (v ? 1 : 0), 0) / (P * P) * 100).toFixed(1)}% confident NIWA-underwater before feathering`);
 
 // ============================================================================================
-// 3. City lights, B channel: verbatim
+// 3. City lights, B channel: RETIRED (2026-07-28) -- lights now live in their own dedicated
+// texture, data/citylights-points.png (R=core, G=corona, B=coolness; see
+// build-citylights-points.mjs), consumed directly by the shader/look.mjs as uLights. This B
+// channel is just zeroed to free ~2.7MB off the shipped page-field.png. Old compositing code
+// kept below (commented) as a record of the previous verbatim-mask contract, in case a future
+// field layout wants a spare channel back.
 // ============================================================================================
-const cityMeta = await sharp('data/citylights.png').metadata();
-if (cityMeta.width !== 4096 || cityMeta.height !== 4096 || cityMeta.channels !== 1) {
-  throw new Error(`citylights.png is ${cityMeta.width}x${cityMeta.height}x${cityMeta.channels}, expected 4096x4096x1`);
-}
-const cityRaw = await sharp('data/citylights.png').extractChannel(0).raw().toBuffer();
-const cityUp = (P === cityMeta.width) ? cityRaw
-  : await sharp(cityRaw, { raw: { width: cityMeta.width, height: cityMeta.height, channels: 1 } })
-      .resize(P, P, { kernel: 'mitchell' }).raw().toBuffer();
+// const cityMeta = await sharp('data/citylights.png').metadata();
+// if (cityMeta.width !== 4096 || cityMeta.height !== 4096 || cityMeta.channels !== 1) {
+//   throw new Error(`citylights.png is ${cityMeta.width}x${cityMeta.height}x${cityMeta.channels}, expected 4096x4096x1`);
+// }
+// const cityRaw = await sharp('data/citylights.png').extractChannel(0).raw().toBuffer();
+// const cityUp = (P === cityMeta.width) ? cityRaw
+//   : await sharp(cityRaw, { raw: { width: cityMeta.width, height: cityMeta.height, channels: 1 } })
+//       .resize(P, P, { kernel: 'mitchell' }).raw().toBuffer();
+const cityUp = new Uint8Array(P * P); // all zero -- see retirement note above
 
 // ============================================================================================
 // 4. Assemble the final RGBA buffer BY HAND. No sharp op touches these bytes after this point
@@ -239,7 +247,7 @@ for (let i = 0; i < P * P; i++) {
   const c = code16[i];
   packed[i * 4] = (c >>> 8) & 0xff;      // R: hi byte
   packed[i * 4 + 1] = gPacked[i];        // G: depth proxy
-  packed[i * 4 + 2] = cityUp[i];         // B: city lights
+  packed[i * 4 + 2] = cityUp[i];         // B: retired, always 0 (see section 3)
   packed[i * 4 + 3] = c & 0xff;          // A: lo byte
 }
 await sharp(packed, { raw: { width: P, height: P, channels: 4 } })
@@ -270,7 +278,7 @@ await sharp(packed, { raw: { width: P, height: P, channels: 4 } })
 // 6. Provenance
 // ============================================================================================
 fs.writeFileSync('data/field-v3.json', JSON.stringify({
-  description: 'Renderer field v3. R+A = 16-bit continuous drying height (hi/lo byte split), G = hybrid NIWA-real/chamfer-proxy bathymetric depth, B = city lights (OSM-derived).',
+  description: 'Renderer field v3. R+A = 16-bit continuous drying height (hi/lo byte split), G = hybrid NIWA-real/chamfer-proxy bathymetric depth, B = retired (always 0; city lights moved to data/citylights-points.png).',
   size: P, sourceSize: N,
   heightEncoding: {
     lo: H_LO, hi: H_HI,
@@ -288,7 +296,7 @@ fs.writeFileSync('data/field-v3.json', JSON.stringify({
     datum: 'all sources reconciled to local MSL; see data/depth-composite.json',
     measured: 'mostly -- real 2m LiDAR over flats/shallows and much of the channels, chart-survey interpolation in the deep channels, NIWA elsewhere; proxy only on land/seams',
   },
-  cityLights: { source: 'prototype/data/citylights.png, verbatim (OSM roads/buildings/landuse, see research/overnight-2026-07-27/lights/README.md)' },
+  cityLights: { source: 'RETIRED -- this channel is always 0. City lights now live in prototype/data/citylights-points.png (see build-citylights-points.mjs); consumed directly as uLights, not via this field.' },
 }, null, 2));
 const kb = f => (fs.statSync(f).size / 1024).toFixed(0) + ' kB';
 console.log(`data/field-v3.png ${kb('data/field-v3.png')} at ${P}px`);

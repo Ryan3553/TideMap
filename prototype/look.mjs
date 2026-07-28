@@ -50,8 +50,8 @@ const ditherIGN=(fx,fy)=>frac(52.9829189*frac(fx*0.06711056+fy*0.00583715));
 
 const baseObj = await sharp(BASE_FILE).removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
 const BP = baseObj.info.width, base = baseObj.data;
-// field-v3.png is RGBA: R=height hi byte, G=bathy, B=city, A=height lo byte. Alpha carries real
-// data here, NOT transparency — do not removeAlpha().
+// field-v3.png is RGBA: R=height hi byte, G=bathy, B=retired (always 0, see prep-field3.mjs),
+// A=height lo byte. Alpha carries real data here, NOT transparency — do not removeAlpha().
 const fldObj = await sharp('data/field-v3.png').toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
 const FP = fldObj.info.width, fld = fldObj.data;
 if (fldObj.info.channels !== 4) throw new Error(`field-v3.png expected 4 channels, got ${fldObj.info.channels}`);
@@ -59,6 +59,13 @@ const flowObj = await sharp('data/flow.png').removeAlpha().toColourspace('srgb')
 const FLP = flowObj.info.width, flow = flowObj.data;
 const relObj = await sharp('data/relief.png').removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
 const RP = relObj.info.width, relief = relObj.data;
+// City lights — dedicated point-sprite texture (build-citylights-points.mjs), R=core, G=corona,
+// B=coolness (0 warm sodium .. 1 white-gold). Same bbox/grid as field-v3.png. Replaces the old
+// city-from-field-B term (field-v3's B channel is retired — see prep-field3.mjs); plain 8-bit
+// RGB, ordinary LINEAR bilinear via samp() — unlike the field's packed 16-bit height, nothing
+// here spans a byte boundary.
+const lightsObj = await sharp('data/citylights-points.png').removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
+const LP = lightsObj.info.width, lightsBuf = lightsObj.data;
 
 function samp(buf, P, u, v, channels) {   // bilinear, matching GL_LINEAR — base imagery and flow
   const x = clamp(u*P-0.5, 0, P-1), y = clamp(v*P-0.5, 0, P-1);
@@ -93,7 +100,7 @@ function sampleField(u, v) {              // manual bilinear across 4 exact texe
     const a=c00[k]+(c10[k]-c00[k])*fx, b=c01[k]+(c11[k]-c01[k])*fx;
     out[k]=a+(b-a)*fy;
   }
-  return out;                             // [H, bathy, city]
+  return out;                             // [H, bathy, retired (always 0)]
 }
 
 // light model, matching frame()
@@ -150,13 +157,37 @@ function bathySmooth(u,v){
   return sum/81;
 }
 
+// City lights: pinprick core + corona + slow twinkle + golden colour push — mirrors the shader's
+// cityTerm block exactly. Twinkle groups texels into ~6px cells (roughly one lamp per cell at the
+// lights texture's native 4096 size) and phases each cell's flicker off a per-cell hash so nearby
+// lamps don't blink in lockstep.
+const TWINKLE_CELL_PX = 6.0;
+const WHITE_GOLD = [1.0, 0.93, 0.80];
+const SPARK_WHITE = [1.0, 0.97, 0.90];
+function cityLightsTerm(u, v) {
+  const [lCore, lCorona, lCool] = samp(lightsBuf, LP, u, v, 3);
+  const cell = [Math.floor(u*LP/TWINKLE_CELL_PX), Math.floor(v*LP/TWINKLE_CELL_PX)];
+  const tw = hash(cell[0], cell[1]);
+  const twinkle = 0.82 + 0.18*Math.sin(t*(0.5+tw*0.9) + tw*6.2831853);
+  const lightCol = mix3(C.city, WHITE_GOLD, lCool);
+  const core = Math.pow(lCore, 1.5) * twinkle;
+  const corona = Math.pow(lCorona, 1.3);
+  const term = [0,0,0];
+  for (let k=0;k<3;k++) {
+    term[k] = lightCol[k]*corona*S.cityGain*1.1
+            + lightCol[k]*core*S.cityGain*2.6
+            + SPARK_WHITE[k]*Math.pow(lCore,4.0)*S.cityGain*1.3;
+  }
+  return term;
+}
+
 const out = Buffer.alloc(W*H*3);
 for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const [u,v]=uvOf(px,py), o=(py*W+px)*3;
   if(u<0||u>1||v<0||v>1){out[o]=out[o+1]=out[o+2]=0;continue;}
   const b=samp(base,BP,u,v,3);
   const fld3=sampleField(u,v);
-  let Hh=fld3[0], bathy=fld3[1], city=fld3[2];
+  let Hh=fld3[0], bathy=fld3[1];   // fld3[2] (old city-lights channel) is retired — see uLights
   // Dither, applied once right after decode — matches the shader's placement exactly.
   // gl_FragCoord.y is bottom-origin in GL — flip the row so the hash argument matches.
   const hDither=(ditherIGN(px+0.5+t*0.7, H-py-0.5)-0.5)*0.0006;
@@ -356,10 +387,10 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   // surf foams white by day; morning haze veils the water — all mirror the shader.
   const edgeIrr=0.60+0.80*noise(nux*0.9,nuy*0.9+t*0.02);
   const wlGate=clamp(4*submerged*(1-submerged),0,1);
+  const cityTerm=cityLightsTerm(u,v);
   for(let k=0;k<3;k++){
     let c=mix(daylight[k],night[k],uNightMix);
-    const cityTerm=C.city[k]*(Math.pow(city,1.6)*S.cityGain*1.4)+[1.0,0.95,0.85][k]*Math.pow(city,3)*S.cityGain*0.8;
-    c+=cityTerm*uNightMix;
+    c+=cityTerm[k]*uNightMix;
     c+=mix(sunTint[k]*0.85,mix(C.edgeCol[k],C.nightDeep[k],0.45),uNightMix)
       *edge*edgeIrr*S.edgeGain*(0.30+0.55*hazeAmt+0.65*uNightMix)*mix(1,wlGate,uNightMix);
     c+=mix(C.edgeCol[k],C.nightDeep[k],0.6*uNightMix)*shore*S.shoreGlow*(0.04+1.0*uNightMix);

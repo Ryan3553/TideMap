@@ -60,6 +60,13 @@ for (const [,src,dst] of BASEMAPS) await pageJpeg(src, dst, BM_SIZE, BM_Q);
 await pagePng('data/field-v3.png', 'data/page-field.png');          // no resize — 16-bit precision
 await pagePng('data/flow.png', pfx+'flow.png', ARTIFACT ? 2048 : 2560);
 await pagePng('data/relief.png', pfx+'relief.png', ARTIFACT ? 1024 : 1280);  // gentle low-freq relief
+// City lights (R=core, G=corona, B=coolness — see build-citylights-points.mjs). Already a tight
+// 4096px/~1.9MB PNG at compressionLevel 9, mostly-black, so local/iPad ships it as-is. The 16MB
+// ARTIFACT cap has no equivalent headroom (measured: full-size lights put ARTIFACT at 16.19MB,
+// over budget, even with field-v3's B-channel retirement's savings already counted) so ARTIFACT
+// gets a 3072px downsize through the normal pagePng path — same pfx pattern as flow/relief.
+const lightsPage = ARTIFACT ? pfx+'citylights.png' : 'data/citylights-points.png';
+if (ARTIFACT) await pagePng('data/citylights-points.png', lightsPage, 3072);
 
 // The basemaps and the field/flow go into the DOCUMENT as <img>, not into the module source.
 // A multi-megabyte data URI inside <script type="module"> silently never executes in some
@@ -69,6 +76,7 @@ const tags = BASEMAPS.map(([name,,page],i)=>
   .concat(`<img id="img_field" alt="" decoding="async" src="${uri('data/page-field.png','image/png')}">`)
   .concat(`<img id="img_flow" alt="" decoding="async" src="${uri(pfx+'flow.png','image/png')}">`)
   .concat(`<img id="img_relief" alt="" decoding="async" src="${uri(pfx+'relief.png','image/png')}">`)
+  .concat(`<img id="img_lights" alt="" decoding="async" src="${uri(lightsPage,'image/png')}">`)
   .join('\n');
 
 const html = fs.readFileSync('template-v2.html','utf8')
