@@ -133,6 +133,8 @@
     <select id="preset" title="Colour preset"></select>
     <button id="copy">Copy settings</button>
     <button id="reset">Reset</button>
+    <button id="saveDefault">Save default</button>
+    <button id="forgetDefault" hidden>Forget default</button>
   </div>
 
   <div class="controls">
@@ -141,6 +143,7 @@
     <button data-speed="2400" aria-pressed="true">40 min / s</button>
     <button data-speed="10800">3 hr / s</button>
     <button id="now">Set to now</button>
+    <button id="realtime">▶ Real time</button>
     <button id="ebb" title="Which way the water is running while paused">Ebb</button>
     <span class="hint">Paused — the tide and daylight sliders below are driving.</span>
   </div>
@@ -224,7 +227,7 @@ const PRESETS={
     nightGlow:0.95,cityGain:0.25,edgeGain:0.10,
     shoreGlow:0.50,surfGain:0.12,flatsGlow:0.46,shimmer:0.20},
 };
-const DEFAULTS={
+const FACTORY={
   ...PRESETS['Harbour water'],
   zoom:0.50, cx:0.366, cy:0.46,
   tide:1.05, light:0.92,            // the sliders that drive the piece when it is paused
@@ -234,8 +237,25 @@ const DEFAULTS={
   edgeWidth:0.035, glowM:0.5, nightFall:4.2, flowGain:0.85, sparks:0.35, ebb:false,
   exposure:1.0, gamma:0.92, vignette:0.36,
 };
+// User-saved defaults (Feature 2) live over the top of FACTORY, never inside it, so Forget can
+// always get back to the shipped look. Boot-time only: merged BEFORE S is initialised, so the
+// iPad kiosk build (which has no UI to touch S with) still boots into whatever was saved.
+const DEFAULTS_KEY='tidemap-user-defaults';
+function readSavedDefaults(){
+  try{ const raw=localStorage.getItem(DEFAULTS_KEY); return raw?JSON.parse(raw):null; }catch(_){ return null; }
+}
+const savedAtBoot=readSavedDefaults();
+let DEFAULTS=JSON.parse(JSON.stringify(FACTORY));
+let savedBasemapName=null;
+if(savedAtBoot && typeof savedAtBoot==='object'){
+  for(const k of Object.keys(savedAtBoot)){
+    if(k==='basemap'){ savedBasemapName=savedAtBoot.basemap; continue; }
+    if(k in DEFAULTS) DEFAULTS[k]=savedAtBoot[k];   // unknown keys ignored defensively
+  }
+}
 let S=JSON.parse(JSON.stringify(DEFAULTS));
-let aspect=4/3, portrait=false, basemapName=Object.keys(IMAGES)[0];
+let aspect=4/3, portrait=false;
+let basemapName=(savedBasemapName && IMAGES[savedBasemapName]) ? savedBasemapName : Object.keys(IMAGES)[0];
 let playing=false;
 // Kiosk: launched from the iPad home screen, or ?kiosk on the URL. Same page, no chrome, the
 // canvas fills the screen at the screen's own aspect, and it runs in real time by itself.
@@ -798,7 +818,7 @@ syncInputs();
 const devSel=document.getElementById('device');
 DEVICES.forEach(([n,a],i)=>{const o=document.createElement('option');o.value=a;o.textContent=n;if(i===0)o.selected=true;devSel.appendChild(o);});
 const baseSel=document.getElementById('basemap');
-Object.keys(IMAGES).forEach((n,i)=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(i===0)o.selected=true;baseSel.appendChild(o);});
+Object.keys(IMAGES).forEach((n,i)=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(n===basemapName)o.selected=true;baseSel.appendChild(o);});
 const preSel=document.getElementById('preset');
 Object.keys(PRESETS).forEach((n,i)=>{const o=document.createElement('option');o.value=n;o.textContent=n;if(i===0)o.selected=true;preSel.appendChild(o);});
 preSel.addEventListener('change',()=>{const p=PRESETS[preSel.value];if(p){Object.assign(S,JSON.parse(JSON.stringify(p)));syncInputs();}});
@@ -868,22 +888,66 @@ piece.addEventListener('wheel',e=>{e.preventDefault();
 
 // ---------------- play / pause ----------------
 const playBtn=document.getElementById('play');
+const realtimeBtn=document.getElementById('realtime');
 const hint=document.querySelector('.hint');
 function setPlaying(v){
   playing=v;
   playBtn.textContent=v?'❚❚ Pause':'▶ Play the day';
   playBtn.setAttribute('aria-pressed',String(v));
-  hint.textContent=v?'Running — the sliders follow the clock.'
+  const rt=v&&speed===1;                              // real time == playing at the clock's own rate
+  realtimeBtn.setAttribute('aria-pressed',String(rt));
+  hint.textContent=v?(rt?'Running in real time — the piece follows the actual clock.'
+                        :'Running — the sliders follow the clock.')
                     :'Paused — the tide and daylight sliders below are driving.';
 }
 function pause(){ if(playing) setPlaying(false); }
 playBtn.addEventListener('click',()=>setPlaying(!playing));
-(()=>{const b=document.getElementById('ebb');
+const paintEbb=(()=>{const b=document.getElementById('ebb');
   const paint=()=>{b.setAttribute('aria-pressed',String(!!S.ebb));b.textContent=S.ebb?'Ebb':'Flood';};
-  b.addEventListener('click',()=>{S.ebb=!S.ebb;paint();});paint();})();
+  b.addEventListener('click',()=>{S.ebb=!S.ebb;paint();});paint();return paint;})();
 document.getElementById('now').addEventListener('click',()=>{virtual=new Date();});
+// Real time: find the nearest moment (searching forward up to one tidal cycle + margin) where
+// the clock's own tide matches the slider's current value AND direction, jump there, and run
+// at speed 1 so the piece is then genuinely following the clock rather than time-lapsing to it.
+realtimeBtn.addEventListener('click',()=>{
+  const t0=Date.now(), STEP=60000, SPAN=14.9*3600000, wantRise=!S.ebb;
+  let best=null,bestErr=Infinity, globalBest=t0,globalErr=Infinity;
+  for(let dt=0;dt<=SPAN;dt+=STEP){
+    const t=t0+dt, v=predict(new Date(t));
+    const err=Math.abs(v-S.tide);
+    if(err<globalErr){globalErr=err;globalBest=t;}
+    const rising=v>predict(new Date(t-600000));
+    if(rising===wantRise && err<bestErr){bestErr=err;best=t;}
+  }
+  virtual=new Date(best!==null?best:globalBest);   // off the reachable range (neap vs slider
+  speed=1;                                          // extreme): fall back to the closest moment
+  [...document.querySelectorAll('[data-speed]')].forEach(b=>b.setAttribute('aria-pressed','false'));
+  setPlaying(true);
+});
 
-document.getElementById('reset').addEventListener('click',()=>{S=JSON.parse(JSON.stringify(DEFAULTS));setPlaying(false);syncInputs();});
+document.getElementById('reset').addEventListener('click',()=>{
+  S=JSON.parse(JSON.stringify(DEFAULTS));
+  setPlaying(false); paintEbb();
+  preSel.selectedIndex=0;
+  if(baseSel.selectedIndex!==0){ baseSel.selectedIndex=0; baseSel.dispatchEvent(new Event('change')); }
+  syncInputs(); clampZoom(); applyFrame();
+});
+const forgetBtn=document.getElementById('forgetDefault');
+forgetBtn.hidden=!savedAtBoot;
+function flashLabel(btn,label,restore){ btn.textContent=label; setTimeout(()=>btn.textContent=restore,1800); }
+document.getElementById('saveDefault').addEventListener('click',e=>{
+  try{
+    localStorage.setItem(DEFAULTS_KEY, JSON.stringify({...S, basemap:basemapName}));
+    forgetBtn.hidden=false;
+  }catch(_){ /* private mode etc — nothing persists, but the button still flashes */ }
+  flashLabel(e.currentTarget,'Saved ✓','Save default');
+});
+forgetBtn.addEventListener('click',e=>{
+  try{ localStorage.removeItem(DEFAULTS_KEY); }catch(_){}
+  DEFAULTS=JSON.parse(JSON.stringify(FACTORY));   // so the next Reset lands on the factory look
+  forgetBtn.hidden=true;
+  flashLabel(e.currentTarget,'Forgotten','Forget default');
+});
 // Copying settings out is the whole point of the sliders, so it must not be able to just fail.
 // navigator.clipboard is unavailable in a cross-origin iframe without allow="clipboard-write",
 // which is exactly where this page usually runs — so try it, fall back to execCommand, and if
@@ -1029,7 +1093,9 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 const sB=[...document.querySelectorAll('[data-speed]')];
-sB.forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.speed;sB.forEach(o=>o.setAttribute('aria-pressed',String(o===b)));if(!playing)setPlaying(true);}));
+// Always re-runs setPlaying (not just when starting from paused) so the real-time button's
+// aria-pressed and the hint text drop out of "real time" the moment a speed other than 1 is chosen.
+sB.forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.speed;sB.forEach(o=>o.setAttribute('aria-pressed',String(o===b)));setPlaying(true);}));
 
 // ---------------- boot ----------------
 const imgs={};
