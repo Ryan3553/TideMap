@@ -1,4 +1,45 @@
-# TideMap — handover, 2026-07-28 later (ninth pass: max-detail data + the detail layer)
+# TideMap — handover, 2026-07-28 evening (tenth pass: Ryan's screenshot round)
+
+Ryan sent a day screenshot plus a wish-list; all seven items shipped this pass
+(commits e0f9b0f..HEAD), verified live in the pane by driving `__tick`/`__pixel`
+and the buttons themselves. What matters for the next session:
+
+- **The 'snake light trails' were NOT the sparks or the flow arteries** — do not turn
+  those down chasing ghosts. They are step seams (1-4% of range) baked into field-v3's
+  G channel where stitched survey sources meet, amplified by the nonlinear metres
+  decode. Mitigated in-shader: `bathySmooth()` is now a **5x5 TENT kernel (1,2,3,2,1
+  per axis)**. The tent weighting is load-bearing: a plain 5x5 box does NOT cancel the
+  period-3 NIWA row noise (5 is not a multiple of 3) and reprints it as scanline
+  striping — verified by render both ways. Root fix (feather source transitions in
+  build-depth-composite.py, regenerate) is queued as a task chip / next-session item.
+- **Day water is a 6-stop ramp** (two stops derived by mix() of the three pickers —
+  no new preset keys) with wide overlaps; the abrupt deep/shallow edge was ~90% of the
+  colour distance packed into the first 3-4 m. Harbour water / Bioluminescent / Deep
+  water day palettes pushed off cyan-teal toward richer darker blues ('deeper blue',
+  Ryan). Warm chart / Monochrome colours untouched by design.
+- **City lights are their own texture now** (`data/citylights-points.png`, 4096, R=core
+  G=corona B=coolness, ~1.9 MB): ~65k point lights synthesized from the CACHED OSM ways
+  (no new fetch) — lamps along roads by class, building-centroid lights by landuse
+  prior, VIIRS only as regional calibration. Baked by `build-citylights-points.mjs`;
+  shader reads uLights (unit 5) with a per-cell hashed slow twinkle. **field-v3's B
+  channel is retired** (zeroed in place with R/G/A asserted byte-identical;
+  prep-field3.mjs now bakes B=0) — that is what paid for the texture. The old
+  build-citylights.mjs / data/citylights.png raster path is dead but left on disk.
+  Light spacing/brightness/coolness constants are a reasoned first pass — expect a
+  taste round from Ryan on the actual iPad.
+- **Panel**: Save default / Forget default (localStorage `tidemap-user-defaults`,
+  merged over FACTORY at boot — so the installed iPad app boots into the saved look;
+  the save also folds into the live DEFAULTS so Reset lands on it without a reload —
+  that bug was caught by clicking the buttons in the pane, not by reading the code),
+  Real time (searches the next tidal cycle for the moment matching the tide slider's
+  height AND direction, jumps the virtual clock there, speed=1), and a fuller Reset
+  (playback stopped, Ebb/Flood repainted, selects restored).
+- Page 22.82 MB (budget 23), artifact build 15.70 MB (cap 16 — ships a 3072 lights
+  copy via the pfx pattern). iPad bundle rebuilt. look.mjs mirrored throughout.
+
+---
+
+# Earlier: ninth pass, 2026-07-28 (max-detail data + the detail layer)
 
 Ryan's directive: max resolution on every data input ("start with high detail and distill
 down"), users zoom to frame their own house, and the app is STRICTLY OFFLINE once on the

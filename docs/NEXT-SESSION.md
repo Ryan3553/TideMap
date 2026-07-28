@@ -1,5 +1,21 @@
 # Next session — kickoff
 
+> **2026-07-28 evening close-out (tenth pass — Ryan's screenshot round): see
+> HANDOVER.md's tenth-pass section first.** New open items:
+>
+> 1. **Feather the survey seams at source** — the 'snake trail' root fix: blend across
+>    source-transition boundaries in build-depth-composite.py instead of hard priority
+>    switching, re-run composite → prep-field3 (→ prep-flow if the raw changed). The
+>    shader-side 5x5 tent in bathySmooth() stays regardless (it also guards the
+>    period-3 row noise — and remember: TENT, not box; a box reprints the stripes).
+> 2. **Night-lights taste round on the iPad** — spacing/brightness/coolness/twinkle
+>    constants in build-citylights-points.mjs are a first pass. Optional upgrade:
+>    Overpass-fetch real highway=street_lamp nodes for the bbox (never queried; only
+>    ways are cached) and use them where present.
+> 3. Ryan saves his look with **Save default** on the device — it persists in
+>    localStorage and the kiosk boots into it. 'Copy settings' → JSON → FACTORY in the
+>    template remains the way to make it everyone's default.
+
 > **2026-07-28 close-out (ninth pass — max-detail data + detail layer): see HANDOVER.md
 > first.** Open items, in value order:
 >
