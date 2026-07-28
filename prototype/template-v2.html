@@ -1095,35 +1095,51 @@ async function hiresRebuild(rect,z){
   const gen=++hiresGen, n=1<<z;
   const lon0=HB.WEST+rect.x*(HB.EAST-HB.WEST), lon1=HB.WEST+(rect.x+rect.w)*(HB.EAST-HB.WEST);
   const lat0=HB.NORTH+rect.y*(HB.SOUTH-HB.NORTH), lat1=HB.NORTH+(rect.y+rect.h)*(HB.SOUTH-HB.NORTH);
-  const x0=Math.floor(merc.x(lon0)*n), x1=Math.floor(merc.x(lon1)*n);
-  const y0=Math.floor(merc.y(lat0)*n), y1=Math.floor(merc.y(lat1)*n);
-  // Pooled fetches (12-wide): an unbounded Promise.all over a few hundred tiles exhausts
-  // the browser's request table (ERR_INSUFFICIENT_RESOURCES) and the failure storm then
-  // trips the layer's kill-switch. The pool keeps the pipe full without flooding it.
-  const coords=[];
-  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)coords.push({tx,ty});
-  const tiles=new Array(coords.length); let ci=0;
-  await Promise.all(Array.from({length:12},async()=>{
-    while(ci<coords.length){ const k=ci++; const t=coords[k];
-      tiles[k]={tx:t.tx,ty:t.ty,bmp:await tileFetch(HIRES_URL(z,t.tx,t.ty))}; }
-  }));
+  // Pooled fetch (12-wide) of one level's tiles for the rect: an unbounded Promise.all
+  // over a few hundred tiles exhausts the browser's request table.
+  const wave=async(lz)=>{
+    const ln=1<<lz;
+    const wx0=Math.floor(merc.x(lon0)*ln), wx1=Math.floor(merc.x(lon1)*ln);
+    const wy0=Math.floor(merc.y(lat0)*ln), wy1=Math.floor(merc.y(lat1)*ln);
+    const coords=[];
+    for(let ty=wy0;ty<=wy1;ty++)for(let tx=wx0;tx<=wx1;tx++)coords.push({tx,ty});
+    const tiles=new Array(coords.length); let ci=0;
+    await Promise.all(Array.from({length:12},async()=>{
+      while(ci<coords.length){ const k=ci++; const t=coords[k];
+        tiles[k]={tx:t.tx,ty:t.ty,bmp:await tileFetch(HIRES_URL(lz,t.tx,t.ty))}; }
+    }));
+    return tiles;
+  };
+  const draw=(lz,tiles)=>{
+    const ln=1<<lz; let d=0;
+    for(const {tx,ty,bmp} of tiles){
+      if(!bmp)continue;
+      const L0=tx/ln*360-180, L1=(tx+1)/ln*360-180;
+      const latT=merc.lat(ty,ln), latB=merc.lat(ty+1,ln);
+      const u0=(L0-HB.WEST)/(HB.EAST-HB.WEST), u1=(L1-HB.WEST)/(HB.EAST-HB.WEST);
+      const vT=(latT-HB.NORTH)/(HB.SOUTH-HB.NORTH), vB=(latB-HB.NORTH)/(HB.SOUTH-HB.NORTH);
+      hctx.drawImage(bmp,(u0-rect.x)/rect.w*HP,(vT-rect.y)/rect.h*HP,
+                         (u1-u0)/rect.w*HP,(vB-vT)/rect.h*HP);
+      d++;
+    }
+    return d;
+  };
+  // The finest band (z17) is coastal-only BY DESIGN, so when serving z>15 the level below
+  // is drawn first as an underlay: a band edge then degrades to the coarser aerial, never
+  // to the soft embedded base — no sharp/soft seam through a framed neighbourhood.
+  const fineTiles=await wave(z);
+  const underTiles=(z>15&&!hiresLevelDead[z-1])?await wave(z-1):null;
   if(gen!==hiresGen||!hiresOk)return;                    // superseded or disabled mid-flight
   hctx.clearRect(0,0,HP,HP);
   let drew=0;
-  for(const {tx,ty,bmp} of tiles){
-    if(!bmp)continue;
-    const L0=tx/n*360-180, L1=(tx+1)/n*360-180;
-    const latT=merc.lat(ty,n), latB=merc.lat(ty+1,n);
-    const u0=(L0-HB.WEST)/(HB.EAST-HB.WEST), u1=(L1-HB.WEST)/(HB.EAST-HB.WEST);
-    const vT=(latT-HB.NORTH)/(HB.SOUTH-HB.NORTH), vB=(latB-HB.NORTH)/(HB.SOUTH-HB.NORTH);
-    hctx.drawImage(bmp,(u0-rect.x)/rect.w*HP,(vT-rect.y)/rect.h*HP,
-                       (u1-u0)/rect.w*HP,(vB-vT)/rect.h*HP);
-    drew++;
-  }
-  if(!drew){
-    hiresLevelDead[z]=true;        // whole wave empty: level absent here — route around it
-    return;                        // next 1 s check re-picks among the levels still alive
-  }
+  if(underTiles)drew+=draw(z-1,underTiles);
+  const fineDrew=draw(z,fineTiles);
+  drew+=fineDrew;
+  if(fineDrew===0&&!underTiles){
+    hiresLevelDead[z]=true;        // level truly absent here — route around it next check.
+    return;                        // (a band miss with an underlay is NOT absence: nulls
+  }                                // are cached, so re-probing that band costs nothing)
+  if(!drew){hiresLevelDead[z]=true;return;}
   gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,hiresTex);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,hiresCanvas);
   gl.uniform4f(U('uHiresRect'),rect.x,rect.y,rect.w,rect.h);

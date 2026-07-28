@@ -1,4 +1,40 @@
-# TideMap — handover, 2026-07-28 (eighth pass: depth-honest day water)
+# TideMap — handover, 2026-07-28 later (ninth pass: max-detail data + the detail layer)
+
+Ryan's directive: max resolution on every data input ("start with high detail and distill
+down"), users zoom to frame their own house, and the app is STRICTLY OFFLINE once on the
+iPad (both directives are also in auto-memory). What shipped:
+
+- **The detail layer**: data/hires-tiles/{15,16,17} (17,256 tiles, 402 MB — z15/z16 full
+  bbox, z17 a coastal band around the harbour) is composited at runtime onto a 4096 canvas
+  atlas covering view+margin and blended over the embedded base in the shader
+  (uHires/uHiresRect/uHiresAmt). Zoom floor is now 0.04 (~900 m frame). Hard-won details,
+  do not re-learn: fetches are POOLED 12-wide (unbounded Promise.all = browser
+  ERR_INSUFFICIENT_RESOURCES); the level pick targets ~70% atlas fill (>=98% always
+  overshot a level); availability is PER LEVEL (one absent level must not kill the layer)
+  and the coarser level is drawn as an UNDERLAY beneath a partial fine band so band edges
+  degrade to z16, never to the soft base. The artifact build ships no tiles and the layer
+  self-disables — by design.
+- **Offline contract**: build-ipad syncs the pyramid + writes a manifest; the installed
+  app warm-fetches EVERY tile through the SW into a 'tidelight-tiles' cache that rebuilds
+  never evict. Missed tiles 404 (never the HTML shell). After one run on wifi the piece
+  is a sealed offline object.
+- **Relief**: rebaked at 4096 from Basemaps elevation z15 (~3.8 m/px — proved the tileset's
+  native max; z16/17 return byte-identical tiles). fetch-relief-z13.mjs preserves the old
+  path. bake-oceanmask constants rescaled to 4096. Page budget now 23 MB (artifact still
+  <16).
+- **Bathymetry**: audit at research/bathy-audit-2026-07-28.md — we hold the best OPEN data
+  everywhere; the harbour's deep channels rest on chart-era interpolation and the two
+  named Port of Tauranga surveys in LINZ's third-party index (exact IDs in the report) are
+  one consent-email away — THE outstanding data ask, Ryan's to send. The open 1m city
+  LiDAR (122642) is integrated with a CROSS-VALIDATION GATE: the layer fakes depth with a
+  -1.20 m fill over 63% of its underwater pixels, so cells are trusted only where they
+  agree with the independent 2m LiDAR within 0.5 m. Do not relax that gate.
+- look.mjs does NOT mirror the detail layer (pure imagery passthrough ≡ uHiresAmt=0, noted
+  in both files); every artistic term downstream of `base` remains mirrored.
+
+---
+
+# Earlier: eighth pass, 2026-07-28 (depth-honest day water)
 
 Ryan flagged two defects in the seventh pass by screenshot: sharp colour bands between
 depths, and a cyan line drawn around low-tide pools. Both were one root defect: **the day

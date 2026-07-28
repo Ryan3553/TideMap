@@ -132,5 +132,5 @@ fs.writeFileSync(path.join(OUT, 'index.html'), withSW);
 
 const kb = f => (fs.statSync(path.join(OUT, f)).size / 1024).toFixed(0) + ' kB';
 console.log(`ipad/  index.html ${kb('index.html')}  sw ${VERSION}  icons 180/192/512/maskable`);
-console.log(tileCount ? `tiles: ${tileCount} synced, ${(tileBytes / 1048576).toFixed(0)} MB (lazy-cached by the SW as viewed)` : 'tiles: none found (detail layer will self-disable)');
+console.log(tileCount ? `tiles: ${tileCount} synced, ${(tileBytes / 1048576).toFixed(0)} MB (warm-cached in full on first run — offline after that)` : 'tiles: none found (detail layer will self-disable)');
 console.log('serve it: node serve.mjs   ->  http://<this machine>:5179/ipad/');
