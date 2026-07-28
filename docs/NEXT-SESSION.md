@@ -1,20 +1,62 @@
 # Next session — kickoff
 
 > **2026-07-28 evening close-out (tenth pass — Ryan's screenshot round): see
-> HANDOVER.md's tenth-pass section first.** New open items:
+> HANDOVER.md's tenth-pass section first.**
 >
-> 1. **Feather the survey seams at source** — the 'snake trail' root fix: blend across
->    source-transition boundaries in build-depth-composite.py instead of hard priority
->    switching, re-run composite → prep-field3 (→ prep-flow if the raw changed). The
->    shader-side 5x5 tent in bathySmooth() stays regardless (it also guards the
->    period-3 row noise — and remember: TENT, not box; a box reprints the stripes).
-> 2. **Night-lights taste round on the iPad** — spacing/brightness/coolness/twinkle
->    constants in build-citylights-points.mjs are a first pass. Optional upgrade:
->    Overpass-fetch real highway=street_lamp nodes for the bbox (never queried; only
->    ways are cached) and use them where present.
-> 3. Ryan saves his look with **Save default** on the device — it persists in
->    localStorage and the kiosk boots into it. 'Copy settings' → JSON → FACTORY in the
->    template remains the way to make it everyone's default.
+> **RYAN'S QUEUE FOR THE NEXT AGENT (his picks, 2026-07-28 late), in this order:**
+>
+> 1. **Seam root fix + bake smoothed bathy into field-v3's freed B channel.** Two
+>    halves, one job — it improves the image and the frame rate at once:
+>    a. Feather across source-transition boundaries in build-depth-composite.py
+>       (distance-weighted cross-fade over a few tens of metres, not hard priority
+>       switching), re-run composite → prep-field3 (→ prep-flow only if the raw
+>       changed materially). Do NOT relax the 122642 cross-validation gate.
+>    b. In prep-field3.mjs, bake SMOOTHED bathymetry into the B channel (zeroed and
+>       unused since the lights moved to citylights-points.png) using a proper wide
+>       seam-killing kernel — offline you can afford any kernel. Then the shader's
+>       bathySmooth() collapses to reading B through the existing 4-tap sampleField
+>       (delete the 25-tap loop), and look.mjs mirrors it. Keep the dm metres decode
+>       byte-compatible. Update the several 'B is retired/always 0' comments in
+>       template-v2.html / look.mjs / prep-field3.mjs. TRAP already paid for: any
+>       shader-side kernel that spans 5 rows must be TENT-weighted, not box — a box
+>       does not cancel the period-3 NIWA row noise and reprints it as scanline
+>       striping (HANDOVER tenth pass). Baking makes this moot in the shader, but the
+>       bake-side kernel must still kill period-3 (kernel row-sum aligned mod 3).
+>       Verify on the known seam framing: look.mjs zoom=0.06 cx=0.57 cy=0.50
+>       tide=1.12 light=1.0, plus a raw G/B texel scan. A one-click chip for half (a)
+>       may still be pending in the UI (task_21d0fee5) — superseded by this item if
+>       both run together.
+> 2. **Night-lights taste round.** Constants are a reasoned first pass, now awaiting
+>    Ryan's iPad verdict: lamp spacing/brightness per road class, building lit-
+>    probability, coolness balance and 6% outage rate live in
+>    build-citylights-points.mjs; twinkle rate/depth and core/corona gains live in the
+>    cityTerm block of template-v2.html (mirror look.mjs!). Optional upgrade: Overpass-
+>    fetch real highway=street_lamp NODES for the bbox (never queried — only ways are
+>    cached in research/overnight-2026-07-27/lights/osm/) and use them where present,
+>    synthesized spacing elsewhere. Expect a written taste note from Ryan first.
+> 3. **Hi-res relief overlay at house zoom.** Archive LDS 120366 (BoP 1 m DEM, ~2-3 GB
+>    for the bbox via the Koordinates export, same mechanism as fetch-122642.py) —
+>    acquire-max-distill-down. Then a house-zoom relief layer by the same runtime-
+>    atlas trick as the aerial detail layer (uHires): bake relief gradient tiles from
+>    the 1 m DEM and blend them over the 4096 relief texture below zoom ~0.1. The
+>    embedded relief bake grid (9.5 m/px) is the current visual floor at zoom 0.04;
+>    the z15 terrain-rgb source is proven byte-identical at z16/17 (its native max),
+>    so 120366 is the only way up. Keep it gentle — artwork, not terrain map; the
+>    low-sun window ruling stands.
+> 4. **Water pace slider.** Ryan has not confirmed the animation pace on the device.
+>    One multiplier on the WATER clock only — scale the animT and flowPhase
+>    accumulation in frame() (and look.mjs's t handling stays as-is; it takes t
+>    explicitly). Do not touch the virtual (tide/sun) clock. Slider under Water,
+>    default 1.0, range ~0.3-3. Trivial; do it alongside item 2's tuning round.
+> 5. **Named looks (multiple saved defaults).** Extend Save default from the single
+>    'tidemap-user-defaults' key to named slots (e.g. one localStorage JSON keyed
+>    store + a small select beside Save/Forget): saving names a slot, selecting a
+>    slot applies it and makes it the boot/Reset target, Forget removes the slot.
+>    Must stay kiosk-friendly (the iPad boots into the ACTIVE slot with no UI touch)
+>    and migrate the existing single-key save silently. Keep the factory-reset path.
+>
+> Standing note: 'Copy settings' → JSON → FACTORY in template-v2.html remains the way
+> Ryan's chosen look becomes everyone's default; Save default is per-device.
 
 > **2026-07-28 close-out (ninth pass — max-detail data + detail layer): see HANDOVER.md
 > first.** Open items, in value order:
