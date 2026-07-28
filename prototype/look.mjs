@@ -17,7 +17,7 @@ const OUT = A.out ?? '_look.png';
 const BASE_FILE = A.base ?? 'data/base-fused.jpg';   // the shipped default basemap
 
 const S = {
-  shallow:'#8fd6ca', mid:'#2c8ca2', deep:'#0d4066', nightDeep:'#3fc8de',
+  shallow:'#81dace', mid:'#1f6a98', deep:'#0a224d', nightDeep:'#3fc8de',
   landDark:'#0b1512', landLight:'#2c4029', dampCol:'#2a2a24', city:'#ffb545', edgeCol:'#e3fbff',
   abyss:'#08131f', pearlCol:'#74858f',
   nightGlow:0.95, nightFall:4.2, cityGain:0.28, edgeGain:0.10,
@@ -121,6 +121,8 @@ const flowPhaseG = t*tideRate*dir*(1/36);
 const W_SHORE = C.shallow.map((c,k)=>c*[1.02,1.10,1.06][k]+[0.0,0.02,0.01][k]);
 const W_DEEPO = C.deep.map((c,k)=>c*[0.40,0.52,0.72][k]);
 const CHAN_COL = mix3(C.mid,C.deep,0.60).map((c,k)=>c*[0.72,0.96,1.30][k]);
+const W_SHALLOWMID = mix3(C.shallow, C.mid, 0.5);   // the 6-stop ramp's derived stops
+const W_MIDDEEP = mix3(C.mid, C.deep, 0.5);
 
 const aspect = W/H;
 const halfW = zoom*aspect*1.0866/2, halfH = zoom/2;
@@ -140,8 +142,12 @@ function bathySmooth(u,v){
   const tx=u*FP-0.5, ty=v*FP-0.5;
   const ix=Math.floor(tx), iy=Math.floor(ty);   // floor, matching the shader's base texel exactly
   let sum=0;
-  for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) sum+=fieldTexel(ix+dx,iy+dy)[1];
-  return sum/9;
+  // 5x5 TENT (1,2,3,2,1 per axis), mirroring the shader: spreads the survey-seam step in G
+  // below the colour ramp's sensitivity (the 'snake trail' fix) while still cancelling the
+  // period-3 row noise exactly (a plain 5-row box reprints it as scanline striping).
+  for(let dy=-2;dy<=2;dy++) for(let dx=-2;dx<=2;dx++)
+    sum+=fieldTexel(ix+dx,iy+dy)[1]*(3-Math.abs(dx))*(3-Math.abs(dy));
+  return sum/81;
 }
 
 const out = Buffer.alloc(W*H*3);
@@ -243,10 +249,13 @@ for(let py=0;py<H;py++) for(let px=0;px<W;px++){
   const deepMixT=1-smoothstep(0.10,0.40,Hh);
   const dm=Math.max(mix(dFit,dReal,deepMixT),0)*(1.15/S.depthCurve);
   const depth=1-Math.exp(-dm/5.0);
-  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,1.0,dm));
-  wcol=mix3(wcol,C.mid,smoothstep(0.7,3.5,dm));
-  wcol=mix3(wcol,C.deep,smoothstep(3.0,10.0,dm));
-  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(8.0,25.0,dm));
+  // 6-stop chain, mirrors the shader exactly (the abrupt-deep/shallow fix).
+  let wcol=mix3(W_SHORE,C.shallow,smoothstep(0.0,1.4,dm));
+  wcol=mix3(wcol,W_SHALLOWMID,smoothstep(0.6,3.2,dm));
+  wcol=mix3(wcol,C.mid,smoothstep(2.2,5.5,dm));
+  wcol=mix3(wcol,W_MIDDEEP,smoothstep(4.0,8.0,dm));
+  wcol=mix3(wcol,C.deep,smoothstep(6.5,13.0,dm));
+  wcol=mix3(wcol,W_DEEPO,ocean*smoothstep(11.0,25.0,dm));
   const chan=(1-ocean)*deepMixT*smoothstep(0.16,0.36,bathyN)*(1-smoothstep(8.0,14.0,dm));
   wcol=mix3(wcol,CHAN_COL,chan*0.70);
   const mvx=(u-0.563)*1.0866, mvy=v-0.592;

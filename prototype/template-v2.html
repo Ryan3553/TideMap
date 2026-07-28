@@ -201,17 +201,19 @@ const PRESETS={
   // Retuned 2026-07-27 evening against Ryan's written brief (deep calm ocean, richest-blue
   // channel veins, luminous turquoise shallows, sand-toned flats) — judged from the 9-variant
   // sweep sheets in data/review/sweep/.
-  'Harbour water':{shallow:'#8fd6ca',mid:'#2c8ca2',deep:'#0d4066',nightDeep:'#3fc8de',
+  // Day water retuned 2026-07-28 (Ryan: 'deeper blue'): hue pushed off cyan-teal toward
+  // true blue by the mid stop, mid richer, deep darker without going black.
+  'Harbour water':{shallow:'#81dace',mid:'#1f6a98',deep:'#0a224d',nightDeep:'#3fc8de',
     landDark:'#0b1512',landLight:'#2c4029',dampCol:'#2a2a24',city:'#ffb545',edgeCol:'#e3fbff',
     abyss:'#08131f',pearlCol:'#74858f',
     nightGlow:0.95,cityGain:0.28,edgeGain:0.10,
     shoreGlow:0.50,surfGain:0.16,flatsGlow:0.50,shimmer:0.25},
-  'Bioluminescent':{shallow:'#63dfe4',mid:'#0b74a4',deep:'#0a2748',nightDeep:'#39d7e6',
+  'Bioluminescent':{shallow:'#52e0eb',mid:'#034a96',deep:'#06102d',nightDeep:'#39d7e6',
     landDark:'#0b1512',landLight:'#2c4029',dampCol:'#0d2a33',city:'#ffb545',edgeCol:'#c8ffff',
     abyss:'#060e18',pearlCol:'#75a2a1',
     nightGlow:1.15,cityGain:0.28,edgeGain:0.12,
     shoreGlow:0.60,surfGain:0.12,flatsGlow:0.59,shimmer:0.32},
-  'Deep water':{shallow:'#2ea9c4',mid:'#0a4f7e',deep:'#0a2b47',nightDeep:'#1f7fae',
+  'Deep water':{shallow:'#21a1c4',mid:'#043072',deep:'#06132d',nightDeep:'#1f7fae',
     landDark:'#080f0d',landLight:'#1e2c1c',dampCol:'#0a1e26',city:'#ffc266',edgeCol:'#9fe8ff',
     abyss:'#040c14',pearlCol:'#596a76',
     nightGlow:1.00,cityGain:0.34,edgeGain:0.09,
@@ -363,10 +365,19 @@ float bathySmooth(vec2 uv){
   vec2 texel=uv*uFieldSize-0.5;
   vec2 base=(floor(texel)+0.5)/uFieldSize;
   float sum=0.0;
-  for(int dy=-1;dy<=1;dy++)
-    for(int dx=-1;dx<=1;dx++)
-      sum+=fieldTexel(base+vec2(float(dx),float(dy))*du).y;
-  return sum/9.0;
+  // 5x5 TENT (weights 1,2,3,2,1 per axis - the 3x3 box convolved with itself), not a box:
+  // the G channel carries straight step seams where stitched survey sources meet (1-4%
+  // jumps), and the nonlinear metres decode amplifies a step the old radius-1 box barely
+  // dented into a thin pale 'snake trail' across the water (Ryan 2026-07-28). Radius 2
+  // spreads the step below the colour ramp's sensitivity. The tent weighting matters: a
+  // plain 5-row box does NOT cancel the period-3 NIWA row noise this filter originally
+  // existed for (5 is not a multiple of 3 - verified by rendering: the box reprints the
+  // rows as scanline striping), while the tent's aligned triples each sum a full period.
+  for(int dy=-2;dy<=2;dy++)
+    for(int dx=-2;dx<=2;dx++)
+      sum+=fieldTexel(base+vec2(float(dx),float(dy))*du).y
+          *(3.0-abs(float(dx)))*(3.0-abs(float(dy)));
+  return sum/81.0;
 }
 
 void main(){
@@ -536,10 +547,21 @@ void main(){
   // once — a zero-derivative plateau at each stop is exactly what banding looks like.
   vec3 wShore=uShallow*vec3(1.02,1.10,1.06)+vec3(0.0,0.02,0.01);
   vec3 wDeepO=uDeep*vec3(0.40,0.52,0.72);
-  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,1.0,dm));
-  wcol=mix(wcol,uMid,smoothstep(0.7,3.5,dm));
-  wcol=mix(wcol,uDeep,smoothstep(3.0,10.0,dm));
-  wcol=mix(wcol,wDeepO,ocean*smoothstep(8.0,25.0,dm));
+  // Two derived mid-ramp stops - no new colour pickers, just a straight mix of the existing
+  // three, same trick the channel-vein colour below already uses.
+  vec3 wShallowMid=mix(uShallow,uMid,0.5);
+  vec3 wMidDeep=mix(uMid,uDeep,0.5);
+  // 6-stop chain (was 4): the old chain packed ~90 percent of the shallow-to-deep colour
+  // distance into the first 3-4 m, which read as an abrupt deep/shallow edge on steep
+  // channel walls (Ryan 2026-07-28). Each hop now covers about half the old colour
+  // distance, and every overlap is wide enough that no two segments plateau over the same
+  // depth span - a simultaneous flat derivative is exactly what read as a band before.
+  vec3 wcol=mix(wShore,uShallow,smoothstep(0.0,1.4,dm));
+  wcol=mix(wcol,wShallowMid,smoothstep(0.6,3.2,dm));
+  wcol=mix(wcol,uMid,smoothstep(2.2,5.5,dm));
+  wcol=mix(wcol,wMidDeep,smoothstep(4.0,8.0,dm));
+  wcol=mix(wcol,uDeep,smoothstep(6.5,13.0,dm));
+  wcol=mix(wcol,wDeepO,ocean*smoothstep(11.0,25.0,dm));
   // The harbour's veins: the mid-depth channels get the richest, clearest blue, and keep it
   // at every tide level. Gated off the open coast so the Pacific stays quiet. Rides the
   // same H-blend as depth (the old 'sea' gate flipped abruptly across the sentinel climb).
