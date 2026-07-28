@@ -63,19 +63,58 @@ fs.writeFileSync(path.join(OUT, 'sw.js'), `const C='tidelight-${VERSION}';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-180.png','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));});
 self.addEventListener('activate',e=>{e.waitUntil((async()=>{
-  for(const k of await caches.keys()) if(k!==C) await caches.delete(k);
+  // Keep only this build's app cache, but NEVER drop the tile cache — those are the
+  // user's cached neighbourhood, and a rebuild must not cost them their offline view.
+  for(const k of await caches.keys()) if(k!==C&&k!=='tidelight-tiles') await caches.delete(k);
   await self.clients.claim();
 })());});
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET') return;
+  const isTile=e.request.url.includes('/hires-tiles/');
   e.respondWith((async()=>{
+    const cacheName=isTile?'tidelight-tiles':C;
     const hit=await caches.match(e.request,{ignoreSearch:true});
     if(hit) return hit;
-    try{ const r=await fetch(e.request); const c=await caches.open(C); c.put(e.request,r.clone()); return r; }
-    catch(err){ return caches.match('./index.html'); }
+    try{ const r=await fetch(e.request);
+      if(r.ok||r.status===0){ const c=await caches.open(cacheName); c.put(e.request,r.clone()); }
+      return r; }
+    catch(err){
+      // Offline miss: only a NAVIGATION falls back to the app shell. A missed tile must
+      // fail as a 404 — returning HTML would poison the page's image decoder.
+      if(e.request.mode==='navigate') return caches.match('./index.html');
+      return new Response('',{status:404});
+    }
   })());
 });
 `);
+
+// ---- detail tiles -------------------------------------------------------------------------
+// Sync data/hires-tiles into the bundle (incremental: size-match skip). The service worker
+// caches tiles lazily as they are viewed — framing a view once while the server is reachable
+// makes that view permanently offline (cache 'tidelight-tiles' survives rebuilds).
+const TILES_SRC = 'data/hires-tiles';
+let tileCount = 0, tileBytes = 0;
+const manifest = [];
+if (fs.existsSync(TILES_SRC)) {
+  for (const z of fs.readdirSync(TILES_SRC)) {
+    const srcDir = path.join(TILES_SRC, z), dstDir = path.join(OUT, 'data', 'hires-tiles', z);
+    if (!fs.statSync(srcDir).isDirectory()) continue;
+    fs.mkdirSync(dstDir, { recursive: true });
+    for (const f of fs.readdirSync(srcDir)) {
+      const s = path.join(srcDir, f), d = path.join(dstDir, f);
+      const st = fs.statSync(s);
+      if (st.size === 0) continue;               // empty = no-tile marker, not worth shipping
+      if (!fs.existsSync(d) || fs.statSync(d).size !== st.size) fs.copyFileSync(s, d);
+      tileCount++; tileBytes += st.size;
+      manifest.push(`data/hires-tiles/${z}/${f}`);
+    }
+  }
+  // The warm-up manifest: the running app pulls EVERY tile through the service worker into
+  // the persistent tile cache on first run, so the piece is fully offline afterwards — the
+  // owner's requirement: once downloaded, no web streaming, ever.
+  fs.mkdirSync(path.join(OUT, 'data', 'hires-tiles'), { recursive: true });
+  fs.writeFileSync(path.join(OUT, 'data', 'hires-tiles', 'manifest.json'), JSON.stringify(manifest));
+}
 
 // Register it from the page copy only — the studio build stays a plain single file.
 const withSW = fs.readFileSync(path.join(OUT, 'index.html'), 'utf8').replace(
@@ -93,4 +132,5 @@ fs.writeFileSync(path.join(OUT, 'index.html'), withSW);
 
 const kb = f => (fs.statSync(path.join(OUT, f)).size / 1024).toFixed(0) + ' kB';
 console.log(`ipad/  index.html ${kb('index.html')}  sw ${VERSION}  icons 180/192/512/maskable`);
+console.log(tileCount ? `tiles: ${tileCount} synced, ${(tileBytes / 1048576).toFixed(0)} MB (lazy-cached by the SW as viewed)` : 'tiles: none found (detail layer will self-disable)');
 console.log('serve it: node serve.mjs   ->  http://<this machine>:5179/ipad/');

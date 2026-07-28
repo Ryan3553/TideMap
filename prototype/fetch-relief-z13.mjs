@@ -1,38 +1,29 @@
+// ARCHIVED z13 path — kept working as a reference/fallback. The active source is now
+// fetch-relief.mjs (LINZ Basemaps elevation z15 terrain-rgb, ~3.8 m/px, baked at P=4096).
+// This file is otherwise untouched from the z13-source version.
+//
 // Land relief for the raking dawn/dusk light (queue item 2, bullet 4).
 //
-// Fetches LINZ Basemaps' combined `elevation` tileset as Terrain-RGB tiles (z15,
+// Fetches LINZ Basemaps' combined `elevation` tileset as Terrain-RGB tiles (z13,
 // WebMercator; elevation = -10000 + (R*65536 + G*256 + B) * 0.1 metres) with the
 // LINZ_BASEMAPS_KEY, stitches the bbox, reprojects to the project's equirectangular
 // grid, and bakes a NORMAL-GRADIENT texture: R = dz/dEast, G = dz/dNorth (metres per
 // metre, clamped +-GRAD_MAX, byte-encoded), B = 0. Water and nodata are zero vectors.
 // The shader turns this into a gentle azimuth-aware hillshade on land at low sun.
 //
-// z15 is ~3.79 m/px at this latitude — true LiDAR-derived posting (the tileset merges
-// every LiDAR survey LINZ has, including Bay of Plenty LiDAR 1m 2024, over the national
-// 8m DEM; a full regional product so it has complete coverage of the inland hills, unlike
-// the "coastal" LiDAR DEM strips which top out a few metres above sea level and never
-// reach the Kaimai foothills or Minden Peak — checked and rejected as a source for that
-// reason). z16/z17 were probed and return byte-identical tiles to z15 at this location:
-// the merged tileset tops out at z15, so there is nothing to gain past it.
+// z13 is ~15.1 m/px at this latitude — the bake grid is ~19-21 m/px, so this is a
+// slight downsample (small pre-smooth, then bilinear; no upsample artifacts possible).
+// The tileset merges every LiDAR survey LINZ has (Bay of Plenty 1m 2024 included)
+// over the 8m national DEM.
 //
-// The bake grid (P, default 4096) is now the binding resolution constraint rather than
-// the source: at P=4096 the equirect grid is ~9.5 m/px, a ~2.5x downsample from the z15
-// source (previously, z13 at ~15.1 m/px was close to a 1:1 match for the P=2048 grid's
-// ~19-21 m/px — barely a downsample at all). The mosaic pre-smooth sigma below scales
-// with that ratio so the finer source doesn't alias into the coarser output grid.
-//
-// The OLD z13 path (P=2048, ~15-21 m/px effective) is archived unmodified as
-// fetch-relief-z13.mjs.
-//
-// Usage: LINZ_BASEMAPS_KEY=<basemaps key, ULID>  node fetch-relief.mjs [P=4096]
-// Writes data/relief.png + data/relief.json. Tiles are cached in data/relief-tiles/
-// (z13 and z15 caches coexist there — filenames are `${z}-${x}-${y}.png`).
+// Usage: LINZ_BASEMAPS_KEY=<basemaps key, ULID>  node fetch-relief.mjs [P=2048]
+// Writes data/relief.png + data/relief.json. Tiles are cached in data/relief-tiles/.
 import fs from 'fs';
 import sharp from 'sharp';
 
-const P = Number(process.argv[2] ?? 4096);
+const P = Number(process.argv[2] ?? 2048);
 const WEST = 175.93, SOUTH = -37.79, EAST = 176.37, NORTH = -37.41;
-const Z = 15, TS = 256;
+const Z = 13, TS = 256;
 const GRAD_MAX = 1.5;                       // encode range for dz/dx (150% slope)
 const KEY = process.env.LINZ_BASEMAPS_KEY;
 if (!KEY) throw new Error('LINZ_BASEMAPS_KEY env var required (Basemaps key, ULID format)');
@@ -86,10 +77,7 @@ async function fetchTile(xt, yt) {
   console.log('');
 }
 
-// pre-smooth on the mosaic before reprojecting to the (coarser) output grid. Sigma
-// scales with the downsample ratio (output spacing / source spacing) so a finer source
-// relative to a fixed bake grid gets proportionally more antialiasing; a source close to
-// 1:1 with the output (the old z13/P2048 case) keeps the original light 0.8px touch.
+// small pre-smooth on the mosaic (sigma ~0.8 px) before the slight downsample
 function blurSep(src, w, h, sigma) {
   const r = Math.max(1, Math.ceil(sigma * 2.5));
   const k = new Float32Array(2 * r + 1);
@@ -109,12 +97,7 @@ function blurSep(src, w, h, sigma) {
   }
   return out;
 }
-const srcResM = 156543.03392 * Math.cos(37.6 * RAD) / (1 << Z);   // ground res of one source px
-const outResM = (EAST - WEST) * 111320 * Math.cos(37.6 * RAD) / P; // ground res of one output px
-const downsampleRatio = outResM / srcResM;
-const preSmoothSigma = Math.max(0.8, downsampleRatio * 0.5);
-console.log(`source ~${srcResM.toFixed(2)} m/px, output ~${outResM.toFixed(2)} m/px, ratio ${downsampleRatio.toFixed(2)}x, pre-smooth sigma ${preSmoothSigma.toFixed(2)}px`);
-const smooth = blurSep(mosaic, MW, NY * TS, preSmoothSigma);
+const smooth = blurSep(mosaic, MW, NY * TS, 0.8);
 
 // reproject to equirect P x P (row 0 = north), bilinear
 const elev = new Float32Array(P * P);
@@ -157,16 +140,14 @@ await sharp(png, { raw: { width: P, height: P, channels: 3 } })
   .png({ compressionLevel: 9, adaptiveFiltering: true }).toFile('data/relief.png');
 
 fs.writeFileSync('data/relief.json', JSON.stringify({
-  description: 'Land relief gradients for the raking-light hillshade. R = dz/dEast, G = dz/dNorth (metres per metre, byte = grad/GRAD_MAX*0.5+0.5), B unused (see blueChannel once bake-oceanmask.mjs has run). Zero vector on water/nodata.',
+  description: 'Land relief gradients for the raking-light hillshade. R = dz/dEast, G = dz/dNorth (metres per metre, byte = grad/GRAD_MAX*0.5+0.5), B unused. Zero vector on water/nodata.',
   size: P, gradMax: GRAD_MAX,
-  source: `LINZ Basemaps combined elevation tileset, Terrain-RGB z${Z} (~${srcResM.toFixed(2)} m/px here), which merges the regional LiDAR DEMs (incl. Bay of Plenty LiDAR 1m 2024) over the national 8m DEM. z15 chosen over the LDS WCS/export route for layer 120366 (~4.9 m/px estimated) because it is finer, keyless-simple (reuses the existing tile-cache fetch path), and was confirmed to have full regional coverage (elevations up to ~630 m found in the cached tiles, i.e. the Kaimai foothills are present) unlike the standalone "coastal" LiDAR DEM (sources/bathy/coastal2m/*.tif, checked and rejected: tops out a few metres above sea level, a shoreline-only product). z16/z17 probed and found byte-identical to z15 at this location - the tileset tops out at z15, nothing finer is served.`,
+  source: `LINZ Basemaps combined elevation tileset, Terrain-RGB z${Z} (~15.1 m/px here), which merges the regional LiDAR DEMs (incl. Bay of Plenty 1m 2024) over the national 8m DEM`,
   request: `https://basemaps.linz.govt.nz/v1/tiles/elevation/WebMercatorQuad/${Z}/{x}/{y}.png?api=<LINZ_BASEMAPS_KEY>&pipeline=terrain-rgb`,
-  tiles: { z: Z, x: [x0, x1], y: [y0, y1], count: NX * NY },
-  bakeGrid: { P, outputResM: Number(outResM.toFixed(2)), sourceResM: Number(srcResM.toFixed(2)), preSmoothSigmaPx: Number(preSmoothSigma.toFixed(2)) },
+  tiles: { z: Z, x: [x0, x1], y: [y0, y1] },
   bbox: [WEST, SOUTH, EAST, NORTH],
   licence: 'CC BY 4.0, attribution Toitu Te Whenua Land Information New Zealand',
-  fetched: '2026-07-28',
-  previousVersion: 'z13, P=2048 (~15-21 m/px effective) — archived as data/relief-OLD-z13.png / .json, regenerable with fetch-relief-z13.mjs',
+  fetched: '2026-07-27',
 }, null, 2));
 const kb = f => (fs.statSync(f).size / 1024).toFixed(0) + ' kB';
 console.log(`data/relief.png ${kb('data/relief.png')} at ${P}px`);

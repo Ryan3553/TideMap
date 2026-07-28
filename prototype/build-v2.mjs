@@ -89,4 +89,7 @@ catch (e) { throw new Error(`module source does not parse: ${e.message}`); }
 fs.writeFileSync(ARTIFACT ? 'tidemap-artifact.html' : 'tidemap-v2.html', html);
 const MB = 1e6;
 console.log(`built ${(html.length/MB).toFixed(2)} MB total, module source ${(script.length/1024).toFixed(0)} kB`);
-if (html.length/MB > 22) console.warn(`WARNING: ${(html.length/MB).toFixed(2)} MB exceeds the 22 MB page-size budget`);
+// Budget raised 22 -> 23 MB (2026-07-28): the relief bake doubled to 4096 under Ryan's
+// max-detail directive (+~5 MB). Local/iPad only — the ARTIFACT build has its own 16 MB
+// ceiling and still downsizes.
+if (html.length/MB > 23) console.warn(`WARNING: ${(html.length/MB).toFixed(2)} MB exceeds the 23 MB page-size budget`);

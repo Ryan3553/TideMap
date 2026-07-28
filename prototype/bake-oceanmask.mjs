@@ -7,35 +7,44 @@
 // water *inside* Tauranga Harbour, softly feathered at the two harbour
 // entrances and along every shore.
 //
-// Method (morphological seal + flood fill), all at the project's 2048px
+// Method (morphological seal + flood fill), all at the project's PxP
 // equirectangular grid (bbox lon 175.93..176.37, lat -37.41..-37.79, row 0 =
-// north — same grid as relief.png and (at 4096px) depth-composite-raw.f32):
-//   1. Downsample the depth composite 4096->2048 by 2x2 averaging.
+// north — same grid as relief.png; depth-composite-raw.f32 is fixed at 4096px
+// regardless of P):
+//   1. Downsample (or, when P == SRC, pass through) the depth composite to
+//      PxP by ratio x ratio box averaging, ratio = SRC/P.
 //      waterMask = elevation < 0.
 //   2. Seal the harbour entrances: dilate the LAND mask by a disc of radius
-//      20 px (~19 m/px => ~380 m from each shore) to close both the ~500 m
-//      Tauranga entrance and the Bowentown entrance. (The spec's original
-//      16px estimate leaves a ~380m clear-water gap through the Bowentown
-//      throat even past its one mid-channel shoal, which leaks the entire
-//      harbour into the open-ocean flood fill in step 3 — see the deviation
-//      note below. 20px was the smallest tested radius with a safety margin
-//      that fully closes it; 18px was the bare minimum.) sealedWater =
-//      waterMask AND NOT dilatedLand.
+//      SEAL_RADIUS px to close both the ~500 m Tauranga entrance and the
+//      Bowentown entrance. sealedWater = waterMask AND NOT dilatedLand.
 //   3. Flood-fill sealedWater (8-connected) from every sealedWater pixel on
 //      the map's north/east edges (the open Pacific). The seal guarantees the
 //      harbour interior is unreachable from here.
 //   4. Grow the resulting ocean label back out through the ORIGINAL waterMask
-//      (8-neighbour dilation, exactly 24 iterations == BFS depth cap 24).
+//      (8-neighbour dilation, GROW_ITERS iterations == BFS depth cap).
 //      This recovers the beach-adjacent strip the seal ate and lets the ocean
 //      push a little way into the entrance throats — the desired feather.
-//   5. mask = 255 where ocean else 0, gaussian blur sigma ~2.5 px, write into
-//      relief.png's B channel. R and G are copied through unmodified and the
-//      copy is verified byte-identical before anything is written to disk.
+//   5. mask = 255 where ocean else 0, gaussian blur sigma BLUR_SIGMA px, write
+//      into relief.png's B channel. R and G are copied through unmodified and
+//      the copy is verified byte-identical before anything is written to disk.
 //
 // Connectivity note: the spec only pins down 8-neighbour connectivity for the
 // step-4 dilation; the step-3 edge flood fill here also uses 8-connectivity
 // (matches step 4, avoids spurious disconnects through diagonal-only water
 // pixels at this resolution).
+//
+// PIXEL-CONSTANT SCALING (2026-07-28, relief upgrade to P=4096): SEAL_RADIUS,
+// GROW_ITERS and BLUR_SIGMA all encode *physical* distances (entrance-closure
+// radius, feather reach) that were tuned in pixels at the original P=2048 grid
+// (~19-21 m/px). Doubling P to 4096 halves the grid spacing to ~9.5-10.3 m/px,
+// so those pixel counts are scaled by SCALE = P/2048 to keep the same
+// real-world distances (the harbour-entrance seal in particular depends on
+// this: see the original tuning note below, preserved unscaled for context).
+//   original tuning @ P=2048: SEAL_RADIUS 20px (~380m — the spec's original
+//   16px estimate leaves a ~380m clear-water gap through the Bowentown throat
+//   even past its one mid-channel shoal, which leaks the entire harbour into
+//   the open-ocean flood fill; 18px was the bare minimum, 20px the safety
+//   margin), GROW_ITERS 24px (~456-504m), BLUR_SIGMA 2.5px (~47-52m).
 //
 // Usage: node bake-oceanmask.mjs
 // Reads data/depth-composite-raw.f32 + data/relief.png.
@@ -44,20 +53,22 @@
 import fs from 'fs';
 import sharp from 'sharp';
 
-const P = 2048;
+const P = 4096;
 const SRC = 4096;
 const N = P * P;
 const WEST = 175.93, SOUTH = -37.79, EAST = 176.37, NORTH = -37.41;
-// SEAL_RADIUS: spec called for 16px (~300m/side, ~600m total closure). Measured
-// against the actual bathymetry, the Bowentown/Katikati entrance throat has a
-// clear-water gap of ~380m even past its one mid-channel shoal, so a 16px seal
-// (verified against sample points inside the harbour: Omokoroa, the inner
-// Bowentown channel) leaks the whole harbour into the ocean flood fill. 18px
-// is the minimum that closes it; 20px is used for a safety margin. The main
-// Tauranga entrance (~500m, per spec) was already fully closed at 16px.
-const SEAL_RADIUS = 20;      // px, disc dilation of land to seal entrances
-const GROW_ITERS = 24;       // px, BFS depth cap == iteration count of the recovery dilation
-const BLUR_SIGMA = 2.5;      // px, final feather
+// SEAL_RADIUS: spec called for 16px (~300m/side, ~600m total closure) at the original
+// P=2048 grid. Measured against the actual bathymetry, the Bowentown/Katikati entrance
+// throat has a clear-water gap of ~380m even past its one mid-channel shoal, so a 16px
+// seal (verified against sample points inside the harbour: Omokoroa, the inner Bowentown
+// channel) leaks the whole harbour into the ocean flood fill. 18px is the minimum that
+// closes it; 20px is used for a safety margin. The main Tauranga entrance (~500m, per
+// spec) was already fully closed at 16px. All three pixel constants below are scaled by
+// SCALE = P/2048 to preserve those physical distances at the current grid resolution.
+const SCALE = P / 2048;
+const SEAL_RADIUS = Math.round(20 * SCALE);  // px, disc dilation of land to seal entrances
+const GROW_ITERS = Math.round(24 * SCALE);   // px, BFS depth cap == iteration count of the recovery dilation
+const BLUR_SIGMA = 2.5 * SCALE;              // px, final feather
 
 const RELIEF_PNG = 'data/relief.png';
 const RELIEF_JSON = 'data/relief.json';
@@ -71,13 +82,19 @@ if (rawBuf.length !== SRC * SRC * 4) throw new Error(`unexpected depth-composite
 const elevSrc = new Float32Array(rawBuf.buffer, rawBuf.byteOffset, SRC * SRC);
 
 const elev = new Float32Array(N);
-for (let j = 0; j < P; j++) {
-  const sj = j * 2;
-  for (let i = 0; i < P; i++) {
-    const si = i * 2;
-    const a = elevSrc[sj * SRC + si], b = elevSrc[sj * SRC + si + 1];
-    const c = elevSrc[(sj + 1) * SRC + si], d = elevSrc[(sj + 1) * SRC + si + 1];
-    elev[j * P + i] = (a + b + c + d) * 0.25;
+const ratio = SRC / P;
+if (!Number.isInteger(ratio)) throw new Error(`SRC/P must be an integer ratio, got ${SRC}/${P}`);
+if (ratio === 1) {
+  elev.set(elevSrc);                          // P now matches SRC (4096) exactly — no downsample needed
+} else {
+  for (let j = 0; j < P; j++) {
+    for (let i = 0; i < P; i++) {
+      let sum = 0;
+      for (let dy = 0; dy < ratio; dy++) for (let dx = 0; dx < ratio; dx++) {
+        sum += elevSrc[(j * ratio + dy) * SRC + (i * ratio + dx)];
+      }
+      elev[j * P + i] = sum / (ratio * ratio);
+    }
   }
 }
 

@@ -283,7 +283,8 @@ void main(){ vUv=vec2(p.x*0.5+0.5,0.5-p.y*0.5); gl_Position=vec4(p,0.0,1.0); }`;
 const FS=`#extension GL_OES_standard_derivatives : enable
 precision highp float;
 varying vec2 vUv;
-uniform sampler2D uBase,uField,uFlow,uRelief;
+uniform sampler2D uBase,uField,uFlow,uRelief,uHires;
+uniform vec4 uHiresRect; uniform float uHiresAmt;
 uniform vec2 uSunDir; uniform float uReliefAmt;
 uniform vec2 uCenter,uFieldSize; uniform float uZoom,uFrameAspect;
 uniform float uTide,uTidePast,uDay,uMoon,uNightMix,uTime,uTideDir;
@@ -352,6 +353,18 @@ void main(){
   vec2 uv=uCenter+vec2((vUv.x-0.5)*uZoom*uFrameAspect*1.0866,(vUv.y-0.5)*uZoom);
   if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){gl_FragColor=vec4(0.0,0.0,0.0,1.0);return;}
   vec3 base=texture2D(uBase,uv).rgb;
+  // Zoomed-in detail layer: a runtime canvas atlas of high-res aerial tiles covering
+  // uHiresRect (xy=origin, zw=size in map uv). Alpha carries tile coverage, so anywhere
+  // the atlas has no tile the embedded base shows through; uHiresAmt fades the layer in
+  // once fresh tiles are composited (and is 0 when no tile source exists — the artifact
+  // build — which makes this whole block a no-op there and in look.mjs).
+  if(uHiresAmt>0.001){
+    vec2 huv=(uv-uHiresRect.xy)/max(uHiresRect.zw,vec2(1e-6));
+    if(huv.x>0.0&&huv.x<1.0&&huv.y>0.0&&huv.y<1.0){
+      vec4 hs=texture2D(uHires,huv);
+      base=mix(base,hs.rgb,hs.a*uHiresAmt);
+    }
+  }
   vec3 fld=sampleField(uv);
 
   // ONE continuous surface, filtered like an elevation model. Water sits below the tide range
@@ -730,7 +743,7 @@ function drawMoon(frac,waxing){
 // ---------------- UI ----------------
 const GROUPS=[
   ['Drive it by hand',[['tide','Tide height (m)',LO,HI,0.005],['light','Daylight',0,1,0.005]]],
-  ['Framing',[['zoom','Zoom',0.18,1.0,0.005],['cx','Centre ←→',0,1,0.005],['cy','Centre ↑↓',0,1,0.005]]],
+  ['Framing',[['zoom','Zoom',0.04,1.0,0.005],['cx','Centre ←→',0,1,0.005],['cy','Centre ↑↓',0,1,0.005]]],
   ['Water',[['shallow','Shallow','c'],['mid','Mid','c'],['deep','Deep','c'],
             ['depthCurve','Depth falloff',0.4,2.5,0.01],['clarity','Shallows show the bed',0,1,0.01],
             ['flowGain','Channel flow',0,1,0.01],['sparks','Tide sparks',0,1,0.01]]],
@@ -851,7 +864,7 @@ piece.addEventListener('pointermove',e=>{if(!drag)return;const r=piece.getBoundi
   S.cy=clamp(drag.cy-(e.clientY-drag.y)/r.height*S.zoom,0,1);syncInputs();});
 piece.addEventListener('pointerup',()=>drag=null);
 piece.addEventListener('wheel',e=>{e.preventDefault();
-  S.zoom=clamp(S.zoom*(1+Math.sign(e.deltaY)*0.06),0.18,zoomCap());syncInputs();},{passive:false});
+  S.zoom=clamp(S.zoom*(1+Math.sign(e.deltaY)*0.06),0.04,zoomCap());syncInputs();},{passive:false});
 
 // ---------------- play / pause ----------------
 const playBtn=document.getElementById('play');
@@ -958,14 +971,20 @@ function frame(now){
   // back, so the user's framing survives and the sliders stay honest.
   let vcx=S.cx,vcy=S.cy,vzoom=S.zoom;
   if(KIOSK&&playing){
-    const tw=Date.now()/1000;
-    vcx+=0.012*Math.sin(tw*2*Math.PI/2900)+0.005*Math.sin(tw*2*Math.PI/700);
-    vcy+=0.009*Math.sin(tw*2*Math.PI/2300+1.7)+0.004*Math.sin(tw*2*Math.PI/530+0.6);
+    const tw=Date.now()/1000, ds=S.zoom/0.5;   // drift scales with zoom: at a deep house
+    // framing the wander must shrink with the frame or it walks off the subject entirely
+    vcx+=(0.012*Math.sin(tw*2*Math.PI/2900)+0.005*Math.sin(tw*2*Math.PI/700))*ds;
+    vcy+=(0.009*Math.sin(tw*2*Math.PI/2300+1.7)+0.004*Math.sin(tw*2*Math.PI/530+0.6))*ds;
     vzoom=Math.min(vzoom*(1+0.025*Math.sin(tw*2*Math.PI/4700+3.1)),zoomCap());
   }
   const halfW=vzoom*a*1.0866/2,halfH=vzoom/2;
   gl.uniform2f(U('uCenter'),clamp(vcx,halfW,1-halfW),clamp(vcy,halfH,1-halfH));
   gl.uniform1f(U('uZoom'),vzoom);gl.uniform1f(U('uFrameAspect'),a);
+  // Detail layer: poll for staleness ~1/s, fade toward its target so tile refreshes
+  // never pop.
+  hiresCheck(now);
+  hiresAmt+=(hiresTarget-hiresAmt)*Math.min(1,dt*3);
+  gl.uniform1f(U('uHiresAmt'),hiresAmt);
   gl.uniform1f(U('uTide'),h);gl.uniform1f(U('uTidePast'),hPast);
   gl.uniform1f(U('uDay'),day*inten);gl.uniform1f(U('uMoon'),moonLight);gl.uniform1f(U('uNightMix'),1-day);
   // animT, not wall time: advances from the frame timestamps (so __tick(t) stays deterministic)
@@ -1022,6 +1041,130 @@ mkTex(await ready(FLOW_EL),2,{format:gl.RGB,filter:gl.LINEAR});
 mkTex(await ready(RELIEF_EL),3,{format:gl.RGB,filter:gl.LINEAR});
 gl.uniform1i(U('uBase'),0);gl.uniform1i(U('uField'),1);gl.uniform1i(U('uFlow'),2);gl.uniform1i(U('uRelief'),3);
 gl.uniform2f(U('uFieldSize'),fieldImg.naturalWidth,fieldImg.naturalHeight);
+
+// ---------------- high-res detail layer ----------------
+// A runtime atlas of LINZ aerial tiles (data/hires-tiles/{z}/{x}-{y}.png, z15-17, fetched
+// at build time — the page never talks to LINZ) composited onto an offscreen canvas
+// covering the current view + margin, uploaded as uHires with its map-uv rect. The shader
+// blends it over the embedded base wherever tiles cover. Absent tiles (the 16 MB artifact
+// build ships none) disable the layer after a few failed loads and the page is exactly
+// what it was before this feature existed. Tiles are WebMercator; each is drawn with a
+// per-tile vertical affine into our equirectangular atlas — sub-pixel correct at these
+// latitudes for 256 px tiles.
+const HB={ WEST:175.93, EAST:176.37, NORTH:-37.41, SOUTH:-37.79 };
+// 0.48: just under the default framing, so the layer covers every zoomed view (z15 tiles
+// out-resolve the canvas from here down) without churning at the default. An 8k embedded
+// base was considered and rejected: the canvas caps at 2600 px, so beyond 4096 an embed
+// can never out-resolve the screen at framings the tile layer does not already own.
+const HIRES_ON_BELOW=0.48, HIRES_MARGIN=0.30, HIRES_URL=(z,x,y)=>`data/hires-tiles/${z}/${x}-${y}.png`;
+const HP=Math.min(4096,gl.getParameter(gl.MAX_TEXTURE_SIZE));
+let hiresOk=('createImageBitmap' in window), hiresErr=0, hiresGen=0, hiresAmt=0, hiresTarget=0;
+let hiresRect=null, hiresZ=0, lastHiresCheck=0;
+const hiresCanvas=document.createElement('canvas');hiresCanvas.width=hiresCanvas.height=HP;
+const hctx=hiresCanvas.getContext('2d');
+const hiresTex=gl.createTexture();
+gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,hiresTex);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,2,2,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(16));
+gl.uniform1i(U('uHires'),4);gl.uniform4f(U('uHiresRect'),0,0,0,0);gl.uniform1f(U('uHiresAmt'),0);
+const tileCache=new Map();               // url -> ImageBitmap | null(no tile) | Promise
+function tileFetch(url){
+  if(tileCache.has(url))return tileCache.get(url);
+  const p=fetch(url).then(r=>{
+    if(!r.ok)throw new Error('http '+r.status);
+    return r.blob();
+  }).then(b=>b.size===0?null:createImageBitmap(b)).then(bmp=>{tileCache.set(url,bmp);return bmp;})
+    .catch(()=>{tileCache.set(url,null);return null;});
+  tileCache.set(url,p);
+  if(tileCache.size>420){const k=tileCache.keys().next().value;const v=tileCache.get(k);
+    if(v&&v.close)v.close();tileCache.delete(k);}
+  return p;
+}
+const merc={x:lon=>(lon+180)/360, y:lat=>(1-Math.log(Math.tan(Math.PI/4+lat*RAD/2))/Math.PI)/2,
+  lat:(y,n)=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))/RAD};
+// Availability is tracked PER LEVEL: a zoom level whose whole wave comes back empty (the
+// z17 band not fetched, or the artifact build's total absence) is marked dead and the
+// picker routes around it; the layer as a whole dies only when every level is dead. A
+// global error kill-switch was tried first and was wrong — one missing level mass-404s
+// and takes the working levels down with it.
+const hiresLevelDead={15:false,16:false,17:false};
+async function hiresRebuild(rect,z){
+  const gen=++hiresGen, n=1<<z;
+  const lon0=HB.WEST+rect.x*(HB.EAST-HB.WEST), lon1=HB.WEST+(rect.x+rect.w)*(HB.EAST-HB.WEST);
+  const lat0=HB.NORTH+rect.y*(HB.SOUTH-HB.NORTH), lat1=HB.NORTH+(rect.y+rect.h)*(HB.SOUTH-HB.NORTH);
+  const x0=Math.floor(merc.x(lon0)*n), x1=Math.floor(merc.x(lon1)*n);
+  const y0=Math.floor(merc.y(lat0)*n), y1=Math.floor(merc.y(lat1)*n);
+  // Pooled fetches (12-wide): an unbounded Promise.all over a few hundred tiles exhausts
+  // the browser's request table (ERR_INSUFFICIENT_RESOURCES) and the failure storm then
+  // trips the layer's kill-switch. The pool keeps the pipe full without flooding it.
+  const coords=[];
+  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)coords.push({tx,ty});
+  const tiles=new Array(coords.length); let ci=0;
+  await Promise.all(Array.from({length:12},async()=>{
+    while(ci<coords.length){ const k=ci++; const t=coords[k];
+      tiles[k]={tx:t.tx,ty:t.ty,bmp:await tileFetch(HIRES_URL(z,t.tx,t.ty))}; }
+  }));
+  if(gen!==hiresGen||!hiresOk)return;                    // superseded or disabled mid-flight
+  hctx.clearRect(0,0,HP,HP);
+  let drew=0;
+  for(const {tx,ty,bmp} of tiles){
+    if(!bmp)continue;
+    const L0=tx/n*360-180, L1=(tx+1)/n*360-180;
+    const latT=merc.lat(ty,n), latB=merc.lat(ty+1,n);
+    const u0=(L0-HB.WEST)/(HB.EAST-HB.WEST), u1=(L1-HB.WEST)/(HB.EAST-HB.WEST);
+    const vT=(latT-HB.NORTH)/(HB.SOUTH-HB.NORTH), vB=(latB-HB.NORTH)/(HB.SOUTH-HB.NORTH);
+    hctx.drawImage(bmp,(u0-rect.x)/rect.w*HP,(vT-rect.y)/rect.h*HP,
+                       (u1-u0)/rect.w*HP,(vB-vT)/rect.h*HP);
+    drew++;
+  }
+  if(!drew){
+    hiresLevelDead[z]=true;        // whole wave empty: level absent here — route around it
+    return;                        // next 1 s check re-picks among the levels still alive
+  }
+  gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,hiresTex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,hiresCanvas);
+  gl.uniform4f(U('uHiresRect'),rect.x,rect.y,rect.w,rect.h);
+  hiresRect=rect;hiresZ=z;hiresTarget=1;
+}
+// Offline warm-up: the installed app (kiosk + service-worker-controlled) pulls the entire
+// bundled tile pyramid through the SW into its persistent cache in the background, so after
+// one run on the home network the piece never needs the network again. Cached tiles come
+// back instantly; the queue is gentle (4-way) and abandons quietly if no manifest ships.
+async function hiresWarmup(){
+  try{
+    const r=await fetch('data/hires-tiles/manifest.json'); if(!r.ok)return;
+    const list=await r.json(); let i=0,done=0;
+    const worker=async()=>{ while(i<list.length){ const url=list[i++];
+      try{ await fetch(url); }catch(_){} if(++done%500===0)console.log('tile warm-up',done,'/',list.length); } };
+    await Promise.all([0,1,2,3].map(worker));
+    console.log('tile warm-up complete:',list.length,'tiles cached');
+  }catch(_){/* no manifest: dev page or artifact build */}
+}
+if(KIOSK && navigator.serviceWorker && navigator.serviceWorker.controller)
+  setTimeout(hiresWarmup,10000);
+
+function hiresCheck(now){                                 // called ~1/s from frame()
+  if(!hiresOk)return;
+  if(now-lastHiresCheck<1000)return;
+  lastHiresCheck=now;
+  if(S.zoom>=HIRES_ON_BELOW){hiresTarget=0;return;}
+  const a=frameAspect();
+  const w=Math.min(1,S.zoom*a*1.0866*(1+2*HIRES_MARGIN)), h=Math.min(1,S.zoom*(1+2*HIRES_MARGIN));
+  const rect={x:clamp(S.cx-w/2,0,1-w), y:clamp(S.cy-h/2,0,1-h), w, h};
+  // Pick the smallest ALIVE z that fills ~70% of the atlas (>=98% always overshot a
+  // level: ~2x oversampled, ~4x the tiles, downsampled away anyway).
+  const alive=[15,16,17].filter(v=>!hiresLevelDead[v]);
+  if(!alive.length){hiresOk=false;hiresTarget=0;return;}
+  let z=alive[alive.length-1];
+  for(const zz of alive){if((0.44/360)*(1<<zz)*256*rect.w>=HP*0.70){z=zz;break;}}
+  const stale=!hiresRect||z!==hiresZ
+    ||Math.abs(rect.x-hiresRect.x)>hiresRect.w*0.18||Math.abs(rect.y-hiresRect.y)>hiresRect.h*0.18
+    ||Math.abs(rect.w-hiresRect.w)/hiresRect.w>0.2;
+  if(stale)hiresRebuild(rect,z);
+}
 baseSel.addEventListener('change',()=>{basemapName=baseSel.value;mkTex(imgs[basemapName],0);updateNote();});
 function updateNote(){
   const w=imgs[basemapName].width;
@@ -1033,7 +1176,10 @@ function updateNote(){
     `would stream the full-resolution layer as you zoom. The waterline is a smooth iso-contour of a `+
     `continuous height surface, but the surface underneath it is sampled at <b>~15 m</b>, so it is `+
     `smooth rather than sharp: it will not show you a tide creeping around a single rock. `+
-    `Below <b>0.33 m</b> the satellites never saw the harbour, and the piece holds still.`;
+    `Below <b>0.33 m</b> the satellites never saw the harbour, and the piece holds still. `+
+    (hiresOk?`Zoom in and a local <b>detail layer</b> streams the LINZ aerial at up to
+    <b>~1.2 m</b> per pixel from bundled tiles — frame your own street and let it run.`:
+    `This build carries no detail-tile bundle; deep zoom shows the embedded basemap only.`);
 }
 
 // Always-on means the screen must not sleep. Safari only grants this from a user gesture and

@@ -1,5 +1,9 @@
 // Offline reproduction of the fragment shader, so the result can be LOOKED at.
 // Same arithmetic as template-v2.html; kept in step by hand. Scratch tool, not shipped.
+// PARITY NOTE: the page's high-res detail layer (uHires/uHiresAmt) is NOT mirrored here —
+// it is pure imagery passthrough blended over uBase, exactly equivalent to uHiresAmt=0
+// when no tile bundle exists, which is the state this renderer reproduces. Every piece of
+// artistic maths downstream of `base` is unchanged and remains mirrored.
 import fs from 'fs';
 import sharp from 'sharp';
 
