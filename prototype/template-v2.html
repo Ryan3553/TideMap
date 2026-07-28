@@ -259,6 +259,7 @@ if(savedAtBoot && typeof savedAtBoot==='object'){
 let S=JSON.parse(JSON.stringify(DEFAULTS));
 let aspect=4/3, portrait=false;
 let basemapName=(savedBasemapName && IMAGES[savedBasemapName]) ? savedBasemapName : Object.keys(IMAGES)[0];
+let defaultBasemap=basemapName;              // what Reset returns the imagery to
 let playing=false;
 // Kiosk: launched from the iPad home screen, or ?kiosk on the URL. Same page, no chrome, the
 // canvas fills the screen at the screen's own aspect, and it runs in real time by itself.
@@ -968,22 +969,28 @@ document.getElementById('reset').addEventListener('click',()=>{
   S=JSON.parse(JSON.stringify(DEFAULTS));
   setPlaying(false); paintEbb();
   preSel.selectedIndex=0;
-  if(baseSel.selectedIndex!==0){ baseSel.selectedIndex=0; baseSel.dispatchEvent(new Event('change')); }
+  if(baseSel.value!==defaultBasemap){ baseSel.value=defaultBasemap; baseSel.dispatchEvent(new Event('change')); }
   syncInputs(); clampZoom(); applyFrame();
 });
 const forgetBtn=document.getElementById('forgetDefault');
 forgetBtn.hidden=!savedAtBoot;
 function flashLabel(btn,label,restore){ btn.textContent=label; setTimeout(()=>btn.textContent=restore,1800); }
 document.getElementById('saveDefault').addEventListener('click',e=>{
+  const snap={...S, basemap:basemapName};
   try{
-    localStorage.setItem(DEFAULTS_KEY, JSON.stringify({...S, basemap:basemapName}));
+    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(snap));
     forgetBtn.hidden=false;
   }catch(_){ /* private mode etc — nothing persists, but the button still flashes */ }
+  // Also fold the snapshot into the LIVE defaults: Reset must land on the saved look in
+  // THIS session, not only after a reload (caught by driving the buttons in the pane).
+  for(const k of Object.keys(snap)) if(k in DEFAULTS) DEFAULTS[k]=snap[k];
+  defaultBasemap=basemapName;
   flashLabel(e.currentTarget,'Saved ✓','Save default');
 });
 forgetBtn.addEventListener('click',e=>{
   try{ localStorage.removeItem(DEFAULTS_KEY); }catch(_){}
   DEFAULTS=JSON.parse(JSON.stringify(FACTORY));   // so the next Reset lands on the factory look
+  defaultBasemap=Object.keys(IMAGES)[0];
   forgetBtn.hidden=true;
   flashLabel(e.currentTarget,'Forgotten','Forget default');
 });
