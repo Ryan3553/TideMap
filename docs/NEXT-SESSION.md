@@ -55,6 +55,31 @@
 >    Must stay kiosk-friendly (the iPad boots into the ACTIVE slot with no UI touch)
 >    and migrate the existing single-key save silently. Keep the factory-reset path.
 >
+> 6. **Moonglade + sun glade (Ryan-requested, 2026-07-28 late; must be zeroable).**
+>    Directional glitter paths on the water — light ON the water; the display shows
+>    no sky. One mechanism, two windows:
+>    - **Moonglade**: an elongated brightening of the night-water term along the
+>      moon's azimuth — a band aligned with uMoonDir (moonPos() needs an `az` output;
+>      clone the sunPos azimuth maths, it shares the lst/H machinery), glitter from
+>      the existing shimmer noise so it drifts and sparkles, gain gated by
+>      moon altitude x phase fraction x uMoon (so a new moon or a set moon = no
+>      glade). New slider Night → 'Moonglade' (0..1, pick a modest default, 0 = off —
+>      Ryan explicitly wants it switchable). Works while paused too: moonPos(virtual)
+>      is computed even when the clock is held.
+>    - **Sun glade**: same term on the day path along uSunDir (already a uniform —
+>      the relief raking light uses it). Window it to low sun (reuse or slightly
+>      widen the uGold window): a long glitter path at golden hour is what the eye
+>      expects from above; noon stays calm. Slider Water → 'Sun glade' (0 = off).
+>    - WHY RYAN HAS SEEN NO REFLECTIONS TO DATE (context for tuning): the only
+>      sun-reflection terms today are non-directional and live in narrow windows —
+>      the golden-hour amber is a flat lerp inside sunAlt ~2-10 deg (the daylight
+>      slider at its usual 0.9-1.0 = sunAlt ~30 deg, window is zero there), plus the
+>      subtle rising-tide wet-edge sheen. The glades must be DIRECTIONAL and visible
+>      in their windows at defaults, without turning the water into glitter soup.
+>    - Both must fade over genuinely deep open ocean like the gold term does (the
+>      Pacific stays negative space), mirror in look.mjs (az= arg exists for sun;
+>      add moon az), and respect the no-backticks-in-FS trap.
+>
 > Standing note: 'Copy settings' → JSON → FACTORY in template-v2.html remains the way
 > Ryan's chosen look becomes everyone's default; Save default is per-device.
 
