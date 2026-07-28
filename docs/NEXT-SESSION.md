@@ -1,5 +1,23 @@
 # Next session — kickoff
 
+> **2026-07-28 close-out (ninth pass — max-detail data + detail layer): see HANDOVER.md
+> first.** Open items, in value order:
+>
+> 1. **RYAN: send the bathymetry consent email** — hydro@linz.govt.nz, survey IDs and
+>    wording in research/bathy-audit-2026-07-28.md §(c). This is the only remaining data
+>    upgrade of consequence (the harbour's deep channels). When the data arrives, slot it
+>    into build-depth-composite.py above the chart-vector source, reconcile datum per the
+>    report, re-run composite → prep-field3 → prep-flow.
+> 2. **RYAN: first run of the reinstalled iPad app on wifi** — the 402 MB tile warm-up
+>    must complete once (watch console 'tile warm-up complete'); after that it is fully
+>    offline. Serve from prototype/: node serve.mjs → http://<machine>:5179/ipad/.
+> 3. base-8k.jpg (archive-only stitched z15 mosaic) was never produced — derive it any
+>    time from data/hires-tiles/15 with the reprojection recipe in fetch-linz.mjs /
+>    reproject-linz.mjs. Do NOT embed it in the page (canvas res ceiling — see HANDOVER).
+> 4. The artifact build ships no tiles (16 MB host cap) — deep zoom is local/iPad only.
+>    If Ryan wants deep zoom in the shared artifact, that needs a different host, not a
+>    bigger page.
+
 > **2026-07-27 night: Ryan's visual-hierarchy brief is implemented** — see HANDOVER.md's
 > seventh-pass section first. New queue items from that round:
 >

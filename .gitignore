@@ -12,6 +12,11 @@ prototype/tidemap-*.html
 # See docs/SOURCES.md — every one is reproducible from the recorded parameters.
 sources/**/*.png
 sources/**/*.tif
+# Koordinates export sidecars (georeference metadata per tile — regenerated with the tiles)
+sources/**/*.aux
+sources/**/*.aux.xml
+sources/**/*.tfw
+sources/**/*.xml
 
 # The packaged iPad app is a build artifact of build-ipad.mjs
 prototype/ipad/
