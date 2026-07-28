@@ -1,0 +1,60 @@
+{
+  "files": {
+    "pattern": "DEM_<sheet>_2025_1000_<tile>.tif (813 non-overlapping 1km NZTM2000 tiles, each with .tfw/.xml/.aux sidecars)",
+    "count": 813,
+    "sheets": [
+      "BD36",
+      "BD37"
+    ]
+  },
+  "source": "LDS layer 122642 - Bay of Plenty - Tauranga LiDAR 1m DEM (2025)",
+  "publisher": "Toitu Te Whenua Land Information New Zealand / 3D Coastal Mapping (survey by Woolpert Ltd for BOPLASS Ltd)",
+  "obtained_via": "Koordinates export API (LDS key WITH Exports scope), key redacted",
+  "request_used": "POST https://data.linz.govt.nz/services/api/v1.x/exports/ {items:[layer 122642], formats:{grid:'image/tiff;subtype=geotiff'}, crs:'EPSG:2193', extent:bbox-polygon}; poll; GET download_url",
+  "export_id": 4576978,
+  "bbox_wgs84_requested": {
+    "west": 176.01,
+    "south": -37.8,
+    "east": 176.37,
+    "north": -37.61
+  },
+  "layer_native_extent_wgs84": {
+    "west": 176.0145,
+    "south": -37.8389,
+    "east": 176.4273,
+    "north": -37.6206
+  },
+  "native_crs": "EPSG:2193",
+  "resolution_m": 1.0,
+  "capture_window": "2025-02-12 .. 2025-03-02 (Woolpert Ltd for BOPLASS Ltd; same 2025 3D Coastal Mapping campaign as the 2m coastal DEM and HS79 multibeam)",
+  "vertical_datum": "NZVD2016, metres, positive UP (topo-bathy LiDAR DEM; same datum/contract as sources/bathy/coastal2m)",
+  "vertical_accuracy": "+/-0.2 m (95%)",
+  "horizontal_accuracy": "+/-1.0 m (95%)",
+  "licence": "CC BY 4.0, attribution Toitu Te Whenua Land Information New Zealand",
+  "fetched": "2026-07-28",
+  "tif_inspection": {
+    "note": "aggregate over all 813 tiles merged with rasterio.merge (native EPSG:2193, no reprojection)",
+    "mosaic_shape_rowscols": [
+      19593,
+      31605
+    ],
+    "mosaic_bounds_nztm2000": [
+      1865440.0,
+      5811927.0,
+      1897045.0,
+      5831520.0
+    ],
+    "nodata": -9999.0,
+    "valid_fraction": 0.449,
+    "range_m_nzvd2016": [
+      -1.35,
+      307.81
+    ]
+  },
+  "note": "Priority slot: build-depth-composite.py integrates this ABOVE the 2m nz-coastal LiDAR (sources/bathy/coastal2m) within this layer's own footprint only; the 2m LiDAR + chart vectors + NIWA continue to cover everywhere outside it.",
+  "also_extracted": [
+    "bay-of-plenty-tauranga-lidar-1m-dem-2025.txt (LDS readme)",
+    "tauranga-lidar-survey-report-2025.pdf (Woolpert survey report)"
+  ],
+  "data_quality_warning": "IMPORTANT, found by inspection 2026-07-28 (not documented by LINZ): despite sharing the 2025 3D Coastal Mapping campaign with sources/bathy/coastal2m, this layer is NOT a topo-bathy product the way coastal2m is. Its merged valid range never drops below -1.35m NZVD2016, and 35.7M of its ~57M nominally-valid underwater-looking pixels are the EXACT same repeated constant -1.20m NZVD2016 -- a fill/no-penetration sentinel (most likely the water-surface return where the laser never reached the seabed), not measured bathymetry. Smaller secondary repeated constants exist too (e.g. -0.825, -0.562). Do NOT treat (value != nodata) as bathymetric validity for this layer. build-depth-composite.py handles this by only trusting a cell where this layer AGREES with sources/bathy/coastal2m (2m LiDAR) within 0.5m wherever the 2m layer is also valid there -- real cross-sensor agreement, which transparently rejects the sentinel(s) without hardcoding their values. That gate leaves only ~1.9% of the grid eligible (vs the ~16.5% the raw nodata mask would suggest), i.e. this source ends up as a resolution refinement of coastal2m's own footprint, not a coverage extension into deeper water."
+}

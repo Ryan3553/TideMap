@@ -17,6 +17,32 @@ Sources, in priority order where they overlap:
      the grid with nodata-aware block AVERAGING (this is a ~5x downsample; the
      round-2 smooth-then-cubic lesson applies to upsampling, not here), and a
      cell only counts where >= 30% of its 2 m samples are valid.
+  1b. Tauranga LiDAR 1m DEM (2025) sources/bathy/coastal1m/DEM_*.tif (813 tiles)
+     LDS layer 122642, same 2025 3D Coastal Mapping campaign, same NZVD2016
+     datum/nodata contract as source 1 (-0.12 m MSL shift, nodata -9999) but
+     native 1 m and a smaller "Tauranga City" footprint (lon 176.01..176.37,
+     lat -37.80..-37.61 - see sources/bathy/coastal1m/provenance.json). Merged
+     from its 813 non-overlapping 1km tiles with rasterio.merge (same CRS, no
+     reprojection needed for that step) then block-averaged onto the grid
+     exactly like source 1.
+     IMPORTANT DATA-QUALITY CAVEAT, found by inspection (not documented by
+     LINZ): despite the shared campaign, 122642 is NOT a topo-bathy product
+     the way source 1 is. Its merged valid range never drops below -1.35 m
+     NZVD2016, and 35.7M of its ~57M "valid" underwater-looking pixels are the
+     EXACT same repeated constant (-1.20 m NZVD2016) - a fill/no-penetration
+     sentinel (almost certainly the water surface return, not the seabed),
+     not measured bathymetry. Smaller secondary repeated constants exist too.
+     Naively trusting nodata!=(-9999) would inject a flat fake surface across
+     most of the harbour and wash out real channel structure (verified: it
+     did, in an earlier version of this block - see the diff-map / render
+     comparison from 2026-07-28). FIX: only trust a 122642 cell where it
+     AGREES with source 1 (2 m LiDAR) within AGREE_TOL where source 1 is also
+     valid there - two independent laser passes agreeing is real cross-
+     validation, and it transparently rejects the fill sentinel(s) without
+     hardcoding their values. This makes 122642 a resolution-REFINEMENT of
+     source 1's own footprint only (~2% of the grid ends up eligible, not
+     the ~16% its raw footprint would suggest) - it never extends coverage
+     into cells source 1 couldn't already see.
   2. Hydro chart vectors            sources/bathy/hydro-{contours,soundings}/
      Depth contours (valdco 0..20) + soundings, metres below chart datum,
      CD -> MSL via -1.107 m (mean tide level computed from the LINZ Tauranga
@@ -194,6 +220,80 @@ if ring.any():
 e = e * (1 - w_lid) + lid_fill * w_lid
 src_id[w_lid > 0.5] = 2
 
+# --------------------------------------------- 1b. Tauranga LiDAR 1m DEM (2025), LDS 122642
+# Refines the 2m coastal LiDAR (source 1) at cells where BOTH sources agree it's real seabed;
+# never extends coverage into cells source 1 couldn't already see (see AGREE_TOL note above --
+# that is precisely where 122642's fill-sentinel contamination lives).
+AGREE_TOL_M = 0.5   # metres; two independent laser passes should agree far tighter than this
+                     # over real terrain (each source's own accuracy spec is ~0.2-0.3 m); a
+                     # bigger gap means one side is not looking at the seabed.
+
+import glob as _glob
+from rasterio.merge import merge as _rio_merge
+
+C1M_DIR = os.path.join(BATHY, "coastal1m")
+c1m_tile_paths = sorted(_glob.glob(os.path.join(C1M_DIR, "DEM_*.tif")))
+c1m = np.full((P, P), np.nan)
+c1m_cover = np.zeros((P, P))
+if c1m_tile_paths:
+    c1m_srcs = [rasterio.open(p) for p in c1m_tile_paths]
+    c1m_crs = c1m_srcs[0].crs
+    c1m_mosaic, c1m_transform = _rio_merge(c1m_srcs, nodata=-9999.0)
+    for s in c1m_srcs:
+        s.close()
+    arr = c1m_mosaic[0]
+    valid = arr != -9999.0
+    vals = np.where(valid, arr, 0.0).astype(np.float64)
+    vmask = valid.astype(np.float64)
+    d_val = np.full((P, P), np.nan)
+    d_msk = np.full((P, P), 0.0)
+    reproject(vals, d_val, src_transform=c1m_transform, src_crs=c1m_crs,
+              dst_transform=dst_transform, dst_crs=dst_crs,
+              resampling=Resampling.average, src_nodata=None, dst_nodata=np.nan)
+    reproject(vmask, d_msk, src_transform=c1m_transform, src_crs=c1m_crs,
+              dst_transform=dst_transform, dst_crs=dst_crs,
+              resampling=Resampling.average, src_nodata=None, dst_nodata=0.0)
+    got = np.isfinite(d_val) & (d_msk > 0)
+    c1m[got] = d_val[got] / np.maximum(d_msk[got], 1e-9)
+    c1m_cover[got] = d_msk[got]
+    print(f"122642 1m LiDAR: {len(c1m_tile_paths)} tiles merged "
+          f"({c1m_mosaic.shape[1]}x{c1m_mosaic.shape[2]} native px, {valid.mean()*100:.1f}% valid)")
+else:
+    print("122642 1m LiDAR: not on disk, skipped")
+c1m_raw_valid = np.isfinite(c1m) & (c1m_cover >= LIDAR_MIN_COVER)
+c1m_msl = c1m - MSL_ABOVE_NZVD
+# agreement gate: only trust cells where source 1 (2m LiDAR) is ALSO valid AND the two agree
+# within AGREE_TOL_M. This is what rejects the fill-sentinel contamination (see header note) --
+# it also means 122642 can only ever refine source 1's footprint, never extend past it.
+c1m_valid = c1m_raw_valid & lidar_valid & (np.abs(c1m_msl - lidar_msl) < AGREE_TOL_M)
+if c1m_raw_valid.any():
+    print(f"122642 1m LiDAR: {c1m_raw_valid.mean()*100:.1f}% of grid at >= {LIDAR_MIN_COVER:.0%} coverage "
+          f"(raw, BEFORE agreement gate), range "
+          f"{np.nanmin(np.where(c1m_raw_valid, c1m_msl, np.nan)):.1f}.."
+          f"{np.nanmax(np.where(c1m_raw_valid, c1m_msl, np.nan)):.1f} m MSL")
+    ov = c1m_raw_valid & lidar_valid
+    if ov.sum() > 1000:
+        d_all = (c1m_msl - lidar_msl)[ov]
+        print(f"  cross-check vs 2m LiDAR pre-gate ({ov.sum()} px): median {np.median(d_all):+.2f} m, "
+              f"IQR {np.percentile(d_all,25):+.2f}..{np.percentile(d_all,75):+.2f} "
+              f"-- wide/bimodal here means fill-sentinel contamination, expected")
+    print(f"122642 1m LiDAR: {c1m_valid.mean()*100:.2f}% of grid survives the agreement gate "
+          f"(refines source 1's own footprint only)")
+    if c1m_valid.sum() > 100:
+        d = (c1m_msl - lidar_msl)[c1m_valid]
+        print(f"  cross-check vs 2m LiDAR post-gate ({c1m_valid.sum()} px): median {np.median(d):+.3f} m, "
+              f"mean {d.mean():+.3f} m, std {d.std():.3f} m -- tight agreement confirms real refinement")
+
+w_c1m = gaussian_filter(c1m_valid.astype(np.float64), 4.0)  # feather the seam (~8 px), same as source 1
+w_c1m[~c1m_valid & (w_c1m < 0.5)] = 0.0
+c1m_fill = np.where(c1m_valid, c1m_msl, 0.0)
+ring = (w_c1m > 0) & ~c1m_valid
+if ring.any():
+    idx = distance_transform_edt(~c1m_valid, return_indices=True, return_distances=False)
+    c1m_fill[ring] = c1m_msl[idx[0][ring], idx[1][ring]]
+e = e * (1 - w_c1m) + c1m_fill * w_c1m
+src_id[w_c1m > 0.5] = 4
+
 # ------------------------------------------------- 0. HS79 multibeam 2m (highest priority)
 MB_PATH = os.path.join(BATHY, "multibeam2m",
                        "Bay of Plenty Multibeam 2m Depth Model (2024).tif")
@@ -258,9 +358,9 @@ def transect(label, lon0, lat0, lon1, lat1, n=24):
 transect("entrance N-S", 176.171, -37.630, 176.171, -37.660)
 transect("western channel E-W", 176.02, -37.62, 176.08, -37.62)
 
-src_counts = [(src_id == k).mean() * 100 for k in (0, 1, 2, 3)]
+src_counts = [(src_id == k).mean() * 100 for k in (0, 1, 2, 3, 4)]
 print(f"source map: NIWA {src_counts[0]:.1f}%  chart-vectors {src_counts[1]:.1f}%  "
-      f"LiDAR {src_counts[2]:.1f}%  multibeam {src_counts[3]:.1f}%")
+      f"LiDAR-2m {src_counts[2]:.1f}%  multibeam {src_counts[3]:.1f}%  LiDAR-1m(122642) {src_counts[4]:.1f}%")
 print(f"composite range: {e.min():.1f}..{e.max():.1f} m MSL, underwater fraction {(e < 0).mean():.3f}")
 
 e.astype(np.float32).tofile(os.path.join(DATA, "depth-composite-raw.f32"))
@@ -268,12 +368,13 @@ print("wrote data/depth-composite-raw.f32")
 
 with open(os.path.join(DATA, "depth-composite.json"), "w") as f:
     json.dump({
-        "description": "Composite real-bathymetry elevation grid, metres vs local MSL, negative underwater. Priority: coastal LiDAR 2m (2025) > chart contours+soundings (near data only) > NIWA 25m DTM. Built by build-depth-composite.py; see sources/bathy/*/provenance.json.",
+        "description": "Composite real-bathymetry elevation grid, metres vs local MSL, negative underwater. Priority: HS79 multibeam 2m (offshore only) > Tauranga LiDAR 1m 2025/122642 (its own footprint only) > coastal LiDAR 2m (2025) > chart contours+soundings (near data only) > NIWA 25m DTM. Built by build-depth-composite.py; see sources/bathy/*/provenance.json.",
         "grid": {"P": P, "bbox": [WEST, SOUTH, EAST, NORTH], "row0": "north"},
         "datums": {"msl_above_chart_datum_m": MSL_ABOVE_CD,
                    "msl_above_nzvd2016_m": MSL_ABOVE_NZVD,
                    "note": "MSL_ABOVE_CD computed as the mean of all HW/LW heights in sources/tides/tauranga_*.csv (mean tide level, 2023-2027); LINZ's published MSL-CD for Tauranga is 1.14 m - the 3 cm gap is MTL-vs-MSL and does not matter at channel depths"},
         "multibeam": "LDS 122679 HS79 multibeam 2m (LAT datum) integrated as priority 0 where valid - offshore shelf band only (~5..46 m below LAT); the harbour interior is not in the survey",
+        "lidar_1m_122642": "LDS 122642 Bay of Plenty - Tauranga LiDAR 1m DEM (2025), NZVD2016 datum (same -0.12m MSL shift as the 2m coastal LiDAR). Integrated ABOVE the 2m coastal LiDAR (source 1) but below HS79 multibeam, gated to cells where it AGREES with source 1 within 0.5m (see build-depth-composite.py header: despite the shared 2025 capture campaign, 122642's raw 'valid' data is dominated by a fill/no-penetration sentinel around -1.2m NZVD2016 in anything deeper than the immediate shoreline -- the agreement gate rejects that and leaves 122642 as a real, cross-validated resolution refinement of source 1's own footprint only, ~2% of the grid, not a coverage extension). Requested footprint was lon 176.01..176.37, lat -37.80..-37.61 (Tauranga City sub-area). 813 tiles merged via rasterio.merge, see sources/bathy/coastal1m/provenance.json.",
     }, f, indent=2)
 
 if os.environ.get("DEBUG_DUMP"):
